@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kartikkabadi/go-learn/internal/practice"
 	"github.com/kartikkabadi/go-learn/internal/service"
 	"github.com/kartikkabadi/go-learn/internal/store"
 	"github.com/kartikkabadi/go-learn/internal/web/middleware"
@@ -353,11 +354,37 @@ func (h *Handler) SubmitExercise(w http.ResponseWriter, r *http.Request) {
 		badRequest(w, "output too long")
 		return
 	}
-	if err := h.Store.SaveExerciseSubmission(user.ID, id, output); err != nil {
+
+	exercises, err := h.Store.ListExercises(user.ID)
+	if err != nil {
+		internalError(w, "list exercises", err)
+		return
+	}
+	var path string
+	for _, ex := range exercises {
+		if ex.ID == id {
+			path = ex.Path
+			break
+		}
+	}
+	correct := gradeExercise(path, output)
+
+	if err := h.Store.SaveExerciseSubmission(user.ID, id, output, correct); err != nil {
 		internalError(w, "submit exercise", err)
 		return
 	}
-	h.Views.Render(w, "submit_ok.html", nil)
+	h.Views.Render(w, "submit_ok.html", map[string]bool{"Correct": correct})
+}
+
+// gradeExercise compares submitted output against the embedded expected output
+// for a practice module. Trailing whitespace is ignored. No expected file =>
+// submission is marked correct (no grading for that exercise).
+func gradeExercise(path, output string) bool {
+	expected, ok := practice.ExpectedOutput(path)
+	if !ok {
+		return true
+	}
+	return expected == strings.TrimSpace(output)
 }
 
 // --- SEO helpers ---

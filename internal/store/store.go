@@ -43,7 +43,7 @@ type Store interface {
 	// Exercises (user-scoped submission status)
 	ListExercises(userID string) ([]Exercise, error)
 	ListExercisesByLesson(userID, lessonID string) ([]Exercise, error)
-	SaveExerciseSubmission(userID, exerciseID, output string) error
+	SaveExerciseSubmission(userID, exerciseID, output string, correct bool) error
 	GetExerciseSubmission(userID, exerciseID string) (string, bool, error)
 
 	// Progress (user-scoped)

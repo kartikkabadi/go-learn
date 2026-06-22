@@ -27,7 +27,10 @@
   <h2>{{.Title}} <span class="muted">(Lesson {{.LessonID}})</span></h2>
   <p>{{.Instructions}}</p>
   <p><code>cd {{.Path}} && go run .</code></p>
-  {{if .Submitted}}<p class="ok">Submitted</p><pre>{{.Output}}</pre>{{end}}
+  {{if .Submitted}}
+    {{if .Correct}}<p class="ok">Submitted correctly</p>{{else}}<p class="warn">Submitted, but output does not match expected</p>{{end}}
+    <pre>{{.Output}}</pre>
+  {{end}}
   <form hx-post="/practice/{{.ID}}/submit" hx-target="#submit-result-{{.ID}}" hx-swap="innerHTML">
     <label>Paste terminal output:</label>
     <textarea name="output" rows="4">{{.Output}}</textarea>

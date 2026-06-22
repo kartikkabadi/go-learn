@@ -411,7 +411,7 @@ func TestSaveExerciseSubmission(t *testing.T) {
 	if err := s.ImportBundle(testBundle); err != nil {
 		t.Fatal(err)
 	}
-	if err := s.SaveExerciseSubmission(testUser(t, s), "t1:ex1", "Hello, world!"); err != nil {
+	if err := s.SaveExerciseSubmission(testUser(t, s), "t1:ex1", "Hello, world!", true); err != nil {
 		t.Fatal(err)
 	}
 	output, ok, err := s.GetExerciseSubmission(testUser(t, s), "t1:ex1")

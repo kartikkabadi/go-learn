@@ -352,7 +352,8 @@ func (s *Store) ListReferences() ([]store.Reference, error) {
 func (s *Store) ListExercises(userID string) ([]store.Exercise, error) {
 	rows, err := s.db.Query(`
 		SELECT e.id, e.lesson_id, e.title, e.path, e.instructions, e.sort_order,
-			CASE WHEN s.exercise_id IS NOT NULL THEN 1 ELSE 0 END
+			CASE WHEN s.exercise_id IS NOT NULL THEN 1 ELSE 0 END,
+			COALESCE(s.correct, 1)
 		FROM exercises e
 		LEFT JOIN exercise_submissions s ON s.exercise_id = e.id AND s.user_id = ?
 		ORDER BY e.sort_order
@@ -365,10 +366,12 @@ func (s *Store) ListExercises(userID string) ([]store.Exercise, error) {
 	for rows.Next() {
 		var ex store.Exercise
 		var submitted int
-		if err := rows.Scan(&ex.ID, &ex.LessonID, &ex.Title, &ex.Path, &ex.Instructions, &ex.SortOrder, &submitted); err != nil {
+		var correct int
+		if err := rows.Scan(&ex.ID, &ex.LessonID, &ex.Title, &ex.Path, &ex.Instructions, &ex.SortOrder, &submitted, &correct); err != nil {
 			return nil, fmt.Errorf("ListExercises: %w", err)
 		}
 		ex.Submitted = submitted == 1
+		ex.Correct = correct == 1
 		out = append(out, ex)
 	}
 	return out, rows.Err()
@@ -378,7 +381,8 @@ func (s *Store) ListExercises(userID string) ([]store.Exercise, error) {
 func (s *Store) ListExercisesByLesson(userID, lessonID string) ([]store.Exercise, error) {
 	rows, err := s.db.Query(`
 		SELECT e.id, e.lesson_id, e.title, e.path, e.instructions, e.sort_order,
-			CASE WHEN s.exercise_id IS NOT NULL THEN 1 ELSE 0 END
+			CASE WHEN s.exercise_id IS NOT NULL THEN 1 ELSE 0 END,
+			COALESCE(s.correct, 1)
 		FROM exercises e
 		LEFT JOIN exercise_submissions s ON s.exercise_id = e.id AND s.user_id = ?
 		WHERE e.lesson_id = ?
@@ -392,25 +396,28 @@ func (s *Store) ListExercisesByLesson(userID, lessonID string) ([]store.Exercise
 	for rows.Next() {
 		var ex store.Exercise
 		var submitted int
-		if err := rows.Scan(&ex.ID, &ex.LessonID, &ex.Title, &ex.Path, &ex.Instructions, &ex.SortOrder, &submitted); err != nil {
+		var correct int
+		if err := rows.Scan(&ex.ID, &ex.LessonID, &ex.Title, &ex.Path, &ex.Instructions, &ex.SortOrder, &submitted, &correct); err != nil {
 			return nil, fmt.Errorf("ListExercisesByLesson: %w", err)
 		}
 		ex.Submitted = submitted == 1
+		ex.Correct = correct == 1
 		out = append(out, ex)
 	}
 	return out, rows.Err()
 }
 
-// SaveExerciseSubmission stores terminal output for an exercise by a user, upserting by (user_id, exercise_id).
-func (s *Store) SaveExerciseSubmission(userID, exerciseID, output string) error {
+// SaveExerciseSubmission stores terminal output and correctness for an exercise by a user, upserting by (user_id, exercise_id).
+func (s *Store) SaveExerciseSubmission(userID, exerciseID, output string, correct bool) error {
 	now := time.Now().UTC().Format(time.RFC3339)
 	_, err := s.db.Exec(`
-		INSERT INTO exercise_submissions (user_id, exercise_id, output, submitted_at)
-		VALUES (?, ?, ?, ?)
+		INSERT INTO exercise_submissions (user_id, exercise_id, output, correct, submitted_at)
+		VALUES (?, ?, ?, ?, ?)
 		ON CONFLICT(user_id, exercise_id) DO UPDATE SET
 			output = excluded.output,
+			correct = excluded.correct,
 			submitted_at = excluded.submitted_at
-	`, userID, exerciseID, output, now)
+	`, userID, exerciseID, output, boolToInt(correct), now)
 	return err
 }
 

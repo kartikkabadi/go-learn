@@ -82,6 +82,7 @@ type Reference struct {
 
 // Exercise is a hands-on programming exercise tied to a lesson.
 // Submitted indicates the learner has submitted output for this exercise.
+// Correct indicates whether the submitted output matched the expected output.
 type Exercise struct {
 	ID           string
 	LessonID     string
@@ -90,6 +91,7 @@ type Exercise struct {
 	Instructions string
 	SortOrder    int
 	Submitted    bool
+	Correct      bool
 }
 
 // Insight is a teaching observation surfaced on the dashboard.
@@ -104,22 +106,22 @@ type Insight struct {
 
 // Mission holds the learner goal statement, success criteria, and constraints.
 type Mission struct {
-	Why              string
-	SuccessCriteria  string
-	ConstraintsText  string
+	Why             string
+	SuccessCriteria string
+	ConstraintsText string
 }
 
 // LessonProgress aggregates a learner progress through a single lesson.
 type LessonProgress struct {
-	LessonID         string
-	Title            string
-	Slug             string
-	SortOrder        int
-	QuestionsTotal   int
-	QuestionsAnswered  int
-	QuestionsCorrect int
-	ExerciseTotal    int
-	ExercisesDone    int
+	LessonID          string
+	Title             string
+	Slug              string
+	SortOrder         int
+	QuestionsTotal    int
+	QuestionsAnswered int
+	QuestionsCorrect  int
+	ExerciseTotal     int
+	ExercisesDone     int
 }
 
 // DashboardStats provides roll-up numbers across all lessons for the home page.
