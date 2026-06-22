@@ -1,0 +1,139 @@
+{
+  "lesson": {
+    "id": "0007",
+    "title": "Maps",
+    "slug": "maps",
+    "summary": "Key-value pairs &mdash; look up values by a key.",
+    "sortOrder": 7
+  },
+  "sections": [
+    {
+      "id": "0007:s1",
+      "heading": "What is a map",
+      "bodyHtml": "<p>A <strong>map</strong> stores pairs of keys and values. Given a key you get back its value &mdash; like a dictionary or phone book.</p><p>Declare a map from <code>string</code> keys to <code>int</code> values:</p><pre><code>var ages map[string]int</code></pre><p>The type is written as <code>map[KeyType]ValueType</code>.</p><p>Like slices, a map declared with <code>var</code> is <code>nil</code> and you cannot write to it until you initialise it with <code>make</code>:</p><pre><code>ages = make(map[string]int)</code></pre><p>You can also create and initialise in one step with a map literal:</p><pre><code>ages := map[string]int{\n    \"Alice\": 30,\n    \"Bob\":   25,\n}</code></pre>",
+      "sortOrder": 1
+    },
+    {
+      "id": "0007:s2",
+      "heading": "Reading and writing",
+      "bodyHtml": "<p>Write a value to a key:</p><pre><code>ages[\"Charlie\"] = 35</code></pre><p>Read a value back:</p><pre><code>fmt.Println(ages[\"Alice\"])  // 30</code></pre><p>Delete a key:</p><pre><code>delete(ages, \"Bob\")</code></pre><p><strong>The comma ok idiom</strong></p><p>Reading a key that doesn't exist returns the zero value. To check whether a key exists, use the two-value form:</p><pre><code>value, ok := ages[\"David\"]\nif !ok {\n    fmt.Println(\"David not found\")\n}</code></pre><p><code>ok</code> is <code>true</code> if the key exists, <code>false</code> otherwise.</p>",
+      "sortOrder": 2
+    },
+    {
+      "id": "0007:s3",
+      "heading": "Your turn",
+      "bodyHtml": "<p>Open <code>practice/maps/main.go</code>.</p><p>Create a map from student names to grades. Add three students, look up one by name, and print the result with the comma ok idiom.</p>",
+      "sortOrder": 3
+    }
+  ],
+  "questions": [
+    {
+      "id": "0007:review-1",
+      "prompt": "How do you declare a map from <code>string</code> keys to <code>int</code> values?",
+      "correctKey": "mapstrint",
+      "questionType": "choice",
+      "sectionTag": "review",
+      "sortOrder": 1,
+      "options": [
+        {
+          "key": "arrint",
+          "label": "map[string, int]",
+          "isCorrect": false,
+          "sortOrder": 1
+        },
+        {
+          "key": "mapstrint",
+          "label": "map[string]int",
+          "isCorrect": true,
+          "sortOrder": 2
+        },
+        {
+          "key": "dictstr",
+          "label": "dict[string]int",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "0007:q1",
+      "prompt": "What does <code>delete(m, \"key\")</code> do?",
+      "correctKey": "removes",
+      "questionType": "choice",
+      "sectionTag": "quiz",
+      "sortOrder": 2,
+      "options": [
+        {
+          "key": "clears",
+          "label": "Removes every entry from the map",
+          "isCorrect": false,
+          "sortOrder": 1
+        },
+        {
+          "key": "removes",
+          "label": "Removes the entry with key <code>\"key\"</code> from map <code>m</code>",
+          "isCorrect": true,
+          "sortOrder": 2
+        },
+        {
+          "key": "panics",
+          "label": "Crashes if the key doesn't exist",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "0007:q2",
+      "prompt": "If <code>m[\"missing\"]</code> returns 0, how do you tell whether <code>\"missing\"</code> was actually in the map?",
+      "correctKey": "ok",
+      "questionType": "choice",
+      "sectionTag": "quiz",
+      "sortOrder": 3,
+      "options": [
+        {
+          "key": "nil",
+          "label": "Check if the result equals nil",
+          "isCorrect": false,
+          "sortOrder": 1
+        },
+        {
+          "key": "ok",
+          "label": "Use the two-value form: <code>val, ok := m[\"missing\"]</code>",
+          "isCorrect": true,
+          "sortOrder": 2
+        },
+        {
+          "key": "len",
+          "label": "Call <code>len(m)</code> to see if the map is empty",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
+      ]
+    }
+  ],
+  "exercises": [
+    {
+      "id": "0007:ex1",
+      "title": "Using a map",
+      "path": "practice/maps",
+      "instructions": "Edit main.go to create a map of student grades, add three entries, then look up one by name and print whether it was found.",
+      "sortOrder": 1
+    }
+  ],
+  "references": [
+    {
+      "id": "0007:ref1",
+      "title": "Go by Example: Maps",
+      "url": "https://gobyexample.com/maps",
+      "notes": ""
+    },
+    {
+      "id": "0007:ref2",
+      "title": "A Tour of Go &mdash; Maps",
+      "url": "https://go.dev/tour/moretypes/11",
+      "notes": ""
+    }
+  ],
+  "answers": []
+}

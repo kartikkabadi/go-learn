@@ -1,0 +1,173 @@
+{
+  "lesson": {
+    "id": "0006",
+    "title": "Slices",
+    "slug": "slices",
+    "summary": "Dynamic arrays &mdash; store multiple values of the same type together.",
+    "sortOrder": 6
+  },
+  "sections": [
+    {
+      "id": "0006:s1",
+      "heading": "What is a slice",
+      "bodyHtml": "<p>An <strong>array</strong> in Go has a fixed size declared up front. A <strong>slice</strong> is like an array but its length can grow.</p><p>Think of a slice as a window into a backing array. You can make it bigger or smaller as needed.</p><p>Declare a slice of integers:</p><pre><code>var scores []int</code></pre><p>Notice no size inside the brackets. That is the difference:</p><ul><li><code>[5]int</code> &mdash; array, exactly 5 elements</li><li><code>[]int</code> &mdash; slice, any length</li></ul><p>A slice declared with <code>var</code> starts as <code>nil</code> (no backing array yet).</p>",
+      "sortOrder": 1
+    },
+    {
+      "id": "0006:s2",
+      "heading": "Creating slices",
+      "bodyHtml": "<p>Three common ways to create a slice:</p><p><strong>1. Slice literal</strong></p><pre><code>numbers := []int{10, 20, 30}</code></pre><p><strong>2. <code>make</code></strong></p><pre><code>numbers := make([]int, 3)  // length 3, all 0</code></pre><p><strong>3. Slice an existing slice or array</strong></p><pre><code>original := []int{10, 20, 30, 40, 50}\nchunk := original[1:4]    // {20, 30, 40}</code></pre><p>The slice syntax <code>s[start:end]</code> takes elements from <code>start</code> up to (but not including) <code>end</code>.</p>",
+      "sortOrder": 2
+    },
+    {
+      "id": "0006:s3",
+      "heading": "Appending and indexing",
+      "bodyHtml": "<p>Use <code>append</code> to add elements:</p><pre><code>numbers := []int{1, 2, 3}\nnumbers = append(numbers, 4)   // {1, 2, 3, 4}\nnumbers = append(numbers, 5, 6) // {1, 2, 3, 4, 5, 6}</code></pre><p>Access elements by index, just like arrays:</p><pre><code>fmt.Println(numbers[0])  // first element\nfmt.Println(numbers[2])  // third element\nn := len(numbers)        // number of elements</code></pre><p>Remember: indices start at 0. The last element is at <code>len(slice) - 1</code>.</p><p>If you index outside the slice &mdash; for example <code>numbers[10]</code> on a 3-element slice &mdash; the program crashes with a runtime panic.</p>",
+      "sortOrder": 3
+    },
+    {
+      "id": "0006:s4",
+      "heading": "Your turn",
+      "bodyHtml": "<p>Open <code>practice/slices/main.go</code>.</p><p>Create a slice of your five favourite numbers using a literal. Then use <code>append</code> to add a sixth number. Print the length and every element.</p>",
+      "sortOrder": 4
+    }
+  ],
+  "questions": [
+    {
+      "id": "0006:review-1",
+      "prompt": "What is the difference between <code>[3]int</code> and <code>[]int</code>?",
+      "correctKey": "slice",
+      "questionType": "choice",
+      "sectionTag": "review",
+      "sortOrder": 1,
+      "options": [
+        {
+          "key": "array",
+          "label": "<code>[3]int</code> is a slice; <code>[]int</code> is an array",
+          "isCorrect": false,
+          "sortOrder": 1
+        },
+        {
+          "key": "slice",
+          "label": "<code>[3]int</code> is an array with fixed size; <code>[]int</code> is a slice that can grow",
+          "isCorrect": true,
+          "sortOrder": 2
+        },
+        {
+          "key": "same",
+          "label": "They are the same thing with different syntax",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "0006:q1",
+      "prompt": "What does <code>append</code> do?",
+      "correctKey": "adds",
+      "questionType": "choice",
+      "sectionTag": "quiz",
+      "sortOrder": 2,
+      "options": [
+        {
+          "key": "resizes",
+          "label": "Changes the length of the original slice directly",
+          "isCorrect": false,
+          "sortOrder": 1
+        },
+        {
+          "key": "adds",
+          "label": "Returns a new slice with the element(s) added",
+          "isCorrect": true,
+          "sortOrder": 2
+        },
+        {
+          "key": "inserts",
+          "label": "Inserts an element at a specific position",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "0006:q2",
+      "prompt": "What does <code>len(s)</code> give you for a slice <code>s</code>?",
+      "correctKey": "count",
+      "questionType": "choice",
+      "sectionTag": "quiz",
+      "sortOrder": 3,
+      "options": [
+        {
+          "key": "capacity",
+          "label": "The maximum capacity before it needs to grow",
+          "isCorrect": false,
+          "sortOrder": 1
+        },
+        {
+          "key": "count",
+          "label": "The number of elements currently in the slice",
+          "isCorrect": true,
+          "sortOrder": 2
+        },
+        {
+          "key": "memory",
+          "label": "The memory address of the slice",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "0006:q3",
+      "prompt": "What happens if you access index 10 of a slice that has 3 elements?",
+      "correctKey": "panic",
+      "questionType": "choice",
+      "sectionTag": "quiz",
+      "sortOrder": 4,
+      "options": [
+        {
+          "key": "panic",
+          "label": "The program crashes with a runtime panic",
+          "isCorrect": true,
+          "sortOrder": 1
+        },
+        {
+          "key": "zero",
+          "label": "You get the zero value (0)",
+          "isCorrect": false,
+          "sortOrder": 2
+        },
+        {
+          "key": "nil",
+          "label": "The slice grows automatically and returns nil",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
+      ]
+    }
+  ],
+  "exercises": [
+    {
+      "id": "0006:ex1",
+      "title": "Working with slices",
+      "path": "practice/slices",
+      "instructions": "Edit main.go to create a slice literal of five numbers, append a sixth, then print the length and all elements.",
+      "sortOrder": 1
+    }
+  ],
+  "references": [
+    {
+      "id": "0006:ref1",
+      "title": "Go by Example: Slices",
+      "url": "https://gobyexample.com/slices",
+      "notes": ""
+    },
+    {
+      "id": "0006:ref2",
+      "title": "A Tour of Go &mdash; Slices",
+      "url": "https://go.dev/tour/moretypes/7",
+      "notes": ""
+    }
+  ],
+  "answers": []
+}

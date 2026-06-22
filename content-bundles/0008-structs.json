@@ -1,0 +1,139 @@
+{
+  "lesson": {
+    "id": "0008",
+    "title": "Structs",
+    "slug": "structs",
+    "summary": "Group related data into a custom type.",
+    "sortOrder": 8
+  },
+  "sections": [
+    {
+      "id": "0008:s1",
+      "heading": "What is a struct",
+      "bodyHtml": "<p>A <strong>struct</strong> bundles several values of different types into one named type.</p><p>Define a struct type with <code>type</code> and <code>struct</code>:</p><pre><code>type Person struct {\n    Name string\n    Age  int\n}</code></pre><p>Fields are written as <code>Name Type</code> &mdash; name first, type second. By convention field names start with a capital letter so they are visible outside the package.</p><p>Think of a struct as a custom container that keeps related data together.</p>",
+      "sortOrder": 1
+    },
+    {
+      "id": "0008:s2",
+      "heading": "Creating struct values",
+      "bodyHtml": "<p>Once the type is defined, create values with a struct literal:</p><pre><code>p := Person{\n    Name: \"Alice\",\n    Age:  30,\n}</code></pre><p>Access fields with the dot operator:</p><pre><code>fmt.Println(p.Name)   // Alice\nfmt.Println(p.Age)    // 30\np.Age = 31            // update a field</code></pre><p>You can also write a one-line literal (order matters, all fields required):</p><pre><code>p := Person{\"Bob\", 25}</code></pre><p>But the named-field style is clearer and less error-prone. Prefer it unless the type is very simple and you can remember the field order.</p>",
+      "sortOrder": 2
+    },
+    {
+      "id": "0008:s3",
+      "heading": "Your turn",
+      "bodyHtml": "<p>Open <code>practice/structs/main.go</code>.</p><p>Define a <code>Movie</code> struct with <code>Title</code> (string) and <code>Year</code> (int). Create a value, update the year, and print both fields.</p>",
+      "sortOrder": 3
+    }
+  ],
+  "questions": [
+    {
+      "id": "0008:review-1",
+      "prompt": "Which keyword do you use to define a new struct type?",
+      "correctKey": "type",
+      "questionType": "choice",
+      "sectionTag": "review",
+      "sortOrder": 1,
+      "options": [
+        {
+          "key": "struct",
+          "label": "<code>struct</code>",
+          "isCorrect": false,
+          "sortOrder": 1
+        },
+        {
+          "key": "type",
+          "label": "<code>type</code>",
+          "isCorrect": true,
+          "sortOrder": 2
+        },
+        {
+          "key": "new",
+          "label": "<code>new</code>",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "0008:q1",
+      "prompt": "How do you access a struct field named <code>Title</code> from a variable <code>m</code>?",
+      "correctKey": "dot",
+      "questionType": "choice",
+      "sectionTag": "quiz",
+      "sortOrder": 2,
+      "options": [
+        {
+          "key": "bracket",
+          "label": "<code>m[\"Title\"]</code>",
+          "isCorrect": false,
+          "sortOrder": 1
+        },
+        {
+          "key": "dot",
+          "label": "<code>m.Title</code>",
+          "isCorrect": true,
+          "sortOrder": 2
+        },
+        {
+          "key": "arrow",
+          "label": "<code>m->Title</code>",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "0008:q2",
+      "prompt": "What happens if you try to access a field that doesn't exist on a struct?",
+      "correctKey": "compile",
+      "questionType": "choice",
+      "sectionTag": "quiz",
+      "sortOrder": 3,
+      "options": [
+        {
+          "key": "nil",
+          "label": "The program panics at runtime",
+          "isCorrect": false,
+          "sortOrder": 1
+        },
+        {
+          "key": "compile",
+          "label": "The program doesn't compile",
+          "isCorrect": true,
+          "sortOrder": 2
+        },
+        {
+          "key": "zero",
+          "label": "You get the zero value",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
+      ]
+    }
+  ],
+  "exercises": [
+    {
+      "id": "0008:ex1",
+      "title": "Creating and using a struct",
+      "path": "practice/structs",
+      "instructions": "Edit main.go to define a Movie struct, create a value, update the year, and print both fields.",
+      "sortOrder": 1
+    }
+  ],
+  "references": [
+    {
+      "id": "0008:ref1",
+      "title": "Go by Example: Structs",
+      "url": "https://gobyexample.com/structs",
+      "notes": ""
+    },
+    {
+      "id": "0008:ref2",
+      "title": "A Tour of Go &mdash; Structs",
+      "url": "https://go.dev/tour/moretypes/1",
+      "notes": ""
+    }
+  ],
+  "answers": []
+}
