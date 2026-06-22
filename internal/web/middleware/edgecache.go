@@ -110,6 +110,7 @@ func EdgeCache(next http.Handler) http.Handler {
 			for k, v := range cached.Header {
 				w.Header()[k] = v
 			}
+			w.Header().Set("X-Edge-Cache", "HIT")
 			w.WriteHeader(cached.StatusCode)
 			io.Copy(w, cached.Body)
 			cached.Body.Close()
@@ -117,6 +118,7 @@ func EdgeCache(next http.Handler) http.Handler {
 		}
 
 		// Cache miss: render and cache.
+		w.Header().Set("X-Edge-Cache", "MISS")
 		rec := newResponseRecorder(w)
 		next.ServeHTTP(rec, r)
 
