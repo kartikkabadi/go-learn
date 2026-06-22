@@ -6,10 +6,12 @@ import (
 	"net/url"
 	"path/filepath"
 	"strings"
+	"time"
 	"testing"
 
 	"github.com/kartikkabadi/go-learn/internal/service"
 	"github.com/kartikkabadi/go-learn/internal/store"
+	"github.com/kartikkabadi/go-learn/internal/web/cookies"
 	handlers "github.com/kartikkabadi/go-learn/internal/web/handlers"
 	"github.com/kartikkabadi/go-learn/internal/web/middleware"
 	"github.com/kartikkabadi/go-learn/internal/web/views"
@@ -41,9 +43,10 @@ func testHandler(t *testing.T) *handlers.Handler {
 	}
 
 	return &handlers.Handler{
-		Store:    s,
-		Progress: &service.Progress{Store: s},
-		Views:    renderer,
+		Store:     s,
+		Progress:  &service.Progress{Store: s},
+		Views:     renderer,
+		CookieKey: []byte("test-cookie-key"),
 	}
 }
 
@@ -236,4 +239,58 @@ func TestProgressPage(t *testing.T) {
 		t.Fatalf("want 200, got %d", resp.StatusCode)
 	}
 	resp.Body.Close()
+}
+
+func TestAuthFlow_LoginAndLogout(t *testing.T) {
+	h := testHandler(t)
+	u, err := h.Store.CreateUser("authflow@example.com", "$2a$10$dummyhashfortestonlyxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Manually create a session to simulate login state.
+	sess, err := h.Store.CreateSession(u.ID, time.Now().Add(24*time.Hour).UTC().Format(time.RFC3339))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Run("LoadUser accepts signed cookie", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		req.AddCookie(&http.Cookie{
+			Name:  "session",
+			Value: cookies.Sign(sess.Token, h.CookieKey),
+		})
+
+		loader := middleware.LoadUser(h.Store, h.CookieKey)
+		var got *store.User
+		handler := loader(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			got = middleware.UserFromContext(r)
+			w.WriteHeader(http.StatusOK)
+		}))
+		w := httptest.NewRecorder()
+		handler.ServeHTTP(w, req)
+		if w.Code != http.StatusOK {
+			t.Fatalf("want 200, got %d", w.Code)
+		}
+		if got == nil || got.ID != u.ID {
+			t.Fatalf("expected user %s, got %v", u.ID, got)
+		}
+	})
+
+	t.Run("LoadUser rejects tampered cookie", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		req.AddCookie(&http.Cookie{Name: "session", Value: "not-signed"})
+
+		loader := middleware.LoadUser(h.Store, h.CookieKey)
+		var got *store.User
+		handler := loader(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			got = middleware.UserFromContext(r)
+			w.WriteHeader(http.StatusOK)
+		}))
+		w := httptest.NewRecorder()
+		handler.ServeHTTP(w, req)
+		if got != nil {
+			t.Fatalf("expected no user, got %v", got)
+		}
+	})
 }
