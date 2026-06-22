@@ -8,7 +8,6 @@ package d1store
 import (
 	"database/sql"
 	"fmt"
-	"html/template"
 	"strings"
 	"time"
 
@@ -20,6 +19,8 @@ import (
 var _ store.Store = (*Store)(nil)
 
 // Store implements store.Store backed by Cloudflare D1.
+// Static content is cached in memory after first load (see cache.go),
+// eliminating D1 round-trips for content that only changes on deploy.
 type Store struct {
 	db *sql.DB
 }
@@ -41,29 +42,6 @@ func (s *Store) Close() error {
 
 // DB returns the underlying *sql.DB, exposed for migration.
 func (s *Store) DB() *sql.DB { return s.db }
-
-// listOptions returns all options for a question, ordered by sort_order.
-func (s *Store) listOptions(questionID string) ([]store.QuestionOption, error) {
-	rows, err := s.db.Query(`
-		SELECT question_id, option_key, label, is_correct, sort_order
-		FROM question_options WHERE question_id = ? ORDER BY sort_order
-	`, questionID)
-	if err != nil {
-		return nil, fmt.Errorf("listOptions: %w", err)
-	}
-	defer rows.Close()
-	var out []store.QuestionOption
-	for rows.Next() {
-		var o store.QuestionOption
-		var correct int
-		if err := rows.Scan(&o.QuestionID, &o.OptionKey, &o.Label, &correct, &o.SortOrder); err != nil {
-			return nil, fmt.Errorf("listOptions: %w", err)
-		}
-		o.IsCorrect = correct == 1
-		out = append(out, o)
-	}
-	return out, rows.Err()
-}
 
 // SaveAnswer records a quiz answer, evaluates correctness, and returns the result.
 func (s *Store) SaveAnswer(userID, questionID, pickedKey, pickedLabel string) (store.Answer, error) {
@@ -179,282 +157,187 @@ func (s *Store) ListAnswers(userID string) ([]store.AnswerRow, error) {
 	return out, rows.Err()
 }
 
-// ListLessons returns all lessons ordered by sort_order.
+// ListLessons returns all lessons from the in-memory cache (0 D1 queries).
 func (s *Store) ListLessons() ([]store.Lesson, error) {
-	rows, err := s.db.Query(`SELECT id, title, slug, summary, sort_order FROM lessons ORDER BY sort_order`)
+	c, err := s.loadCache()
 	if err != nil {
-		return nil, fmt.Errorf("ListLessons: %w", err)
+		return nil, err
 	}
-	defer rows.Close()
-	var out []store.Lesson
-	for rows.Next() {
-		var l store.Lesson
-		if err := rows.Scan(&l.ID, &l.Title, &l.Slug, &l.Summary, &l.SortOrder); err != nil {
-			return nil, fmt.Errorf("ListLessons: %w", err)
-		}
-		out = append(out, l)
-	}
-	return out, rows.Err()
+	return c.lessons, nil
 }
 
-// GetLesson retrieves a single lesson by ID, or nil if not found.
+// GetLesson retrieves a single lesson by ID from the in-memory cache.
 func (s *Store) GetLesson(id string) (*store.Lesson, error) {
-	var l store.Lesson
-	err := s.db.QueryRow(
-		`SELECT id, title, slug, summary, sort_order FROM lessons WHERE id = ?`, id,
-	).Scan(&l.ID, &l.Title, &l.Slug, &l.Summary, &l.SortOrder)
-	if err == sql.ErrNoRows {
-		return nil, nil
-	}
+	c, err := s.loadCache()
 	if err != nil {
-		return nil, fmt.Errorf("GetLesson: %w", err)
+		return nil, err
 	}
-	return &l, nil
+	if l, ok := c.byID[id]; ok {
+		return l, nil
+	}
+	return nil, nil
 }
 
-// GetLessonBySlug retrieves a single lesson by slug, or nil if not found.
+// GetLessonBySlug retrieves a single lesson by slug from the in-memory cache.
 func (s *Store) GetLessonBySlug(slug string) (*store.Lesson, error) {
-	var l store.Lesson
-	err := s.db.QueryRow(
-		`SELECT id, title, slug, summary, sort_order FROM lessons WHERE slug = ?`, slug,
-	).Scan(&l.ID, &l.Title, &l.Slug, &l.Summary, &l.SortOrder)
-	if err == sql.ErrNoRows {
-		return nil, nil
-	}
+	c, err := s.loadCache()
 	if err != nil {
-		return nil, fmt.Errorf("GetLessonBySlug: %w", err)
+		return nil, err
 	}
-	return &l, nil
+	if l, ok := c.bySlug[slug]; ok {
+		return l, nil
+	}
+	return nil, nil
 }
 
-// ListLessonSections returns all sections for a lesson, ordered by sort_order.
+// ListLessonSections returns sections for a lesson from the in-memory cache.
 func (s *Store) ListLessonSections(lessonID string) ([]store.LessonSection, error) {
-	rows, err := s.db.Query(`
-		SELECT id, lesson_id, heading, body_html, sort_order
-		FROM lesson_sections WHERE lesson_id = ? ORDER BY sort_order
-	`, lessonID)
+	c, err := s.loadCache()
 	if err != nil {
-		return nil, fmt.Errorf("ListLessonSections: %w", err)
+		return nil, err
 	}
-	defer rows.Close()
-	var out []store.LessonSection
-	for rows.Next() {
-		var sec store.LessonSection
-		var body string
-		if err := rows.Scan(&sec.ID, &sec.LessonID, &sec.Heading, &body, &sec.SortOrder); err != nil {
-			return nil, fmt.Errorf("ListLessonSections: %w", err)
-		}
-		sec.BodyHTML = template.HTML(body)
-		out = append(out, sec)
-	}
-	return out, rows.Err()
+	return c.sections[lessonID], nil
 }
 
-// ListQuestionsByLesson returns all questions for a lesson, with options and
-// the user's answers populated. Uses 3 queries (questions, options, answers)
-// instead of 1+2N to avoid N+1 round-trips on D1.
+// ListQuestionsByLesson returns all questions for a lesson from the cache
+// (options populated), then fetches the user's answers in 1 D1 query (if
+// logged in). Anonymous requests = 0 D1 queries.
 func (s *Store) ListQuestionsByLesson(userID, lessonID string) ([]store.Question, error) {
-	rows, err := s.db.Query(`
-		SELECT id, lesson_id, prompt, correct_key, question_type, section_tag, sort_order
-		FROM questions WHERE lesson_id = ? ORDER BY sort_order
-	`, lessonID)
+	c, err := s.loadCache()
 	if err != nil {
-		return nil, fmt.Errorf("ListQuestionsByLesson: %w", err)
+		return nil, err
 	}
-	var out []store.Question
-	for rows.Next() {
-		var q store.Question
-		if err := rows.Scan(&q.ID, &q.LessonID, &q.Prompt, &q.CorrectKey, &q.QuestionType, &q.SectionTag, &q.SortOrder); err != nil {
-			rows.Close()
-			return nil, fmt.Errorf("ListQuestionsByLesson: %w", err)
-		}
-		out = append(out, q)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, fmt.Errorf("ListQuestionsByLesson: %w", err)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("ListQuestionsByLesson: %w", err)
-	}
+	cached := c.questions[lessonID]
+	// Copy so we can attach per-user answers without mutating the cache.
+	out := make([]store.Question, len(cached))
+	copy(out, cached)
 	if len(out) == 0 {
 		return out, nil
 	}
 
-	// Batch-fetch options for all questions in this lesson.
-	optRows, err := s.db.Query(`
-		SELECT question_id, option_key, label, is_correct, sort_order
-		FROM question_options
-		WHERE question_id IN (SELECT id FROM questions WHERE lesson_id = ?)
-		ORDER BY sort_order
-	`, lessonID)
+	if userID == "" {
+		return out, nil
+	}
+
+	// Single query for all user answers in this lesson.
+	ansRows, err := s.db.Query(`
+		SELECT question_id, picked_key, picked_label, correct, answered_at
+		FROM answers
+		WHERE user_id = ? AND question_id IN (SELECT id FROM questions WHERE lesson_id = ?)
+	`, userID, lessonID)
 	if err != nil {
-		return nil, fmt.Errorf("ListQuestionsByLesson options: %w", err)
+		return nil, fmt.Errorf("ListQuestionsByLesson answers: %w", err)
 	}
-	optsByQ := make(map[string][]store.QuestionOption)
-	for optRows.Next() {
-		var o store.QuestionOption
+	defer ansRows.Close()
+	ansByQ := make(map[string]*store.Answer)
+	for ansRows.Next() {
+		var a store.Answer
 		var correct int
-		if err := optRows.Scan(&o.QuestionID, &o.OptionKey, &o.Label, &correct, &o.SortOrder); err != nil {
-			optRows.Close()
-			return nil, fmt.Errorf("ListQuestionsByLesson options: %w", err)
-		}
-		o.IsCorrect = correct == 1
-		optsByQ[o.QuestionID] = append(optsByQ[o.QuestionID], o)
-	}
-	if err := optRows.Close(); err != nil {
-		return nil, fmt.Errorf("ListQuestionsByLesson options: %w", err)
-	}
-
-	// Batch-fetch answers for this user+lesson (only if logged in).
-	var ansByQ map[string]*store.Answer
-	if userID != "" {
-		ansRows, err := s.db.Query(`
-			SELECT question_id, picked_key, picked_label, correct, answered_at
-			FROM answers
-			WHERE user_id = ? AND question_id IN (SELECT id FROM questions WHERE lesson_id = ?)
-		`, userID, lessonID)
-		if err != nil {
+		if err := ansRows.Scan(&a.QuestionID, &a.PickedKey, &a.PickedLabel, &correct, &a.AnsweredAt); err != nil {
 			return nil, fmt.Errorf("ListQuestionsByLesson answers: %w", err)
 		}
-		ansByQ = make(map[string]*store.Answer)
-		for ansRows.Next() {
-			var a store.Answer
-			var correct int
-			if err := ansRows.Scan(&a.QuestionID, &a.PickedKey, &a.PickedLabel, &correct, &a.AnsweredAt); err != nil {
-				ansRows.Close()
-				return nil, fmt.Errorf("ListQuestionsByLesson answers: %w", err)
-			}
-			a.Correct = correct == 1
-			ansByQ[a.QuestionID] = &a
-		}
-		if err := ansRows.Close(); err != nil {
-			return nil, fmt.Errorf("ListQuestionsByLesson answers: %w", err)
-		}
+		a.Correct = correct == 1
+		ansByQ[a.QuestionID] = &a
 	}
-
 	for i := range out {
-		out[i].Options = optsByQ[out[i].ID]
-		if ansByQ != nil {
-			out[i].Answer = ansByQ[out[i].ID]
-		}
+		out[i].Answer = ansByQ[out[i].ID]
 	}
 	return out, nil
 }
 
-// GetQuestion retrieves a single question by ID with options. It does not populate
-// the user's answer — the caller sets q.Answer if needed.
+// GetQuestion retrieves a single question by ID with options from the cache.
+// It does not populate the user's answer — the caller sets q.Answer if needed.
 func (s *Store) GetQuestion(id string) (*store.Question, error) {
-	var q store.Question
-	err := s.db.QueryRow(`
-		SELECT id, lesson_id, prompt, correct_key, question_type, section_tag, sort_order
-		FROM questions WHERE id = ?
-	`, id).Scan(&q.ID, &q.LessonID, &q.Prompt, &q.CorrectKey, &q.QuestionType, &q.SectionTag, &q.SortOrder)
-	if err == sql.ErrNoRows {
-		return nil, nil
-	}
+	c, err := s.loadCache()
 	if err != nil {
-		return nil, fmt.Errorf("GetQuestion: %w", err)
+		return nil, err
 	}
-	q.Options, err = s.listOptions(q.ID)
-	if err != nil {
-		return nil, fmt.Errorf("GetQuestion: %w", err)
+	if q, ok := c.questionsByID[id]; ok {
+		return q, nil
 	}
-	return &q, nil
+	return nil, nil
 }
 
-// ListGlossaryTerms returns all glossary terms ordered by sort_order.
+// ListGlossaryTerms returns glossary terms from the in-memory cache.
 func (s *Store) ListGlossaryTerms() ([]store.GlossaryTerm, error) {
-	rows, err := s.db.Query(`SELECT id, term, definition, sort_order FROM glossary_terms ORDER BY sort_order`)
+	c, err := s.loadCache()
 	if err != nil {
-		return nil, fmt.Errorf("ListGlossaryTerms: %w", err)
+		return nil, err
 	}
-	defer rows.Close()
-	var out []store.GlossaryTerm
-	for rows.Next() {
-		var t store.GlossaryTerm
-		if err := rows.Scan(&t.ID, &t.Term, &t.Definition, &t.SortOrder); err != nil {
-			return nil, fmt.Errorf("ListGlossaryTerms: %w", err)
-		}
-		out = append(out, t)
-	}
-	return out, rows.Err()
+	return c.glossary, nil
 }
 
-// ListReferences returns all external references ordered by title.
+// ListReferences returns external references from the in-memory cache.
 func (s *Store) ListReferences() ([]store.Reference, error) {
-	rows, err := s.db.Query(`SELECT id, title, url, notes, COALESCE(lesson_id, '') FROM references_ext ORDER BY title`)
+	c, err := s.loadCache()
 	if err != nil {
-		return nil, fmt.Errorf("ListReferences: %w", err)
+		return nil, err
 	}
-	defer rows.Close()
-	var out []store.Reference
-	for rows.Next() {
-		var r store.Reference
-		if err := rows.Scan(&r.ID, &r.Title, &r.URL, &r.Notes, &r.LessonID); err != nil {
-			return nil, fmt.Errorf("ListReferences: %w", err)
-		}
-		out = append(out, r)
-	}
-	return out, rows.Err()
+	return c.references, nil
 }
 
-// ListExercises returns all exercises with submission status for the given user, ordered by sort_order.
+// ListExercises returns all exercises with submission status for the given user.
+// Exercise definitions come from cache; submissions fetched in 1 D1 query.
 func (s *Store) ListExercises(userID string) ([]store.Exercise, error) {
+	c, err := s.loadCache()
+	if err != nil {
+		return nil, err
+	}
+	out := make([]store.Exercise, len(c.exercises))
+	copy(out, c.exercises)
+	if userID == "" {
+		return out, nil
+	}
+	return s.attachSubmissions(out, userID)
+}
+
+// ListExercisesByLesson returns exercises for a lesson with submission status.
+// Exercise definitions come from cache; submissions fetched in 1 D1 query.
+func (s *Store) ListExercisesByLesson(userID, lessonID string) ([]store.Exercise, error) {
+	c, err := s.loadCache()
+	if err != nil {
+		return nil, err
+	}
+	cached := c.exByLesson[lessonID]
+	out := make([]store.Exercise, len(cached))
+	copy(out, cached)
+	if userID == "" {
+		return out, nil
+	}
+	return s.attachSubmissions(out, userID)
+}
+
+// attachSubmissions fetches the user's submissions for the given exercises
+// in 1 query and merges Submitted/Correct into the slice.
+func (s *Store) attachSubmissions(out []store.Exercise, userID string) ([]store.Exercise, error) {
+	if len(out) == 0 {
+		return out, nil
+	}
 	rows, err := s.db.Query(`
-		SELECT e.id, e.lesson_id, e.title, e.path, e.instructions, e.sort_order,
-			CASE WHEN s.exercise_id IS NOT NULL THEN 1 ELSE 0 END,
-			COALESCE(s.correct, 1)
-		FROM exercises e
-		LEFT JOIN exercise_submissions s ON s.exercise_id = e.id AND s.user_id = ?
-		ORDER BY e.sort_order
+		SELECT exercise_id, correct FROM exercise_submissions WHERE user_id = ?
 	`, userID)
 	if err != nil {
-		return nil, fmt.Errorf("ListExercises: %w", err)
+		return nil, fmt.Errorf("ListExercises submissions: %w", err)
 	}
 	defer rows.Close()
-	var out []store.Exercise
+	subByEx := make(map[string]bool)
+	correctByEx := make(map[string]bool)
 	for rows.Next() {
-		var ex store.Exercise
-		var submitted int
+		var exID string
 		var correct int
-		if err := rows.Scan(&ex.ID, &ex.LessonID, &ex.Title, &ex.Path, &ex.Instructions, &ex.SortOrder, &submitted, &correct); err != nil {
-			return nil, fmt.Errorf("ListExercises: %w", err)
+		if err := rows.Scan(&exID, &correct); err != nil {
+			return nil, fmt.Errorf("ListExercises submissions: %w", err)
 		}
-		ex.Submitted = submitted == 1
-		ex.Correct = correct == 1
-		out = append(out, ex)
+		subByEx[exID] = true
+		correctByEx[exID] = correct == 1
 	}
-	return out, rows.Err()
-}
-
-// ListExercisesByLesson returns exercises filtered by lesson ID for the given user.
-func (s *Store) ListExercisesByLesson(userID, lessonID string) ([]store.Exercise, error) {
-	rows, err := s.db.Query(`
-		SELECT e.id, e.lesson_id, e.title, e.path, e.instructions, e.sort_order,
-			CASE WHEN s.exercise_id IS NOT NULL THEN 1 ELSE 0 END,
-			COALESCE(s.correct, 1)
-		FROM exercises e
-		LEFT JOIN exercise_submissions s ON s.exercise_id = e.id AND s.user_id = ?
-		WHERE e.lesson_id = ?
-		ORDER BY e.sort_order
-	`, userID, lessonID)
-	if err != nil {
-		return nil, fmt.Errorf("ListExercisesByLesson: %w", err)
-	}
-	defer rows.Close()
-	var out []store.Exercise
-	for rows.Next() {
-		var ex store.Exercise
-		var submitted int
-		var correct int
-		if err := rows.Scan(&ex.ID, &ex.LessonID, &ex.Title, &ex.Path, &ex.Instructions, &ex.SortOrder, &submitted, &correct); err != nil {
-			return nil, fmt.Errorf("ListExercisesByLesson: %w", err)
+	for i := range out {
+		if subByEx[out[i].ID] {
+			out[i].Submitted = true
+			out[i].Correct = correctByEx[out[i].ID]
 		}
-		ex.Submitted = submitted == 1
-		ex.Correct = correct == 1
-		out = append(out, ex)
 	}
-	return out, rows.Err()
+	return out, nil
 }
 
 // SaveExerciseSubmission stores terminal output and correctness for an exercise by a user, upserting by (user_id, exercise_id).
@@ -487,46 +370,32 @@ func (s *Store) GetExerciseSubmission(userID, exerciseID string) (string, bool, 
 	return output, true, nil
 }
 
-// ListActiveInsights returns all active insights, optionally filtered by kind.
+// ListActiveInsights returns active insights from the in-memory cache,
+// optionally filtered by kind.
 func (s *Store) ListActiveInsights(kind string) ([]store.Insight, error) {
-	q := `SELECT id, title, body, kind, active, created_at FROM insights WHERE active = 1`
-	args := []any{}
-	if kind != "" {
-		q += ` AND kind = ?`
-		args = append(args, kind)
-	}
-	q += ` ORDER BY created_at`
-	rows, err := s.db.Query(q, args...)
+	c, err := s.loadCache()
 	if err != nil {
-		return nil, fmt.Errorf("ListActiveInsights: %w", err)
+		return nil, err
 	}
-	defer rows.Close()
+	if kind == "" {
+		return c.insights, nil
+	}
 	var out []store.Insight
-	for rows.Next() {
-		var ins store.Insight
-		var active int
-		if err := rows.Scan(&ins.ID, &ins.Title, &ins.Body, &ins.Kind, &active, &ins.CreatedAt); err != nil {
-			return nil, fmt.Errorf("ListActiveInsights: %w", err)
+	for _, ins := range c.insights {
+		if ins.Kind == kind {
+			out = append(out, ins)
 		}
-		ins.Active = active == 1
-		out = append(out, ins)
 	}
-	return out, rows.Err()
+	return out, nil
 }
 
-// GetMission returns the learner mission statement.
+// GetMission returns the learner mission statement from the in-memory cache.
 func (s *Store) GetMission() (*store.Mission, error) {
-	var m store.Mission
-	err := s.db.QueryRow(`SELECT why, success_criteria, constraints_text FROM mission WHERE id = 1`).Scan(
-		&m.Why, &m.SuccessCriteria, &m.ConstraintsText,
-	)
-	if err == sql.ErrNoRows {
-		return nil, nil
-	}
+	c, err := s.loadCache()
 	if err != nil {
-		return nil, fmt.Errorf("GetMission: %w", err)
+		return nil, err
 	}
-	return &m, nil
+	return c.mission, nil
 }
 
 // LessonProgress returns progress stats for every lesson for the given user.
