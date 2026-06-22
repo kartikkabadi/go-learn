@@ -9,6 +9,36 @@ linters:
   exclusions:
     paths:
       - "(.+)_test\\.go$"
+    rules:
+      # defer Close at process exit / row iteration — error not actionable.
+      - linters: [errcheck]
+        source: 'defer .*\.Close\(\)'
+      # Explicit rows.Close() after query loop — error not actionable (rows drained).
+      - linters: [errcheck]
+        source: '^\s+rows\.Close\(\)$'
+      # Writes to http.ResponseWriter — client disconnect is not actionable.
+      - linters: [errcheck]
+        source: 'fmt\.Fprint(ln|f)?\(w,'
+      # CLI import tool reads local bundle files by name — not user input.
+      - linters: [gosec]
+        text: "G304"
+        path: "cmd/import-content/main\\.go|internal/store/import\\.go"
+      # JSON-LD is built from escaped fields and wrapped in template.JS intentionally.
+      - linters: [gosec]
+        text: "G203"
+      # Sitemap/robots/favicon write config-derived URLs to ResponseWriter — not XSS.
+      - linters: [gosec]
+        text: "G705"
+        path: "internal/web/handlers/handlers\\.go"
+      # Redirects to config-derived or same-site paths — not user-controlled open redirects.
+      # auth.go Login `next` is sanitized (must start with "/" and not "//").
+      - linters: [gosec]
+        text: "G710"
+        path: "internal/web/handlers/(auth|handlers)\\.go|internal/web/middleware/auth\\.go"
+      # Session cookies set Secure/HttpOnly/SameSite; gosec can't trace conditional Secure.
+      - linters: [gosec]
+        text: "G124"
+        path: "internal/web/handlers/auth\\.go"
 formatters:
   enable:
     - gofmt
