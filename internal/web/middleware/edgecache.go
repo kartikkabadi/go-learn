@@ -3,8 +3,12 @@
 package middleware
 
 import (
+	"bytes"
+	"io"
 	"net/http"
 	"strings"
+
+	"github.com/syumai/workers/cloudflare/cache"
 )
 
 // sessionCookieName must match the cookie used by auth.go.
@@ -12,16 +16,16 @@ const sessionCookieName = "session"
 
 // cacheablePaths are paths whose anonymous response is identical for all users.
 var cacheablePaths = map[string]bool{
-	"/":            true,
-	"/lessons":     true,
-	"/reference":   true,
-	"/practice":    true,
-	"/login":       true,
-	"/signup":      true,
-	"/sitemap.xml": true,
-	"/robots.txt":  true,
-	"/favicon.ico": true,
-	"/health":      true,
+	"/":              true,
+	"/lessons":       true,
+	"/reference":     true,
+	"/practice":      true,
+	"/login":         true,
+	"/signup":        true,
+	"/sitemap.xml":   true,
+	"/robots.txt":    true,
+	"/favicon.ico":   true,
+	"/health":        true,
 }
 
 // isCacheable returns true for anonymous GET requests to cacheable paths.
@@ -33,6 +37,7 @@ func isCacheable(r *http.Request) bool {
 		return false
 	}
 	if !cacheablePaths[r.URL.Path] {
+		// Lesson pages are cacheable for anonymous users (no quiz answers shown).
 		if strings.HasPrefix(r.URL.Path, "/lessons/") {
 			return true
 		}
@@ -41,17 +46,95 @@ func isCacheable(r *http.Request) bool {
 	return true
 }
 
-// EdgeCache sets cache-control headers on anonymous GET responses so that
-// Cloudflare's built-in edge cache serves repeat requests without invoking
-// the Worker. Zero overhead — no Cache API calls, just headers.
-// Authenticated requests get no-cache to prevent caching user-specific data.
+// responseRecorder captures the response body and headers for caching.
+type responseRecorder struct {
+	http.ResponseWriter
+	buf        bytes.Buffer
+	status     int
+	header     http.Header
+	wroteHdr   bool
+}
+
+func newResponseRecorder(w http.ResponseWriter) *responseRecorder {
+	return &responseRecorder{
+		ResponseWriter: w,
+		header:         http.Header{},
+		status:         http.StatusOK,
+	}
+}
+
+func (r *responseRecorder) ensureHeader() {
+	if r.wroteHdr {
+		return
+	}
+	r.wroteHdr = true
+	r.status = http.StatusOK
+	for k, v := range r.ResponseWriter.Header() {
+		r.header[k] = v
+	}
+}
+
+func (r *responseRecorder) Write(b []byte) (int, error) {
+	r.ensureHeader()
+	r.buf.Write(b)
+	return r.ResponseWriter.Write(b)
+}
+
+func (r *responseRecorder) WriteHeader(code int) {
+	if r.wroteHdr {
+		return
+	}
+	r.wroteHdr = true
+	r.status = code
+	for k, v := range r.ResponseWriter.Header() {
+		r.header[k] = v
+	}
+	r.ResponseWriter.WriteHeader(code)
+}
+
+// EdgeCache wraps a handler with Cloudflare Cache API for anonymous GET requests.
+// Cached responses are served from the edge (sub-millisecond). Authenticated
+// requests and non-cacheable paths bypass the cache entirely.
 func EdgeCache(next http.Handler) http.Handler {
+	c := cache.New()
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if isCacheable(r) {
-			w.Header().Set("Cache-Control", "public, max-age=300, stale-while-revalidate=600")
-		} else {
-			w.Header().Set("Cache-Control", "private, no-cache")
+		if !isCacheable(r) {
+			next.ServeHTTP(w, r)
+			return
 		}
-		next.ServeHTTP(w, r)
+
+		// Check edge cache.
+		cached, err := c.Match(r, &cache.MatchOptions{IgnoreMethod: true})
+		if err == nil && cached != nil {
+			// Copy cached headers.
+			for k, v := range cached.Header {
+				w.Header()[k] = v
+			}
+			w.WriteHeader(cached.StatusCode)
+			io.Copy(w, cached.Body)
+			cached.Body.Close()
+			return
+		}
+
+		// Cache miss: render and cache.
+		rec := newResponseRecorder(w)
+		next.ServeHTTP(rec, r)
+
+		// Only cache successful responses and redirects.
+		if rec.buf.Len() == 0 || (rec.status != http.StatusOK && rec.status != http.StatusMovedPermanently && rec.status != http.StatusFound) {
+			return
+		}
+
+		// Build a response for the cache.
+		cachedResp := &http.Response{
+			StatusCode: rec.status,
+			Header:     rec.header,
+			Body:       io.NopCloser(bytes.NewReader(rec.buf.Bytes())),
+		}
+		if cachedResp.Header == nil {
+			cachedResp.Header = w.Header()
+		}
+		cachedResp.Header.Set("Cache-Control", "public, max-age=300, stale-while-revalidate=600")
+		_ = c.Put(r, cachedResp)
 	})
 }
