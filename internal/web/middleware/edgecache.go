@@ -104,8 +104,8 @@ func EdgeCache(next http.Handler) http.Handler {
 		rec := newResponseRecorder(w)
 		next.ServeHTTP(rec, r)
 
-		// Only cache successful responses.
-		if rec.status != http.StatusOK || rec.buf.Len() == 0 {
+		// Only cache successful responses and redirects.
+		if rec.buf.Len() == 0 || (rec.status != http.StatusOK && rec.status != http.StatusMovedPermanently && rec.status != http.StatusFound) {
 			return
 		}
 
