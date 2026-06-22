@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"html/template"
+	"log/slog"
 	"net/http"
 	"strings"
 
@@ -17,7 +18,6 @@ type Handler struct {
 	Progress *service.Progress
 	Views    *views.Renderer
 }
-
 
 type DashboardPage struct {
 	views.PageMeta
@@ -64,10 +64,21 @@ type PracticePage struct {
 	Exercises []ExerciseView
 }
 
+// HTTP error helpers
+
+func internalError(w http.ResponseWriter, msg string, err error) {
+	slog.Error(msg, "error", err)
+	http.Error(w, "internal error", http.StatusInternalServerError)
+}
+
+func badRequest(w http.ResponseWriter, msg string) {
+	http.Error(w, msg, http.StatusBadRequest)
+}
+
 func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 	data, err := h.Progress.Dashboard()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		internalError(w, "dashboard", err)
 		return
 	}
 	base := baseURL(r)
@@ -85,7 +96,7 @@ func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) LessonsIndex(w http.ResponseWriter, r *http.Request) {
 	lessons, err := h.Store.LessonProgress()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		internalError(w, "lessons index", err)
 		return
 	}
 	base := baseURL(r)
@@ -106,7 +117,7 @@ func (h *Handler) LessonShow(w http.ResponseWriter, r *http.Request) {
 		lesson, err = h.Store.GetLesson(slugOrID)
 	}
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		internalError(w, "lesson show", err)
 		return
 	}
 	if lesson == nil {
@@ -123,17 +134,17 @@ func (h *Handler) LessonShow(w http.ResponseWriter, r *http.Request) {
 
 	sections, err := h.Store.ListLessonSections(lesson.ID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		internalError(w, "lesson sections", err)
 		return
 	}
 	questions, err := h.Store.ListQuestionsByLesson(lesson.ID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		internalError(w, "lesson questions", err)
 		return
 	}
 	exercises, err := h.Store.ListExercisesByLesson(lesson.ID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		internalError(w, "lesson exercises", err)
 		return
 	}
 
@@ -167,7 +178,7 @@ func (h *Handler) LessonShow(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) AnswerQuestion(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
-		http.Error(w, "bad form", http.StatusBadRequest)
+		badRequest(w, "bad form")
 		return
 	}
 	lessonID := r.PathValue("id")
@@ -178,13 +189,13 @@ func (h *Handler) AnswerQuestion(w http.ResponseWriter, r *http.Request) {
 		pickedLabel = pickedKey
 	}
 	if pickedKey == "" {
-		http.Error(w, "pickedKey required", http.StatusBadRequest)
+		badRequest(w, "pickedKey required")
 		return
 	}
 
 	answer, err := h.Store.SaveAnswer(questionID, pickedKey, pickedLabel)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		badRequest(w, err.Error())
 		return
 	}
 
@@ -201,14 +212,14 @@ func (h *Handler) AnswerQuestion(w http.ResponseWriter, r *http.Request) {
 		Review:   q.SectionTag == "review",
 	}
 	if err := h.Views.RenderPartial(w, "quiz_answer_partial", view); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		internalError(w, "answer partial", err)
 	}
 }
 
 func (h *Handler) ProgressPage(w http.ResponseWriter, r *http.Request) {
 	answers, err := h.Store.ListAnswers()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		internalError(w, "progress page", err)
 		return
 	}
 	base := baseURL(r)
@@ -225,12 +236,12 @@ func (h *Handler) ProgressPage(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) Reference(w http.ResponseWriter, r *http.Request) {
 	terms, err := h.Store.ListGlossaryTerms()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		internalError(w, "reference terms", err)
 		return
 	}
 	refs, err := h.Store.ListReferences()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		internalError(w, "reference refs", err)
 		return
 	}
 	base := baseURL(r)
@@ -248,7 +259,7 @@ func (h *Handler) Reference(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) Practice(w http.ResponseWriter, r *http.Request) {
 	exercises, err := h.Store.ListExercises()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		internalError(w, "practice list", err)
 		return
 	}
 	var evs []ExerciseView
@@ -257,7 +268,7 @@ func (h *Handler) Practice(w http.ResponseWriter, r *http.Request) {
 		if ex.Submitted {
 			out, ok, err := h.Store.GetExerciseSubmission(ex.ID)
 			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
+				internalError(w, "practice submission", err)
 				return
 			}
 			if ok {
@@ -279,17 +290,17 @@ func (h *Handler) Practice(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) SubmitExercise(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
-		http.Error(w, "bad form", http.StatusBadRequest)
+		badRequest(w, "bad form")
 		return
 	}
 	id := r.PathValue("id")
 	output := r.FormValue("output")
 	if strings.TrimSpace(output) == "" {
-		http.Error(w, "output required", http.StatusBadRequest)
+		badRequest(w, "output required")
 		return
 	}
 	if err := h.Store.SaveExerciseSubmission(id, output); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		internalError(w, "submit exercise", err)
 		return
 	}
 	h.Views.Render(w, "submit_ok.html", nil)
@@ -352,7 +363,7 @@ func (h *Handler) Sitemap(w http.ResponseWriter, r *http.Request) {
 	base := "https://go-learn.example.com"
 	lessons, err := h.Store.ListLessons()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		internalError(w, "sitemap", err)
 		return
 	}
 	fmt.Fprintf(w, `<?xml version="1.0" encoding="UTF-8"?>

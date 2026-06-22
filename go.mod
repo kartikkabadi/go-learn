@@ -2,7 +2,10 @@ module example.com/go-learn
 
 go 1.26
 
-require modernc.org/sqlite v1.46.1
+require (
+	github.com/syumai/workers v0.33.0
+	modernc.org/sqlite v1.46.1
+)
 
 require (
 	github.com/dustin/go-humanize v1.0.1 // indirect
