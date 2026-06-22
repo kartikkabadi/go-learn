@@ -1,4 +1,4 @@
-module example.com/go-learn
+module github.com/kartikkabadi/go-learn
 
 go 1.26
 

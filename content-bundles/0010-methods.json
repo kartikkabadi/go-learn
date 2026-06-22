@@ -1,0 +1,139 @@
+{
+  "lesson": {
+    "id": "0010",
+    "title": "Methods",
+    "slug": "methods",
+    "summary": "Attach functions to types with a receiver.",
+    "sortOrder": 10
+  },
+  "sections": [
+    {
+      "id": "0010:s1",
+      "heading": "What is a method",
+      "bodyHtml": "<p>A <strong>method</strong> is a function with a special extra parameter called a <strong>receiver</strong>. The receiver sits between <code>func</code> and the function name:</p><pre><code>type Person struct {\n    Name string\n}\n\nfunc (p Person) Greet() string {\n    return \"Hi, I'm \" + p.Name\n}</code></pre><p>Call a method with dot notation, just like accessing a field:</p><pre><code>alice := Person{\"Alice\"}\nmsg := alice.Greet()   // &quot;Hi, I'm Alice&quot;</code></pre><p>The receiver <code>p Person</code> means this method is attached to <code>Person</code>. Inside the method, <code>p</code> is a copy of the value you called it on.</p>",
+      "sortOrder": 1
+    },
+    {
+      "id": "0010:s2",
+      "heading": "Value vs pointer receivers",
+      "bodyHtml": "<p>A <strong>value receiver</strong> (<code>(p Person)</code>) works on a copy &mdash; changes inside the method don&rsquo;t affect the original:</p><pre><code>func (p Person) Rename(name string) {\n    p.Name = name    // only changes the copy\n}</code></pre><p>A <strong>pointer receiver</strong> (<code>(p *Person)</code>) works on the original:</p><pre><code>func (p *Person) Rename(name string) {\n    p.Name = name    // changes the original\n}</code></pre><p>Use a pointer receiver when you need to mutate the receiver or when the type is large. By convention, if any method on a type uses a pointer receiver, all methods on that type should use pointer receivers.</p><p>Go automatically handles conversion &mdash; you can call a pointer-receiver method on a value, and Go will take its address for you.</p>",
+      "sortOrder": 2
+    },
+    {
+      "id": "0010:s3",
+      "heading": "Your turn",
+      "bodyHtml": "<p>Open <code>practice/methods/main.go</code>.</p><p>Define a <code>Counter</code> struct with an <code>int</code> field <code>Value</code>. Add a method <code>Increment</code> with a pointer receiver that adds 1 to <code>Value</code>. Create a <code>Counter</code> and call <code>Increment</code> three times, printing the value after each call.</p>",
+      "sortOrder": 3
+    }
+  ],
+  "questions": [
+    {
+      "id": "0010:review-1",
+      "prompt": "Where does the receiver go in a method declaration?",
+      "correctKey": "between",
+      "questionType": "choice",
+      "sectionTag": "review",
+      "sortOrder": 1,
+      "options": [
+        {
+          "key": "before",
+          "label": "Before <code>func</code>",
+          "isCorrect": false,
+          "sortOrder": 1
+        },
+        {
+          "key": "between",
+          "label": "Between <code>func</code> and the method name",
+          "isCorrect": true,
+          "sortOrder": 2
+        },
+        {
+          "key": "after",
+          "label": "After the method name and before the return type",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "0010:q1",
+      "prompt": "If you need a method to modify the receiver&rsquo;s fields, what kind of receiver should you use?",
+      "correctKey": "pointer",
+      "questionType": "choice",
+      "sectionTag": "quiz",
+      "sortOrder": 2,
+      "options": [
+        {
+          "key": "value",
+          "label": "Value receiver <code>(t MyType)</code>",
+          "isCorrect": false,
+          "sortOrder": 1
+        },
+        {
+          "key": "pointer",
+          "label": "Pointer receiver <code>(t *MyType)</code>",
+          "isCorrect": true,
+          "sortOrder": 2
+        },
+        {
+          "key": "ref",
+          "label": "Reference receiver <code>(t &amp;MyType)</code>",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "0010:q2",
+      "prompt": "Can you define methods on types that are not structs (e.g. <code>type MyInt int</code>)?",
+      "correctKey": "yes",
+      "questionType": "choice",
+      "sectionTag": "quiz",
+      "sortOrder": 3,
+      "options": [
+        {
+          "key": "yes",
+          "label": "Yes, on any type you define in the same package",
+          "isCorrect": true,
+          "sortOrder": 1
+        },
+        {
+          "key": "struct",
+          "label": "No, methods only work on structs",
+          "isCorrect": false,
+          "sortOrder": 2
+        },
+        {
+          "key": "builtin",
+          "label": "Yes, on any type including built-ins like <code>int</code>",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
+      ]
+    }
+  ],
+  "exercises": [
+    {
+      "id": "0010:ex1",
+      "title": "Counter with a pointer receiver",
+      "path": "practice/methods",
+      "instructions": "Edit main.go to define Counter, implement Increment with a pointer receiver, and call it three times.",
+      "sortOrder": 1
+    }
+  ],
+  "references": [
+    {
+      "id": "0010:ref1",
+      "title": "Go by Example: Methods",
+      "url": "https://gobyexample.com/methods",
+      "notes": ""
+    },
+    {
+      "id": "0010:ref2",
+      "title": "A Tour of Go &mdash; Methods",
+      "url": "https://go.dev/tour/methods/1",
+      "notes": ""
+    }
+  ],
+  "answers": []
+}

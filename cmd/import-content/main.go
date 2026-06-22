@@ -9,7 +9,7 @@ import (
 	"sort"
 	"strings"
 
-	"example.com/go-learn/internal/store"
+	"github.com/kartikkabadi/go-learn/internal/store"
 )
 
 func main() {

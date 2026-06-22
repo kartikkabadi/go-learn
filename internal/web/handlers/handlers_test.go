@@ -8,10 +8,10 @@ import (
 	"strings"
 	"testing"
 
-	"example.com/go-learn/internal/service"
-	"example.com/go-learn/internal/store"
-	handlers "example.com/go-learn/internal/web/handlers"
-	"example.com/go-learn/internal/web/views"
+	"github.com/kartikkabadi/go-learn/internal/service"
+	"github.com/kartikkabadi/go-learn/internal/store"
+	handlers "github.com/kartikkabadi/go-learn/internal/web/handlers"
+	"github.com/kartikkabadi/go-learn/internal/web/views"
 )
 
 func testHandler(t *testing.T) *handlers.Handler {

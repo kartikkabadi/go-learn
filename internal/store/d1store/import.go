@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"example.com/go-learn/internal/store"
+	"github.com/kartikkabadi/go-learn/internal/store"
 )
 
 // ImportBundle upserts a lesson, its sections, questions, exercises, references, and seed answers.

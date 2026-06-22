@@ -4,8 +4,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"example.com/go-learn/internal/service"
-	"example.com/go-learn/internal/store"
+	"github.com/kartikkabadi/go-learn/internal/service"
+	"github.com/kartikkabadi/go-learn/internal/store"
 )
 
 func TestAccuracyPercent_NoAnswers(t *testing.T) {

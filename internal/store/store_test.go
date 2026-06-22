@@ -4,7 +4,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"example.com/go-learn/internal/store"
+	"github.com/kartikkabadi/go-learn/internal/store"
 )
 
 func TestSaveAnswerChoice(t *testing.T) {

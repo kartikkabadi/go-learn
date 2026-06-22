@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"example.com/go-learn/internal/store"
+	"github.com/kartikkabadi/go-learn/internal/store"
 )
 
 // Handler provides JSON API endpoints for quiz answers.

@@ -1,6 +1,6 @@
 package service
 
-import "example.com/go-learn/internal/store"
+import "github.com/kartikkabadi/go-learn/internal/store"
 
 // Progress aggregates store data into dashboard views for the web handlers.
 type Progress struct {

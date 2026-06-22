@@ -7,9 +7,9 @@ import (
 	"net/http"
 	"strings"
 
-	"example.com/go-learn/internal/service"
-	"example.com/go-learn/internal/store"
-	"example.com/go-learn/internal/web/views"
+	"github.com/kartikkabadi/go-learn/internal/service"
+	"github.com/kartikkabadi/go-learn/internal/store"
+	"github.com/kartikkabadi/go-learn/internal/web/views"
 )
 
 // Handler wires together the store, service layer, and template renderer for web routes.

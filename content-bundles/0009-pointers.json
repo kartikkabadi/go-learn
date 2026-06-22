@@ -1,0 +1,139 @@
+{
+  "lesson": {
+    "id": "0009",
+    "title": "Pointers",
+    "slug": "pointers",
+    "summary": "Reference values by memory address &mdash; understand &amp; and *.",
+    "sortOrder": 9
+  },
+  "sections": [
+    {
+      "id": "0009:s1",
+      "heading": "What is a pointer",
+      "bodyHtml": "<p>Every value in your program lives somewhere in memory. A <strong>pointer</strong> holds the memory address of another value &mdash; it &ldquo;points to&rdquo; that value.</p><p>Use <code>&amp;</code> to get the address of a variable, and <code>*</code> to get the value at an address (dereferencing):</p><pre><code>x := 42\np := &amp;x          // p is a pointer to x (type *int)\nfmt.Println(p)   // prints something like 0xc000018030\nfmt.Println(*p)  // 42 &mdash; follow the pointer</code></pre><p>The type <code>*int</code> means &ldquo;pointer to an int&rdquo;. Every type has a pointer version: <code>*string</code>, <code>*bool</code>, and so on.</p><p>Think of <code>&amp;</code> as &ldquo;where does this live?&rdquo; and <code>*</code> as &ldquo;what is actually there?&rdquo;.</p>",
+      "sortOrder": 1
+    },
+    {
+      "id": "0009:s2",
+      "heading": "Using pointers safely",
+      "bodyHtml": "<p>The zero value of any pointer is <code>nil</code> &mdash; it points to nothing. Dereferencing a <code>nil</code> pointer crashes your program, so always check first:</p><pre><code>var p *int         // nil\nif p != nil {\n    fmt.Println(*p)\n}</code></pre><p>Pointers let functions modify the caller&rsquo;s original value. Without a pointer, Go makes a copy:</p><pre><code>func zeroVal(v int) {\n    v = 0            // changes the copy only\n}\nfunc zeroPtr(p *int) {\n    *p = 0           // changes the original\n}</code></pre><p>Pass a pointer when you need to mutate the original or when the value is large and copying would be expensive.</p>",
+      "sortOrder": 2
+    },
+    {
+      "id": "0009:s3",
+      "heading": "Your turn",
+      "bodyHtml": "<p>Open <code>practice/pointers/main.go</code>.</p><p>Write a function <code>double(v *int)</code> that multiplies the value at the pointer by 2. Call it from <code>main</code> and print the result.</p>",
+      "sortOrder": 3
+    }
+  ],
+  "questions": [
+    {
+      "id": "0009:review-1",
+      "prompt": "What does the <code>&amp;</code> operator do?",
+      "correctKey": "address",
+      "questionType": "choice",
+      "sectionTag": "review",
+      "sortOrder": 1,
+      "options": [
+        {
+          "key": "address",
+          "label": "Gets the memory address of a variable",
+          "isCorrect": true,
+          "sortOrder": 1
+        },
+        {
+          "key": "deref",
+          "label": "Gets the value at a memory address",
+          "isCorrect": false,
+          "sortOrder": 2
+        },
+        {
+          "key": "multiply",
+          "label": "Multiplies two values",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "0009:q1",
+      "prompt": "What does <code>*p</code> give you when <code>p</code> is a pointer to an int?",
+      "correctKey": "value",
+      "questionType": "choice",
+      "sectionTag": "quiz",
+      "sortOrder": 2,
+      "options": [
+        {
+          "key": "address",
+          "label": "The memory address of p",
+          "isCorrect": false,
+          "sortOrder": 1
+        },
+        {
+          "key": "value",
+          "label": "The int value that p points to",
+          "isCorrect": true,
+          "sortOrder": 2
+        },
+        {
+          "key": "type",
+          "label": "The type of p",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "0009:q2",
+      "prompt": "What happens if you dereference a <code>nil</code> pointer?",
+      "correctKey": "panic",
+      "questionType": "choice",
+      "sectionTag": "quiz",
+      "sortOrder": 3,
+      "options": [
+        {
+          "key": "zero",
+          "label": "You get the zero value",
+          "isCorrect": false,
+          "sortOrder": 1
+        },
+        {
+          "key": "panic",
+          "label": "The program panics (crashes)",
+          "isCorrect": true,
+          "sortOrder": 2
+        },
+        {
+          "key": "skip",
+          "label": "The dereference is silently skipped",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
+      ]
+    }
+  ],
+  "exercises": [
+    {
+      "id": "0009:ex1",
+      "title": "Double via pointer",
+      "path": "practice/pointers",
+      "instructions": "Edit main.go to implement double(v *int) and call it from main.",
+      "sortOrder": 1
+    }
+  ],
+  "references": [
+    {
+      "id": "0009:ref1",
+      "title": "Go by Example: Pointers",
+      "url": "https://gobyexample.com/pointers",
+      "notes": ""
+    },
+    {
+      "id": "0009:ref2",
+      "title": "A Tour of Go &mdash; Pointers",
+      "url": "https://go.dev/tour/moretypes/1",
+      "notes": ""
+    }
+  ],
+  "answers": []
+}

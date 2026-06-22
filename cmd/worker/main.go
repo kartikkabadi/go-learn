@@ -11,11 +11,12 @@ import (
 	"net/http"
 	"os"
 
-	"example.com/go-learn/internal/store/d1store"
-	"example.com/go-learn/internal/service"
-	"example.com/go-learn/internal/web/handlers"
-	"example.com/go-learn/internal/web/middleware"
-	"example.com/go-learn/internal/web/views"
+	"github.com/kartikkabadi/go-learn/internal/store/d1store"
+	"github.com/kartikkabadi/go-learn/internal/service"
+	"github.com/kartikkabadi/go-learn/internal/web/handlers"
+	"github.com/kartikkabadi/go-learn/internal/web/middleware"
+	"github.com/kartikkabadi/go-learn/internal/web/views"
+	"github.com/kartikkabadi/go-learn/web/static"
 	"github.com/syumai/workers"
 )
 
@@ -46,7 +47,7 @@ func main() {
 	}
 
 	mux := http.NewServeMux()
-	mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.Dir("web/static"))))
+	mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.FS(staticassets.FS))))
 
 	mux.HandleFunc("GET /{$}", web.Dashboard)
 	mux.HandleFunc("GET /lessons", web.LessonsIndex)

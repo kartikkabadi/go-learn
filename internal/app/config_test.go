@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"example.com/go-learn/internal/app"
+	"github.com/kartikkabadi/go-learn/internal/app"
 )
 
 func TestConfigDefaults(t *testing.T) {

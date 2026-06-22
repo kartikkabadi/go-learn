@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"example.com/go-learn/internal/api"
-	"example.com/go-learn/internal/store"
+	"github.com/kartikkabadi/go-learn/internal/api"
+	"github.com/kartikkabadi/go-learn/internal/store"
 )
 
 func testStore(t *testing.T) *store.SQLiteStore {

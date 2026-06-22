@@ -11,7 +11,7 @@ import (
 	"html/template"
 	"time"
 
-	"example.com/go-learn/internal/store"
+	"github.com/kartikkabadi/go-learn/internal/store"
 	_ "github.com/syumai/workers/cloudflare/d1"
 )
 
