@@ -4,7 +4,6 @@ package main
 
 import (
 	"crypto/rand"
-	"encoding/base64"
 	"log/slog"
 	"net/http"
 	"os"

@@ -1,6 +1,6 @@
 # Built binaries
 bin/
-server
+/server
 
 # Database (local copy - schema is in migrations, content comes from bundles)
 progress/go-learn.db
