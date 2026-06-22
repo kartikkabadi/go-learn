@@ -30,7 +30,7 @@ func Open(dbName string) (*Store, error) {
 	if err != nil {
 		return nil, fmt.Errorf("d1store open: %w", err)
 	}
-	db.SetMaxOpenConns(1)
+	db.SetMaxOpenConns(10)
 	return &Store{db: db}, nil
 }
 

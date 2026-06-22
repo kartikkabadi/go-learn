@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/kartikkabadi/go-learn/internal/practice"
@@ -179,19 +180,30 @@ func (h *Handler) LessonShow(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sections, err := h.Store.ListLessonSections(lesson.ID)
-	if err != nil {
-		internalError(w, "lesson sections", err)
+	// Fetch sections, questions, and exercises in parallel to minimize D1 round-trips.
+	uid := userIDFrom(r)
+	var (
+		sections         []store.LessonSection
+		questions        []store.Question
+		exercises        []store.Exercise
+		sErr, qErr, eErr error
+	)
+	var wg sync.WaitGroup
+	wg.Add(3)
+	go func() { defer wg.Done(); sections, sErr = h.Store.ListLessonSections(lesson.ID) }()
+	go func() { defer wg.Done(); questions, qErr = h.Store.ListQuestionsByLesson(uid, lesson.ID) }()
+	go func() { defer wg.Done(); exercises, eErr = h.Store.ListExercisesByLesson(uid, lesson.ID) }()
+	wg.Wait()
+	if sErr != nil {
+		internalError(w, "lesson sections", sErr)
 		return
 	}
-	questions, err := h.Store.ListQuestionsByLesson(userIDFrom(r), lesson.ID)
-	if err != nil {
-		internalError(w, "lesson questions", err)
+	if qErr != nil {
+		internalError(w, "lesson questions", qErr)
 		return
 	}
-	exercises, err := h.Store.ListExercisesByLesson(userIDFrom(r), lesson.ID)
-	if err != nil {
-		internalError(w, "lesson exercises", err)
+	if eErr != nil {
+		internalError(w, "lesson exercises", eErr)
 		return
 	}
 
@@ -287,14 +299,22 @@ func (h *Handler) ProgressPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Reference(w http.ResponseWriter, r *http.Request) {
-	terms, err := h.Store.ListGlossaryTerms()
-	if err != nil {
-		internalError(w, "reference terms", err)
+	var (
+		terms      []store.GlossaryTerm
+		refs       []store.Reference
+		tErr, rErr error
+	)
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go func() { defer wg.Done(); terms, tErr = h.Store.ListGlossaryTerms() }()
+	go func() { defer wg.Done(); refs, rErr = h.Store.ListReferences() }()
+	wg.Wait()
+	if tErr != nil {
+		internalError(w, "reference terms", tErr)
 		return
 	}
-	refs, err := h.Store.ListReferences()
-	if err != nil {
-		internalError(w, "reference refs", err)
+	if rErr != nil {
+		internalError(w, "reference refs", rErr)
 		return
 	}
 	base := h.baseURL(r)

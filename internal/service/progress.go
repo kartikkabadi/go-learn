@@ -1,6 +1,10 @@
 package service
 
-import "github.com/kartikkabadi/go-learn/internal/store"
+import (
+	"sync"
+
+	"github.com/kartikkabadi/go-learn/internal/store"
+)
 
 // Progress aggregates store data into dashboard views for the web handlers.
 type Progress struct {
@@ -18,26 +22,39 @@ type Dashboard struct {
 }
 
 // Dashboard assembles stats, mission, lessons, weak spots, and the next uncompleted lesson.
+// All 5 store queries run in parallel to minimize D1 round-trip latency.
 func (p *Progress) Dashboard(userID string) (Dashboard, error) {
-	stats, err := p.Store.DashboardStats(userID)
-	if err != nil {
-		return Dashboard{}, err
+	var (
+		stats     store.DashboardStats
+		mission   *store.Mission
+		lessons   []store.LessonProgress
+		weak      []store.Insight
+		exercises []store.Exercise
+	)
+	var sErr, mErr, lErr, wErr, eErr error
+	var wg sync.WaitGroup
+	wg.Add(5)
+	go func() { defer wg.Done(); stats, sErr = p.Store.DashboardStats(userID) }()
+	go func() { defer wg.Done(); mission, mErr = p.Store.GetMission() }()
+	go func() { defer wg.Done(); lessons, lErr = p.Store.LessonProgress(userID) }()
+	go func() { defer wg.Done(); weak, wErr = p.Store.ListActiveInsights("weak_spot") }()
+	go func() { defer wg.Done(); exercises, eErr = p.Store.ListExercises(userID) }()
+	wg.Wait()
+
+	if sErr != nil {
+		return Dashboard{}, sErr
 	}
-	mission, err := p.Store.GetMission()
-	if err != nil {
-		return Dashboard{}, err
+	if mErr != nil {
+		return Dashboard{}, mErr
 	}
-	lessons, err := p.Store.LessonProgress(userID)
-	if err != nil {
-		return Dashboard{}, err
+	if lErr != nil {
+		return Dashboard{}, lErr
 	}
-	weak, err := p.Store.ListActiveInsights("weak_spot")
-	if err != nil {
-		return Dashboard{}, err
+	if wErr != nil {
+		return Dashboard{}, wErr
 	}
-	exercises, err := p.Store.ListExercises(userID)
-	if err != nil {
-		return Dashboard{}, err
+	if eErr != nil {
+		return Dashboard{}, eErr
 	}
 
 	var next *store.LessonProgress
