@@ -1,6 +1,7 @@
 package store_test
 
 import (
+	"fmt"
 	"path/filepath"
 	"testing"
 
@@ -29,7 +30,7 @@ func TestSaveAnswerChoice(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	ans, err := st.SaveAnswer("t1:q1", "a", "right")
+	ans, err := st.SaveAnswer(testUser(t, st), "t1:q1", "a", "right")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -37,7 +38,7 @@ func TestSaveAnswerChoice(t *testing.T) {
 		t.Fatal("expected correct")
 	}
 
-	ans, err = st.SaveAnswer("t1:q1", "b", "wrong")
+	ans, err = st.SaveAnswer(testUser(t, st), "t1:q1", "b", "wrong")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -64,7 +65,7 @@ func TestSaveAnswerText(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	ans, err := st.SaveAnswer("t2:q1", "big", "big")
+	ans, err := st.SaveAnswer(testUser(t, st), "t2:q1", "big", "big")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -82,6 +83,38 @@ func testStore(t *testing.T) *store.SQLiteStore {
 	}
 	t.Cleanup(func() { s.Close() })
 	return s
+}
+
+// testUser creates a fresh user for the calling test (idempotent within a test)
+// and returns its ID for use in user-scoped calls. The same test gets the same
+// user ID on repeated calls within that test.
+func testUser(t *testing.T, s store.Store) string {
+	t.Helper()
+	email := fmt.Sprintf("%s@example.com", sanitizeEmail(t.Name()))
+	u, err := s.GetUserByEmail(email)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if u == nil {
+		created, err := s.CreateUser(email, "$2a$10$dummyhashfortestonlyxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
+		if err != nil {
+			t.Fatal(err)
+		}
+		return created.ID
+	}
+	return u.ID
+}
+
+func sanitizeEmail(s string) string {
+	out := make([]byte, 0, len(s))
+	for _, c := range []byte(s) {
+		if (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') {
+			out = append(out, c)
+		} else {
+			out = append(out, 'x')
+		}
+	}
+	return string(out)
 }
 
 var testBundle = store.ContentBundle{
@@ -187,7 +220,7 @@ func TestListQuestionsByLesson(t *testing.T) {
 	if err := s.ImportBundle(testBundle); err != nil {
 		t.Fatal(err)
 	}
-	questions, err := s.ListQuestionsByLesson("t1")
+	questions, err := s.ListQuestionsByLesson(testUser(t, s), "t1")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -207,10 +240,10 @@ func TestGetAnswer_Found(t *testing.T) {
 	if err := s.ImportBundle(testBundle); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := s.SaveAnswer("t1:q1", "a", "A named memory location"); err != nil {
+	if _, err := s.SaveAnswer(testUser(t, s), "t1:q1", "a", "A named memory location"); err != nil {
 		t.Fatal(err)
 	}
-	ans, err := s.GetAnswer("t1:q1")
+	ans, err := s.GetAnswer(testUser(t, s), "t1:q1")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -227,7 +260,7 @@ func TestGetAnswer_NotFound(t *testing.T) {
 	if err := s.ImportBundle(testBundle); err != nil {
 		t.Fatal(err)
 	}
-	ans, err := s.GetAnswer("t1:q1")
+	ans, err := s.GetAnswer(testUser(t, s), "t1:q1")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -241,13 +274,13 @@ func TestListAnswers(t *testing.T) {
 	if err := s.ImportBundle(testBundle); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := s.SaveAnswer("t1:q1", "a", "A named memory location"); err != nil {
+	if _, err := s.SaveAnswer(testUser(t, s), "t1:q1", "a", "A named memory location"); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := s.SaveAnswer("t1:q2", "var", "var"); err != nil {
+	if _, err := s.SaveAnswer(testUser(t, s), "t1:q2", "var", "var"); err != nil {
 		t.Fatal(err)
 	}
-	answers, err := s.ListAnswers()
+	answers, err := s.ListAnswers(testUser(t, s))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -270,13 +303,13 @@ func TestListAnswersByLesson(t *testing.T) {
 	if err := s.ImportBundle(testBundle); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := s.SaveAnswer("t1:q1", "b", "A type of loop"); err != nil {
+	if _, err := s.SaveAnswer(testUser(t, s), "t1:q1", "b", "A type of loop"); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := s.SaveAnswer("t1:q2", "var", "var"); err != nil {
+	if _, err := s.SaveAnswer(testUser(t, s), "t1:q2", "var", "var"); err != nil {
 		t.Fatal(err)
 	}
-	answers, err := s.ListAnswersByLesson("t1")
+	answers, err := s.ListAnswersByLesson(testUser(t, s), "t1")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -296,7 +329,7 @@ func TestLessonProgress(t *testing.T) {
 	if err := s.ImportBundle(testBundle); err != nil {
 		t.Fatal(err)
 	}
-	progress, err := s.LessonProgress()
+	progress, err := s.LessonProgress(testUser(t, s))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -313,10 +346,10 @@ func TestLessonProgress(t *testing.T) {
 	if lp.ExerciseTotal != 1 {
 		t.Fatalf("want 1 total exercise, got %d", lp.ExerciseTotal)
 	}
-	if _, err := s.SaveAnswer("t1:q1", "a", "A named memory location"); err != nil {
+	if _, err := s.SaveAnswer(testUser(t, s), "t1:q1", "a", "A named memory location"); err != nil {
 		t.Fatal(err)
 	}
-	progress, err = s.LessonProgress()
+	progress, err = s.LessonProgress(testUser(t, s))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -333,7 +366,7 @@ func TestDashboardStats(t *testing.T) {
 	if err := s.ImportBundle(testBundle); err != nil {
 		t.Fatal(err)
 	}
-	stats, err := s.DashboardStats()
+	stats, err := s.DashboardStats(testUser(t, s))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -349,13 +382,13 @@ func TestDashboardStats(t *testing.T) {
 	if stats.ExercisesTotal != 1 {
 		t.Fatalf("want 1 exercise, got %d", stats.ExercisesTotal)
 	}
-	if _, err := s.SaveAnswer("t1:q1", "a", "A named memory location"); err != nil {
+	if _, err := s.SaveAnswer(testUser(t, s), "t1:q1", "a", "A named memory location"); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := s.SaveAnswer("t1:q2", "var", "var"); err != nil {
+	if _, err := s.SaveAnswer(testUser(t, s), "t1:q2", "var", "var"); err != nil {
 		t.Fatal(err)
 	}
-	stats, err = s.DashboardStats()
+	stats, err = s.DashboardStats(testUser(t, s))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -404,10 +437,10 @@ func TestSaveExerciseSubmission(t *testing.T) {
 	if err := s.ImportBundle(testBundle); err != nil {
 		t.Fatal(err)
 	}
-	if err := s.SaveExerciseSubmission("t1:ex1", "Hello, world!"); err != nil {
+	if err := s.SaveExerciseSubmission(testUser(t, s), "t1:ex1", "Hello, world!"); err != nil {
 		t.Fatal(err)
 	}
-	output, ok, err := s.GetExerciseSubmission("t1:ex1")
+	output, ok, err := s.GetExerciseSubmission(testUser(t, s), "t1:ex1")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -421,7 +454,7 @@ func TestSaveExerciseSubmission(t *testing.T) {
 
 func TestGetExerciseSubmission_NotFound(t *testing.T) {
 	s := testStore(t)
-	_, ok, err := s.GetExerciseSubmission("nonexistent")
+	_, ok, err := s.GetExerciseSubmission(testUser(t, s), "nonexistent")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -435,7 +468,7 @@ func TestListExercisesByLesson(t *testing.T) {
 	if err := s.ImportBundle(testBundle); err != nil {
 		t.Fatal(err)
 	}
-	exercises, err := s.ListExercisesByLesson("t1")
+	exercises, err := s.ListExercisesByLesson(testUser(t, s), "t1")
 	if err != nil {
 		t.Fatal(err)
 	}

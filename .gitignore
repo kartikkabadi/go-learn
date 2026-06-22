@@ -14,6 +14,13 @@ progress/go-learn.db
 # Learning records (contains PII; scrub before push)
 learning-records/
 
+# Personal config (contains PII)
+AGENTS.md
+MISSION.md
+
+# Wrangler config (contains account-specific IDs and domain)
+wrangler.toml
+
 # Environment
 .env
 .env.local

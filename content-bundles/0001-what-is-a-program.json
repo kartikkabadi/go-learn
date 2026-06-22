@@ -41,9 +41,24 @@
       "sectionTag": "quiz",
       "sortOrder": 1,
       "options": [
-        {"key": "a", "label": "A physical computer part", "isCorrect": false, "sortOrder": 1},
-        {"key": "b", "label": "Precise instructions for CPU", "isCorrect": true, "sortOrder": 2},
-        {"key": "c", "label": "A kind of computer virus", "isCorrect": false, "sortOrder": 3}
+        {
+          "key": "a",
+          "label": "A physical computer part",
+          "isCorrect": false,
+          "sortOrder": 1
+        },
+        {
+          "key": "b",
+          "label": "Precise instructions for CPU",
+          "isCorrect": true,
+          "sortOrder": 2
+        },
+        {
+          "key": "c",
+          "label": "A kind of computer virus",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
       ]
     },
     {
@@ -54,9 +69,24 @@
       "sectionTag": "quiz",
       "sortOrder": 2,
       "options": [
-        {"key": "a", "label": "Deletes your source code", "isCorrect": false, "sortOrder": 1},
-        {"key": "b", "label": "Installs Go from internet", "isCorrect": false, "sortOrder": 2},
-        {"key": "c", "label": "Runs program in folder", "isCorrect": true, "sortOrder": 3}
+        {
+          "key": "a",
+          "label": "Deletes your source code",
+          "isCorrect": false,
+          "sortOrder": 1
+        },
+        {
+          "key": "b",
+          "label": "Installs Go from internet",
+          "isCorrect": false,
+          "sortOrder": 2
+        },
+        {
+          "key": "c",
+          "label": "Runs program in folder",
+          "isCorrect": true,
+          "sortOrder": 3
+        }
       ]
     },
     {
@@ -67,9 +97,24 @@
       "sectionTag": "quiz",
       "sortOrder": 3,
       "options": [
-        {"key": "a", "label": "Inside the main function", "isCorrect": true, "sortOrder": 1},
-        {"key": "b", "label": "At the import statement", "isCorrect": false, "sortOrder": 2},
-        {"key": "c", "label": "At the package line", "isCorrect": false, "sortOrder": 3}
+        {
+          "key": "a",
+          "label": "Inside the main function",
+          "isCorrect": true,
+          "sortOrder": 1
+        },
+        {
+          "key": "b",
+          "label": "At the import statement",
+          "isCorrect": false,
+          "sortOrder": 2
+        },
+        {
+          "key": "c",
+          "label": "At the package line",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
       ]
     }
   ],
@@ -89,10 +134,5 @@
       "url": "https://go.dev/doc/tutorial/getting-started",
       "notes": "Official Hello World tutorial"
     }
-  ],
-  "answers": [
-    {"questionId": "0001:q1", "pickedKey": "b", "pickedLabel": "Precise instructions for CPU"},
-    {"questionId": "0001:q2", "pickedKey": "c", "pickedLabel": "Runs program in folder"},
-    {"questionId": "0001:q3", "pickedKey": "b", "pickedLabel": "At the import statement"}
   ]
 }

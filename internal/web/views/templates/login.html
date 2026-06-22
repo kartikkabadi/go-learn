@@ -1,0 +1,31 @@
+{{define "login.html"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{.Title}}</title>
+  <meta name="description" content="{{.Description}}">
+  <meta name="robots" content="noindex">
+  <link rel="stylesheet" href="/static/theme.css">
+</head>
+<body>
+{{template "nav" .}}
+<main id="main">
+  <h1>Log in</h1>
+
+  {{if .Error}}<p class="bad">{{.Error}}</p>{{end}}
+
+  <form method="POST" action="/login?next={{.Next}}" class="auth-form">
+    <label for="email">Email</label>
+    <input type="email" id="email" name="email" value="{{.Email}}" required autocomplete="email" autofocus>
+    <label for="password">Password</label>
+    <input type="password" id="password" name="password" required autocomplete="current-password">
+    <button class="btn" type="submit">Log in</button>
+    <input type="hidden" name="next" value="{{.Next}}">
+  </form>
+  <p class="muted">No account yet? <a href="/signup">Sign up</a></p>
+</main>
+</body>
+</html>
+{{end}}

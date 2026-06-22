@@ -31,10 +31,16 @@ func main() {
 		log.Fatal(err)
 	}
 
+	// Non-lesson JSON files handled separately below.
+	nonLesson := map[string]bool{
+		"mission.json":   true,
+		"glossary.json":  true,
+		"insights.json":  true,
+	}
 	var lessonFiles []string
 	for _, e := range entries {
 		name := e.Name()
-		if strings.HasSuffix(name, ".json") {
+		if strings.HasSuffix(name, ".json") && !nonLesson[name] {
 			lessonFiles = append(lessonFiles, name)
 		}
 	}

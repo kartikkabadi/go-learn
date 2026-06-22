@@ -75,8 +75,8 @@ func (s *SQLiteStore) ListLessonSections(lessonID string) ([]LessonSection, erro
 	return out, rows.Err()
 }
 
-// ListQuestionsByLesson returns all questions for a lesson, with options and answers populated.
-func (s *SQLiteStore) ListQuestionsByLesson(lessonID string) ([]Question, error) {
+// ListQuestionsByLesson returns all questions for a lesson, with options and the user's answers populated.
+func (s *SQLiteStore) ListQuestionsByLesson(userID, lessonID string) ([]Question, error) {
 	rows, err := s.db.Query(`
 		SELECT id, lesson_id, prompt, correct_key, question_type, section_tag, sort_order
 		FROM questions WHERE lesson_id = ? ORDER BY sort_order
@@ -106,15 +106,18 @@ func (s *SQLiteStore) ListQuestionsByLesson(lessonID string) ([]Question, error)
 		if err != nil {
 			return nil, fmt.Errorf("ListQuestionsByLesson: %w", err)
 		}
-		out[i].Answer, err = s.GetAnswer(out[i].ID)
-		if err != nil {
-			return nil, fmt.Errorf("ListQuestionsByLesson: %w", err)
+		if userID != "" {
+			out[i].Answer, err = s.GetAnswer(userID, out[i].ID)
+			if err != nil {
+				return nil, fmt.Errorf("ListQuestionsByLesson: %w", err)
+			}
 		}
 	}
 	return out, nil
 }
 
-// GetQuestion retrieves a single question by ID with options and answer.
+// GetQuestion retrieves a single question by ID with options. It does not populate
+// the user's answer — the caller sets q.Answer if needed.
 func (s *SQLiteStore) GetQuestion(id string) (*Question, error) {
 	var q Question
 	err := s.db.QueryRow(`
@@ -128,10 +131,6 @@ func (s *SQLiteStore) GetQuestion(id string) (*Question, error) {
 		return nil, fmt.Errorf("GetQuestion: %w", err)
 	}
 	q.Options, err = s.listOptions(q.ID)
-	if err != nil {
-		return nil, fmt.Errorf("GetQuestion: %w", err)
-	}
-	q.Answer, err = s.GetAnswer(q.ID)
 	if err != nil {
 		return nil, fmt.Errorf("GetQuestion: %w", err)
 	}
@@ -196,15 +195,15 @@ func (s *SQLiteStore) ListReferences() ([]Reference, error) {
 	return out, rows.Err()
 }
 
-// ListExercises returns all exercises with submission status, ordered by sort_order.
-func (s *SQLiteStore) ListExercises() ([]Exercise, error) {
+// ListExercises returns all exercises with submission status for the given user, ordered by sort_order.
+func (s *SQLiteStore) ListExercises(userID string) ([]Exercise, error) {
 	rows, err := s.db.Query(`
 		SELECT e.id, e.lesson_id, e.title, e.path, e.instructions, e.sort_order,
 			CASE WHEN s.exercise_id IS NOT NULL THEN 1 ELSE 0 END
 		FROM exercises e
-		LEFT JOIN exercise_submissions s ON s.exercise_id = e.id
+		LEFT JOIN exercise_submissions s ON s.exercise_id = e.id AND s.user_id = ?
 		ORDER BY e.sort_order
-	`)
+	`, userID)
 	if err != nil {
 		return nil, fmt.Errorf("ListExercises: %w", err)
 	}
@@ -222,38 +221,53 @@ func (s *SQLiteStore) ListExercises() ([]Exercise, error) {
 	return out, rows.Err()
 }
 
-// ListExercisesByLesson returns exercises filtered by lesson ID.
-func (s *SQLiteStore) ListExercisesByLesson(lessonID string) ([]Exercise, error) {
-	all, err := s.ListExercises()
+// ListExercisesByLesson returns exercises filtered by lesson ID for the given user.
+func (s *SQLiteStore) ListExercisesByLesson(userID, lessonID string) ([]Exercise, error) {
+	rows, err := s.db.Query(`
+		SELECT e.id, e.lesson_id, e.title, e.path, e.instructions, e.sort_order,
+			CASE WHEN s.exercise_id IS NOT NULL THEN 1 ELSE 0 END
+		FROM exercises e
+		LEFT JOIN exercise_submissions s ON s.exercise_id = e.id AND s.user_id = ?
+		WHERE e.lesson_id = ?
+		ORDER BY e.sort_order
+	`, userID, lessonID)
 	if err != nil {
 		return nil, fmt.Errorf("ListExercisesByLesson: %w", err)
 	}
+	defer rows.Close()
 	var out []Exercise
-	for _, ex := range all {
-		if ex.LessonID == lessonID {
-			out = append(out, ex)
+	for rows.Next() {
+		var ex Exercise
+		var submitted int
+		if err := rows.Scan(&ex.ID, &ex.LessonID, &ex.Title, &ex.Path, &ex.Instructions, &ex.SortOrder, &submitted); err != nil {
+			return nil, fmt.Errorf("ListExercisesByLesson: %w", err)
 		}
+		ex.Submitted = submitted == 1
+		out = append(out, ex)
 	}
-	return out, nil
+	return out, rows.Err()
 }
 
-// SaveExerciseSubmission stores terminal output for an exercise, upserting by exercise ID.
-func (s *SQLiteStore) SaveExerciseSubmission(exerciseID, output string) error {
+// SaveExerciseSubmission stores terminal output for an exercise by a user, upserting by (user_id, exercise_id).
+func (s *SQLiteStore) SaveExerciseSubmission(userID, exerciseID, output string) error {
 	now := timeNowRFC3339()
 	_, err := s.db.Exec(`
-		INSERT INTO exercise_submissions (exercise_id, output, submitted_at)
-		VALUES (?, ?, ?)
-		ON CONFLICT(exercise_id) DO UPDATE SET
+		INSERT INTO exercise_submissions (user_id, exercise_id, output, submitted_at)
+		VALUES (?, ?, ?, ?)
+		ON CONFLICT(user_id, exercise_id) DO UPDATE SET
 			output = excluded.output,
 			submitted_at = excluded.submitted_at
-	`, exerciseID, output, now)
+	`, userID, exerciseID, output, now)
 	return err
 }
 
-// GetExerciseSubmission retrieves saved output for an exercise.
-func (s *SQLiteStore) GetExerciseSubmission(exerciseID string) (string, bool, error) {
+// GetExerciseSubmission retrieves saved output for an exercise by a user.
+func (s *SQLiteStore) GetExerciseSubmission(userID, exerciseID string) (string, bool, error) {
 	var output string
-	err := s.db.QueryRow(`SELECT output FROM exercise_submissions WHERE exercise_id = ?`, exerciseID).Scan(&output)
+	err := s.db.QueryRow(
+		`SELECT output FROM exercise_submissions WHERE user_id = ? AND exercise_id = ?`,
+		userID, exerciseID,
+	).Scan(&output)
 	if err == sql.ErrNoRows {
 		return "", false, nil
 	}
@@ -305,8 +319,8 @@ func (s *SQLiteStore) GetMission() (*Mission, error) {
 	return &m, nil
 }
 
-// LessonProgress returns progress stats for every lesson.
-func (s *SQLiteStore) LessonProgress() ([]LessonProgress, error) {
+// LessonProgress returns progress stats for every lesson for the given user.
+func (s *SQLiteStore) LessonProgress(userID string) ([]LessonProgress, error) {
 	lessons, err := s.ListLessons()
 	if err != nil {
 		return nil, fmt.Errorf("LessonProgress: %w", err)
@@ -320,8 +334,8 @@ func (s *SQLiteStore) LessonProgress() ([]LessonProgress, error) {
 		if err := s.db.QueryRow(`
 			SELECT COUNT(*), COALESCE(SUM(a.correct), 0)
 			FROM answers a JOIN questions q ON q.id = a.question_id
-			WHERE q.lesson_id = ?
-		`, l.ID).Scan(&lp.QuestionsAnswered, &lp.QuestionsCorrect); err != nil {
+			WHERE a.user_id = ? AND q.lesson_id = ?
+		`, userID, l.ID).Scan(&lp.QuestionsAnswered, &lp.QuestionsCorrect); err != nil {
 			return nil, fmt.Errorf("LessonProgress: %w", err)
 		}
 		if err := s.db.QueryRow(`SELECT COUNT(*) FROM exercises WHERE lesson_id = ?`, l.ID).Scan(&lp.ExerciseTotal); err != nil {
@@ -329,8 +343,9 @@ func (s *SQLiteStore) LessonProgress() ([]LessonProgress, error) {
 		}
 		if err := s.db.QueryRow(`
 			SELECT COUNT(*) FROM exercise_submissions s
-			JOIN exercises e ON e.id = s.exercise_id WHERE e.lesson_id = ?
-		`, l.ID).Scan(&lp.ExercisesDone); err != nil {
+			JOIN exercises e ON e.id = s.exercise_id
+			WHERE s.user_id = ? AND e.lesson_id = ?
+		`, userID, l.ID).Scan(&lp.ExercisesDone); err != nil {
 			return nil, fmt.Errorf("LessonProgress: %w", err)
 		}
 		out = append(out, lp)
@@ -338,8 +353,8 @@ func (s *SQLiteStore) LessonProgress() ([]LessonProgress, error) {
 	return out, nil
 }
 
-// DashboardStats returns aggregate progress numbers across all lessons.
-func (s *SQLiteStore) DashboardStats() (DashboardStats, error) {
+// DashboardStats returns aggregate progress numbers across all lessons for the given user.
+func (s *SQLiteStore) DashboardStats(userID string) (DashboardStats, error) {
 	var st DashboardStats
 	err := s.db.QueryRow(`SELECT COUNT(*) FROM lessons`).Scan(&st.LessonsTotal)
 	if err != nil {
@@ -349,9 +364,9 @@ func (s *SQLiteStore) DashboardStats() (DashboardStats, error) {
 	if err != nil {
 		return st, err
 	}
-	err = s.db.QueryRow(`SELECT COUNT(*), COALESCE(SUM(correct), 0) FROM answers`).Scan(
-		&st.QuestionsAnswered, &st.QuestionsCorrect,
-	)
+	err = s.db.QueryRow(
+		`SELECT COUNT(*), COALESCE(SUM(correct), 0) FROM answers WHERE user_id = ?`, userID,
+	).Scan(&st.QuestionsAnswered, &st.QuestionsCorrect)
 	if err != nil {
 		return st, err
 	}
@@ -359,7 +374,9 @@ func (s *SQLiteStore) DashboardStats() (DashboardStats, error) {
 	if err != nil {
 		return st, err
 	}
-	err = s.db.QueryRow(`SELECT COUNT(*) FROM exercise_submissions`).Scan(&st.ExercisesSubmitted)
+	err = s.db.QueryRow(
+		`SELECT COUNT(*) FROM exercise_submissions WHERE user_id = ?`, userID,
+	).Scan(&st.ExercisesSubmitted)
 	return st, err
 }
 

@@ -24,8 +24,8 @@ fresh-import:
 # Build WASM binary for Workers
 worker:
 	@mkdir -p build
-	GOOS=js GOARCH=wasm go build -o build/worker.wasm ./cmd/worker
-	@ls -lh build/worker.wasm
+	GOOS=js GOARCH=wasm go build -o build/app.wasm ./cmd/worker
+	@ls -lh build/app.wasm
 
 # Generate wrangler scaffolding from syumai/workers template
 worker-init:

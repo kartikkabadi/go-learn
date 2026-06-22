@@ -4,7 +4,6 @@ package d1store
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/kartikkabadi/go-learn/internal/store"
 )
@@ -100,40 +99,9 @@ func (s *Store) ImportBundle(b store.ContentBundle) error {
 		}
 	}
 
-	for _, a := range b.Answers {
-		var qType, correctKey string
-		if err := s.db.QueryRow(
-			`SELECT question_type, correct_key FROM questions WHERE id = ?`, a.QuestionID,
-		).Scan(&qType, &correctKey); err != nil {
-			return fmt.Errorf("lookup question for answer %s: %w", a.QuestionID, err)
-		}
-		correct := false
-		if qType == "text" {
-			correct = a.PickedKey == correctKey
-		} else {
-			var isCorrect int
-			if err := s.db.QueryRow(
-				`SELECT is_correct FROM question_options WHERE question_id = ? AND option_key = ?`,
-				a.QuestionID, a.PickedKey,
-			).Scan(&isCorrect); err != nil {
-				return fmt.Errorf("lookup option for answer %s: %w", a.QuestionID, err)
-			}
-			correct = isCorrect == 1
-		}
-		now := time.Now().UTC().Format(time.RFC3339)
-		_, err = s.db.Exec(`
-			INSERT INTO answers (question_id, picked_key, picked_label, correct, answered_at)
-			VALUES (?, ?, ?, ?, ?)
-			ON CONFLICT(question_id) DO UPDATE SET
-				picked_key = excluded.picked_key,
-				picked_label = excluded.picked_label,
-				correct = excluded.correct,
-				answered_at = excluded.answered_at
-		`, a.QuestionID, a.PickedKey, a.PickedLabel, boolToInt(correct), now)
-		if err != nil {
-			return fmt.Errorf("upsert answer %s: %w", a.QuestionID, err)
-		}
-	}
+	// Answers are no longer seeded from bundles — they are per-user and created
+	// at runtime via SaveAnswer. The BundleAnswer type is retained for backwards
+	// compatibility with existing bundle files but is intentionally ignored.
 
 	return nil
 }

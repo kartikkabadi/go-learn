@@ -4,10 +4,15 @@ compatibility_date = "2026-06-22"
 
 workers_dev = true
 
+# Custom domain route — replace with your domain
+routes = [
+  { pattern = "your-domain.com", custom_domain = true }
+]
+
 [[d1_databases]]
 binding = "DB"
 database_name = "go-learn-db"
-database_id = "00b94b89-cb17-46e7-9afa-fe678a7e691b"
+database_id = "YOUR_D1_DATABASE_ID"
 
 [assets]
 directory = "web/static"
@@ -15,3 +20,4 @@ binding = "ASSETS"
 
 [vars]
 D1_DB_NAME = "DB"
+CANONICAL_BASE = "https://your-domain.com"

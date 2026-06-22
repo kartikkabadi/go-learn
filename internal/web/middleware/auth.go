@@ -1,0 +1,61 @@
+package middleware
+
+import (
+	"context"
+	"log/slog"
+	"net/http"
+
+	"github.com/kartikkabadi/go-learn/internal/store"
+)
+
+type contextKey string
+
+const userKey contextKey = "user"
+
+// UserFromContext returns the authenticated user for the request, or nil.
+func UserFromContext(r *http.Request) *store.User {
+	if u, ok := r.Context().Value(userKey).(*store.User); ok {
+		return u
+	}
+	return nil
+}
+
+// LoadUser looks up the session cookie and attaches the user to the request context.
+// It runs on every request; unmatched/missing sessions are silently treated as anonymous.
+func LoadUser(s store.Store) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			c, err := r.Cookie("session")
+			if err == nil && c.Value != "" {
+				sess, err := s.GetSession(c.Value)
+				if err != nil {
+					slog.Error("get session", "error", err)
+				} else if sess != nil {
+					user, err := s.GetUserByID(sess.UserID)
+					if err != nil {
+						slog.Error("get user by id", "error", err)
+					} else if user != nil {
+						r = r.WithContext(context.WithValue(r.Context(), userKey, user))
+					}
+				}
+			}
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+// RequireUser rejects requests with no authenticated user, redirecting to /login.
+func RequireUser(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if UserFromContext(r) == nil {
+			http.Redirect(w, r, "/login?next="+r.URL.Path, http.StatusFound)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+// WithUser attaches a user to the request context. Intended for tests.
+func WithUser(r *http.Request, u *store.User) *http.Request {
+	return r.WithContext(context.WithValue(r.Context(), userKey, u))
+}

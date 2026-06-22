@@ -4,7 +4,7 @@ import "fmt"
 
 func main() {
 	// TODO: change these to your own values
-	name := "Kartik"
+	name := "Go Learner"
 	age := 15
     learningGo := true
 	fmt.Println("Name:", name)

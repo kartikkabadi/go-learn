@@ -25,7 +25,7 @@ func Logger(logger *slog.Logger, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 		next.ServeHTTP(w, r)
-		logger.Info("request", "method", r.Method, "path", r.URL.Path, "ms", time.Since(start).Milliseconds())
+		logger.Info("request", "method", r.Method, "path", r.URL.Path, "ms", time.Since(start).Milliseconds(), "req_id", RequestIDFromContext(r.Context()))
 	})
 }
 
@@ -37,16 +37,22 @@ func SecurityHeaders(next http.Handler) http.Handler {
 		w.Header().Set("Referrer-Policy", "no-referrer-when-downgrade")
 		w.Header().Set("Permissions-Policy", "camera=(), microphone=(), geolocation=(), interest-cohort=()")
 
-		// Strict CSP: only same-origin scripts and unpkg for HTMX.
+		// HSTS only over HTTPS (sending it over HTTP is ignored and can be a vector).
+		if r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == "https" {
+			w.Header().Set("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload")
+		}
+
+		// Strict CSP: only same-origin scripts and self-hosted HTMX.
 		// style-src 'unsafe-inline' is needed because template-rendered pages
 		// include <style> blocks via the CSS file linked in <head>.
 		w.Header().Set("Content-Security-Policy",
 			"default-src 'self'; "+
-				"script-src 'self' https://unpkg.com; "+
+				"script-src 'self'; "+
 				"style-src 'self' 'unsafe-inline'; "+
 				"img-src 'self' data:; "+
 				"base-uri 'self'; "+
-				"form-action 'self'",
+				"form-action 'self'; "+
+				"frame-ancestors 'none'",
 		)
 
 		next.ServeHTTP(w, r)
@@ -125,19 +131,24 @@ func (rl *RateLimiter) Cleanup() {
 }
 
 // ValidateOrigin checks the Origin header on POST requests for CSRF protection.
-// In production (HTTPS), only same-origin POSTs are accepted.
+// Browsers always send Origin on cross-origin POSTs and on same-origin form POSTs
+// triggered by HTMX/fetch; a missing Origin on a POST is treated as suspicious and
+// rejected. Same-origin only.
 func ValidateOrigin(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPost {
 			origin := r.Header.Get("Origin")
-			if origin != "" {
-				expected := fmt.Sprintf("https://%s", r.Host)
-				expectedHTTP := fmt.Sprintf("http://%s", r.Host)
-				if origin != expected && origin != expectedHTTP {
-					slog.Warn("origin mismatch", "origin", origin, "expected", expected, "path", r.URL.Path)
-					http.Error(w, "forbidden", http.StatusForbidden)
-					return
-				}
+			if origin == "" {
+				slog.Warn("origin missing on POST", "path", r.URL.Path)
+				http.Error(w, "forbidden", http.StatusForbidden)
+				return
+			}
+			expectedHTTPS := fmt.Sprintf("https://%s", r.Host)
+			expectedHTTP := fmt.Sprintf("http://%s", r.Host)
+			if origin != expectedHTTPS && origin != expectedHTTP {
+				slog.Warn("origin mismatch", "origin", origin, "host", r.Host, "path", r.URL.Path)
+				http.Error(w, "forbidden", http.StatusForbidden)
+				return
 			}
 		}
 		next.ServeHTTP(w, r)

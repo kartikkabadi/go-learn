@@ -8,12 +8,14 @@ import (
 	"net/http"
 )
 
-// PageMeta carries SEO metadata for every full-page render.
+// PageMeta carries SEO metadata and auth state for every full-page render.
 type PageMeta struct {
 	Title       string
 	Description string
 	Canonical   string
 	JSONLD      template.JS
+	Authed      bool
+	UserEmail   string
 }
 
 //go:embed templates/*.html templates/partials/*.html

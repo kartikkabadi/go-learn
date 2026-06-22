@@ -18,8 +18,8 @@ type Dashboard struct {
 }
 
 // Dashboard assembles stats, mission, lessons, weak spots, and the next uncompleted lesson.
-func (p *Progress) Dashboard() (Dashboard, error) {
-	stats, err := p.Store.DashboardStats()
+func (p *Progress) Dashboard(userID string) (Dashboard, error) {
+	stats, err := p.Store.DashboardStats(userID)
 	if err != nil {
 		return Dashboard{}, err
 	}
@@ -27,7 +27,7 @@ func (p *Progress) Dashboard() (Dashboard, error) {
 	if err != nil {
 		return Dashboard{}, err
 	}
-	lessons, err := p.Store.LessonProgress()
+	lessons, err := p.Store.LessonProgress(userID)
 	if err != nil {
 		return Dashboard{}, err
 	}
@@ -35,7 +35,7 @@ func (p *Progress) Dashboard() (Dashboard, error) {
 	if err != nil {
 		return Dashboard{}, err
 	}
-	exercises, err := p.Store.ListExercises()
+	exercises, err := p.Store.ListExercises(userID)
 	if err != nil {
 		return Dashboard{}, err
 	}
@@ -59,9 +59,9 @@ func (p *Progress) Dashboard() (Dashboard, error) {
 	}, nil
 }
 
-// AccuracyPercent returns overall quiz accuracy as a percentage (0-100).
-func (p *Progress) AccuracyPercent() (int, error) {
-	stats, err := p.Store.DashboardStats()
+// AccuracyPercent returns overall quiz accuracy as a percentage (0-100) for a user.
+func (p *Progress) AccuracyPercent(userID string) (int, error) {
+	stats, err := p.Store.DashboardStats(userID)
 	if err != nil {
 		return 0, err
 	}

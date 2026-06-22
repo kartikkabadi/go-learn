@@ -33,3 +33,6 @@ jobs:
 
       - name: Build
         run: go build -o /dev/null ./...
+
+      - name: Build WASM (Cloudflare Workers)
+        run: GOOS=js GOARCH=wasm go build -o /dev/null ./cmd/worker

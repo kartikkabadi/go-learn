@@ -10,14 +10,16 @@
   <meta property="og:title" content="{{.Title}}">
   <meta property="og:description" content="{{.Description}}">
   <meta property="og:type" content="website">
+  <meta property="og:image" content="/og-image.svg">
   <meta property="og:url" content="{{.Canonical}}">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="stylesheet" href="/static/theme.css">
-  <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+  <script src="/static/htmx.min.js"></script>
   {{if .JSONLD}}<script type="application/ld+json">{{.JSONLD}}</script>{{end}}
 </head>
 <body>
 {{template "nav" .}}
+<main id="main">
 <h1>Practice</h1>
 <p class="muted">Run exercises in your terminal, then paste the output here.</p>
 {{range .Exercises}}
@@ -34,6 +36,7 @@
   <div id="submit-result-{{.ID}}"></div>
 </div>
 {{end}}
+</main>
 </body>
 </html>
 {{end}}

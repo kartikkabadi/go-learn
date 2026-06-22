@@ -35,9 +35,24 @@
       "sectionTag": "review",
       "sortOrder": 1,
       "options": [
-        {"key": "import", "label": "At the import statement", "isCorrect": false, "sortOrder": 1},
-        {"key": "main", "label": "Inside the main function", "isCorrect": true, "sortOrder": 2},
-        {"key": "package", "label": "At the package line", "isCorrect": false, "sortOrder": 3}
+        {
+          "key": "import",
+          "label": "At the import statement",
+          "isCorrect": false,
+          "sortOrder": 1
+        },
+        {
+          "key": "main",
+          "label": "Inside the main function",
+          "isCorrect": true,
+          "sortOrder": 2
+        },
+        {
+          "key": "package",
+          "label": "At the package line",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
       ]
     },
     {
@@ -48,9 +63,24 @@
       "sectionTag": "review",
       "sortOrder": 2,
       "options": [
-        {"key": "var", "label": "Creates int named count", "isCorrect": true, "sortOrder": 1},
-        {"key": "func", "label": "Defines function named count", "isCorrect": false, "sortOrder": 2},
-        {"key": "import", "label": "Imports package named count", "isCorrect": false, "sortOrder": 3}
+        {
+          "key": "var",
+          "label": "Creates int named count",
+          "isCorrect": true,
+          "sortOrder": 1
+        },
+        {
+          "key": "func",
+          "label": "Defines function named count",
+          "isCorrect": false,
+          "sortOrder": 2
+        },
+        {
+          "key": "import",
+          "label": "Imports package named count",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
       ]
     },
     {
@@ -70,9 +100,24 @@
       "sectionTag": "quiz",
       "sortOrder": 4,
       "options": [
-        {"key": "assign", "label": "if score = 100", "isCorrect": false, "sortOrder": 1},
-        {"key": "eq", "label": "if score == 100", "isCorrect": true, "sortOrder": 2},
-        {"key": "declare", "label": "if score := 100", "isCorrect": false, "sortOrder": 3}
+        {
+          "key": "assign",
+          "label": "if score = 100",
+          "isCorrect": false,
+          "sortOrder": 1
+        },
+        {
+          "key": "eq",
+          "label": "if score == 100",
+          "isCorrect": true,
+          "sortOrder": 2
+        },
+        {
+          "key": "declare",
+          "label": "if score := 100",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
       ]
     },
     {
@@ -83,9 +128,24 @@
       "sectionTag": "quiz",
       "sortOrder": 5,
       "options": [
-        {"key": "yes", "label": "Yes, the block runs", "isCorrect": true, "sortOrder": 1},
-        {"key": "no", "label": "No, it is skipped", "isCorrect": false, "sortOrder": 2},
-        {"key": "age", "label": "Only if age is 18", "isCorrect": false, "sortOrder": 3}
+        {
+          "key": "yes",
+          "label": "Yes, the block runs",
+          "isCorrect": true,
+          "sortOrder": 1
+        },
+        {
+          "key": "no",
+          "label": "No, it is skipped",
+          "isCorrect": false,
+          "sortOrder": 2
+        },
+        {
+          "key": "age",
+          "label": "Only if age is 18",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
       ]
     }
   ],
@@ -105,6 +165,5 @@
       "url": "https://go.dev/tour/flowcontrol/1",
       "notes": "Official if/else section"
     }
-  ],
-  "answers": []
+  ]
 }

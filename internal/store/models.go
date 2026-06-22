@@ -5,6 +5,21 @@ package store
 
 import "html/template"
 
+// User is a registered learner. Email is case-insensitive unique.
+type User struct {
+	ID           string
+	Email        string
+	PasswordHash string
+	CreatedAt    string
+}
+
+// Session is an authenticated session tied to a user via a token cookie.
+type Session struct {
+	Token     string
+	UserID    string
+	ExpiresAt string
+	CreatedAt string
+}
 
 // Lesson represents a single lesson in the curriculum.
 // Lessons are ordered by SortOrder.

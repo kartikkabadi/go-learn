@@ -9,6 +9,7 @@ import (
 	"database/sql"
 	"fmt"
 	"html/template"
+	"strings"
 	"time"
 
 	"github.com/kartikkabadi/go-learn/internal/store"
@@ -38,6 +39,9 @@ func (s *Store) Close() error {
 	return s.db.Close()
 }
 
+// DB returns the underlying *sql.DB, exposed for migration.
+func (s *Store) DB() *sql.DB { return s.db }
+
 // listOptions returns all options for a question, ordered by sort_order.
 func (s *Store) listOptions(questionID string) ([]store.QuestionOption, error) {
 	rows, err := s.db.Query(`
@@ -62,7 +66,7 @@ func (s *Store) listOptions(questionID string) ([]store.QuestionOption, error) {
 }
 
 // SaveAnswer records a quiz answer, evaluates correctness, and returns the result.
-func (s *Store) SaveAnswer(questionID, pickedKey, pickedLabel string) (store.Answer, error) {
+func (s *Store) SaveAnswer(userID, questionID, pickedKey, pickedLabel string) (store.Answer, error) {
 	var qType, correctKey string
 	err := s.db.QueryRow(
 		`SELECT question_type, correct_key FROM questions WHERE id = ?`,
@@ -78,7 +82,7 @@ func (s *Store) SaveAnswer(questionID, pickedKey, pickedLabel string) (store.Ans
 	correct := false
 	switch qType {
 	case "text":
-		correct = pickedKey == correctKey
+		correct = strings.EqualFold(strings.TrimSpace(pickedKey), strings.TrimSpace(correctKey))
 	case "choice":
 		var isCorrect int
 		err = s.db.QueryRow(
@@ -98,14 +102,14 @@ func (s *Store) SaveAnswer(questionID, pickedKey, pickedLabel string) (store.Ans
 
 	now := time.Now().UTC().Format(time.RFC3339)
 	_, err = s.db.Exec(`
-		INSERT INTO answers (question_id, picked_key, picked_label, correct, answered_at)
-		VALUES (?, ?, ?, ?, ?)
-		ON CONFLICT(question_id) DO UPDATE SET
+		INSERT INTO answers (user_id, question_id, picked_key, picked_label, correct, answered_at)
+		VALUES (?, ?, ?, ?, ?, ?)
+		ON CONFLICT(user_id, question_id) DO UPDATE SET
 			picked_key = excluded.picked_key,
 			picked_label = excluded.picked_label,
 			correct = excluded.correct,
 			answered_at = excluded.answered_at
-	`, questionID, pickedKey, pickedLabel, boolToInt(correct), now)
+	`, userID, questionID, pickedKey, pickedLabel, boolToInt(correct), now)
 	if err != nil {
 		return store.Answer{}, fmt.Errorf("save answer: %w", err)
 	}
@@ -120,13 +124,13 @@ func (s *Store) SaveAnswer(questionID, pickedKey, pickedLabel string) (store.Ans
 }
 
 // GetAnswer retrieves a previously saved answer for a question, or nil if unanswered.
-func (s *Store) GetAnswer(questionID string) (*store.Answer, error) {
+func (s *Store) GetAnswer(userID, questionID string) (*store.Answer, error) {
 	var a store.Answer
 	var correct int
 	err := s.db.QueryRow(`
 		SELECT question_id, picked_key, picked_label, correct, answered_at
-		FROM answers WHERE question_id = ?
-	`, questionID).Scan(&a.QuestionID, &a.PickedKey, &a.PickedLabel, &correct, &a.AnsweredAt)
+		FROM answers WHERE user_id = ? AND question_id = ?
+	`, userID, questionID).Scan(&a.QuestionID, &a.PickedKey, &a.PickedLabel, &correct, &a.AnsweredAt)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}
@@ -138,7 +142,7 @@ func (s *Store) GetAnswer(questionID string) (*store.Answer, error) {
 }
 
 // ListAnswers returns all answers joined with lesson and question data.
-func (s *Store) ListAnswers() ([]store.AnswerRow, error) {
+func (s *Store) ListAnswers(userID string) ([]store.AnswerRow, error) {
 	rows, err := s.db.Query(`
 		SELECT
 			a.question_id, a.picked_key, a.picked_label, a.correct, a.answered_at,
@@ -151,8 +155,9 @@ func (s *Store) ListAnswers() ([]store.AnswerRow, error) {
 		FROM answers a
 		JOIN questions q ON q.id = a.question_id
 		JOIN lessons l ON l.id = q.lesson_id
+		WHERE a.user_id = ?
 		ORDER BY l.sort_order, q.sort_order
-	`)
+	`, userID)
 	if err != nil {
 		return nil, fmt.Errorf("list answers: %w", err)
 	}
@@ -175,14 +180,14 @@ func (s *Store) ListAnswers() ([]store.AnswerRow, error) {
 }
 
 // ListAnswersByLesson returns answers for a specific lesson in sort order.
-func (s *Store) ListAnswersByLesson(lessonID string) ([]store.Answer, error) {
+func (s *Store) ListAnswersByLesson(userID, lessonID string) ([]store.Answer, error) {
 	rows, err := s.db.Query(`
 		SELECT a.question_id, a.picked_key, a.picked_label, a.correct, a.answered_at
 		FROM answers a
 		JOIN questions q ON q.id = a.question_id
-		WHERE q.lesson_id = ?
+		WHERE a.user_id = ? AND q.lesson_id = ?
 		ORDER BY q.sort_order
-	`, lessonID)
+	`, userID, lessonID)
 	if err != nil {
 		return nil, fmt.Errorf("list lesson answers: %w", err)
 	}
@@ -273,7 +278,7 @@ func (s *Store) ListLessonSections(lessonID string) ([]store.LessonSection, erro
 }
 
 // ListQuestionsByLesson returns all questions for a lesson, with options and answers.
-func (s *Store) ListQuestionsByLesson(lessonID string) ([]store.Question, error) {
+func (s *Store) ListQuestionsByLesson(userID, lessonID string) ([]store.Question, error) {
 	rows, err := s.db.Query(`
 		SELECT id, lesson_id, prompt, correct_key, question_type, section_tag, sort_order
 		FROM questions WHERE lesson_id = ? ORDER BY sort_order
@@ -303,15 +308,18 @@ func (s *Store) ListQuestionsByLesson(lessonID string) ([]store.Question, error)
 		if err != nil {
 			return nil, fmt.Errorf("ListQuestionsByLesson: %w", err)
 		}
-		out[i].Answer, err = s.GetAnswer(out[i].ID)
-		if err != nil {
-			return nil, fmt.Errorf("ListQuestionsByLesson: %w", err)
+		if userID != "" {
+			out[i].Answer, err = s.GetAnswer(userID, out[i].ID)
+			if err != nil {
+				return nil, fmt.Errorf("ListQuestionsByLesson: %w", err)
+			}
 		}
 	}
 	return out, nil
 }
 
-// GetQuestion retrieves a single question by ID with options and answer.
+// GetQuestion retrieves a single question by ID with options. It does not populate
+// the user's answer — the caller sets q.Answer if needed.
 func (s *Store) GetQuestion(id string) (*store.Question, error) {
 	var q store.Question
 	err := s.db.QueryRow(`
@@ -325,10 +333,6 @@ func (s *Store) GetQuestion(id string) (*store.Question, error) {
 		return nil, fmt.Errorf("GetQuestion: %w", err)
 	}
 	q.Options, err = s.listOptions(q.ID)
-	if err != nil {
-		return nil, fmt.Errorf("GetQuestion: %w", err)
-	}
-	q.Answer, err = s.GetAnswer(q.ID)
 	if err != nil {
 		return nil, fmt.Errorf("GetQuestion: %w", err)
 	}
@@ -371,15 +375,15 @@ func (s *Store) ListReferences() ([]store.Reference, error) {
 	return out, rows.Err()
 }
 
-// ListExercises returns all exercises with submission status, ordered by sort_order.
-func (s *Store) ListExercises() ([]store.Exercise, error) {
+// ListExercises returns all exercises with submission status for the given user, ordered by sort_order.
+func (s *Store) ListExercises(userID string) ([]store.Exercise, error) {
 	rows, err := s.db.Query(`
 		SELECT e.id, e.lesson_id, e.title, e.path, e.instructions, e.sort_order,
 			CASE WHEN s.exercise_id IS NOT NULL THEN 1 ELSE 0 END
 		FROM exercises e
-		LEFT JOIN exercise_submissions s ON s.exercise_id = e.id
+		LEFT JOIN exercise_submissions s ON s.exercise_id = e.id AND s.user_id = ?
 		ORDER BY e.sort_order
-	`)
+	`, userID)
 	if err != nil {
 		return nil, fmt.Errorf("ListExercises: %w", err)
 	}
@@ -397,38 +401,53 @@ func (s *Store) ListExercises() ([]store.Exercise, error) {
 	return out, rows.Err()
 }
 
-// ListExercisesByLesson returns exercises filtered by lesson ID.
-func (s *Store) ListExercisesByLesson(lessonID string) ([]store.Exercise, error) {
-	all, err := s.ListExercises()
+// ListExercisesByLesson returns exercises filtered by lesson ID for the given user.
+func (s *Store) ListExercisesByLesson(userID, lessonID string) ([]store.Exercise, error) {
+	rows, err := s.db.Query(`
+		SELECT e.id, e.lesson_id, e.title, e.path, e.instructions, e.sort_order,
+			CASE WHEN s.exercise_id IS NOT NULL THEN 1 ELSE 0 END
+		FROM exercises e
+		LEFT JOIN exercise_submissions s ON s.exercise_id = e.id AND s.user_id = ?
+		WHERE e.lesson_id = ?
+		ORDER BY e.sort_order
+	`, userID, lessonID)
 	if err != nil {
 		return nil, fmt.Errorf("ListExercisesByLesson: %w", err)
 	}
+	defer rows.Close()
 	var out []store.Exercise
-	for _, ex := range all {
-		if ex.LessonID == lessonID {
-			out = append(out, ex)
+	for rows.Next() {
+		var ex store.Exercise
+		var submitted int
+		if err := rows.Scan(&ex.ID, &ex.LessonID, &ex.Title, &ex.Path, &ex.Instructions, &ex.SortOrder, &submitted); err != nil {
+			return nil, fmt.Errorf("ListExercisesByLesson: %w", err)
 		}
+		ex.Submitted = submitted == 1
+		out = append(out, ex)
 	}
-	return out, nil
+	return out, rows.Err()
 }
 
-// SaveExerciseSubmission stores terminal output for an exercise, upserting by exercise ID.
-func (s *Store) SaveExerciseSubmission(exerciseID, output string) error {
+// SaveExerciseSubmission stores terminal output for an exercise by a user, upserting by (user_id, exercise_id).
+func (s *Store) SaveExerciseSubmission(userID, exerciseID, output string) error {
 	now := time.Now().UTC().Format(time.RFC3339)
 	_, err := s.db.Exec(`
-		INSERT INTO exercise_submissions (exercise_id, output, submitted_at)
-		VALUES (?, ?, ?)
-		ON CONFLICT(exercise_id) DO UPDATE SET
+		INSERT INTO exercise_submissions (user_id, exercise_id, output, submitted_at)
+		VALUES (?, ?, ?, ?)
+		ON CONFLICT(user_id, exercise_id) DO UPDATE SET
 			output = excluded.output,
 			submitted_at = excluded.submitted_at
-	`, exerciseID, output, now)
+	`, userID, exerciseID, output, now)
 	return err
 }
 
-// GetExerciseSubmission retrieves saved output for an exercise.
-func (s *Store) GetExerciseSubmission(exerciseID string) (string, bool, error) {
+// GetExerciseSubmission retrieves saved output for an exercise by a user.
+func (s *Store) GetExerciseSubmission(userID, exerciseID string) (string, bool, error) {
 	var output string
-	err := s.db.QueryRow(`SELECT output FROM exercise_submissions WHERE exercise_id = ?`, exerciseID).Scan(&output)
+	err := s.db.QueryRow(
+		`SELECT output FROM exercise_submissions WHERE user_id = ? AND exercise_id = ?`,
+		userID, exerciseID,
+	).Scan(&output)
 	if err == sql.ErrNoRows {
 		return "", false, nil
 	}
@@ -481,7 +500,7 @@ func (s *Store) GetMission() (*store.Mission, error) {
 }
 
 // LessonProgress returns progress stats for every lesson.
-func (s *Store) LessonProgress() ([]store.LessonProgress, error) {
+func (s *Store) LessonProgress(userID string) ([]store.LessonProgress, error) {
 	lessons, err := s.ListLessons()
 	if err != nil {
 		return nil, fmt.Errorf("LessonProgress: %w", err)
@@ -495,8 +514,8 @@ func (s *Store) LessonProgress() ([]store.LessonProgress, error) {
 		if err := s.db.QueryRow(`
 			SELECT COUNT(*), COALESCE(SUM(a.correct), 0)
 			FROM answers a JOIN questions q ON q.id = a.question_id
-			WHERE q.lesson_id = ?
-		`, l.ID).Scan(&lp.QuestionsAnswered, &lp.QuestionsCorrect); err != nil {
+			WHERE a.user_id = ? AND q.lesson_id = ?
+		`, userID, l.ID).Scan(&lp.QuestionsAnswered, &lp.QuestionsCorrect); err != nil {
 			return nil, fmt.Errorf("LessonProgress: %w", err)
 		}
 		if err := s.db.QueryRow(`SELECT COUNT(*) FROM exercises WHERE lesson_id = ?`, l.ID).Scan(&lp.ExerciseTotal); err != nil {
@@ -504,8 +523,9 @@ func (s *Store) LessonProgress() ([]store.LessonProgress, error) {
 		}
 		if err := s.db.QueryRow(`
 			SELECT COUNT(*) FROM exercise_submissions s
-			JOIN exercises e ON e.id = s.exercise_id WHERE e.lesson_id = ?
-		`, l.ID).Scan(&lp.ExercisesDone); err != nil {
+			JOIN exercises e ON e.id = s.exercise_id
+			WHERE s.user_id = ? AND e.lesson_id = ?
+		`, userID, l.ID).Scan(&lp.ExercisesDone); err != nil {
 			return nil, fmt.Errorf("LessonProgress: %w", err)
 		}
 		out = append(out, lp)
@@ -514,7 +534,7 @@ func (s *Store) LessonProgress() ([]store.LessonProgress, error) {
 }
 
 // DashboardStats returns aggregate progress numbers across all lessons.
-func (s *Store) DashboardStats() (store.DashboardStats, error) {
+func (s *Store) DashboardStats(userID string) (store.DashboardStats, error) {
 	var st store.DashboardStats
 	err := s.db.QueryRow(`SELECT COUNT(*) FROM lessons`).Scan(&st.LessonsTotal)
 	if err != nil {
@@ -524,9 +544,9 @@ func (s *Store) DashboardStats() (store.DashboardStats, error) {
 	if err != nil {
 		return st, err
 	}
-	err = s.db.QueryRow(`SELECT COUNT(*), COALESCE(SUM(correct), 0) FROM answers`).Scan(
-		&st.QuestionsAnswered, &st.QuestionsCorrect,
-	)
+	err = s.db.QueryRow(
+		`SELECT COUNT(*), COALESCE(SUM(correct), 0) FROM answers WHERE user_id = ?`, userID,
+	).Scan(&st.QuestionsAnswered, &st.QuestionsCorrect)
 	if err != nil {
 		return st, err
 	}
@@ -534,7 +554,9 @@ func (s *Store) DashboardStats() (store.DashboardStats, error) {
 	if err != nil {
 		return st, err
 	}
-	err = s.db.QueryRow(`SELECT COUNT(*) FROM exercise_submissions`).Scan(&st.ExercisesSubmitted)
+	err = s.db.QueryRow(
+		`SELECT COUNT(*) FROM exercise_submissions WHERE user_id = ?`, userID,
+	).Scan(&st.ExercisesSubmitted)
 	return st, err
 }
 

@@ -1,0 +1,59 @@
+{{define "landing.html"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{.Title}}</title>
+  <meta name="description" content="{{.Description}}">
+  {{if .Canonical}}<link rel="canonical" href="{{.Canonical}}">{{end}}
+  <meta property="og:title" content="{{.Title}}">
+  <meta property="og:description" content="{{.Description}}">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="/og-image.svg">
+  <meta property="og:url" content="{{.Canonical}}">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="stylesheet" href="/static/theme.css">
+  {{if .JSONLD}}<script type="application/ld+json">{{.JSONLD}}</script>{{end}}
+</head>
+<body>
+{{template "nav" .}}
+<main id="main">
+
+<section class="hero">
+  <h1>Learn Go interactively</h1>
+  <p class="hero-sub">A free, hands-on course that teaches you Go from scratch — with quizzes, exercises, and progress tracking.</p>
+  <a href="/signup" class="btn btn-large">Start learning →</a>
+  <p class="muted">{{len .Lessons}} lessons · self-paced · no experience required</p>
+</section>
+
+{{if .Mission}}
+<section class="mission-section">
+  <h2>Why this course exists</h2>
+  <div class="card"><p>{{.Mission.Why}}</p></div>
+</section>
+{{end}}
+
+<section class="lessons-section">
+  <h2>What you'll learn</h2>
+  <div class="lesson-grid">
+  {{range .Lessons}}
+  <div class="card lesson-card">
+    <a href="/lessons/{{.Slug}}"><strong>Lesson {{.ID}}</strong> — {{.Title}}</a>
+    <p class="muted">{{.Summary}}</p>
+  </div>
+  {{end}}
+  </div>
+</section>
+
+<section class="cta-section">
+  <h2>Ready to start?</h2>
+  <p>Create a free account to track your progress and save your quiz answers.</p>
+  <a href="/signup" class="btn btn-large">Create your account →</a>
+  <p class="muted">Already have an account? <a href="/login">Log in</a></p>
+</section>
+
+</main>
+</body>
+</html>
+{{end}}

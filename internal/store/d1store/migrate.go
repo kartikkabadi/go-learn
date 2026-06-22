@@ -1,27 +1,27 @@
-package store
+//go:build js && wasm
+
+package d1store
 
 import (
-	"embed"
+	"database/sql"
 	"fmt"
 	"sort"
 	"strings"
+
+	"github.com/kartikkabadi/go-learn/internal/store"
 )
 
-//go:embed migrations/*.sql
-var migrationFiles embed.FS
-
-// MigrationFiles is exported for d1store to share the same migration set.
-var MigrationFiles = migrationFiles
-
-func (s *SQLiteStore) migrate() error {
-	if _, err := s.db.Exec(`CREATE TABLE IF NOT EXISTS schema_migrations (
+// Migrate applies pending SQL migrations to the D1 database.
+// Migration files are embedded in the store package and shared with SQLite.
+func Migrate(db *sql.DB) error {
+	if _, err := db.Exec(`CREATE TABLE IF NOT EXISTS schema_migrations (
 		version TEXT PRIMARY KEY,
 		applied_at TEXT NOT NULL DEFAULT (datetime('now'))
 	)`); err != nil {
 		return fmt.Errorf("ensure schema_migrations: %w", err)
 	}
 
-	entries, err := migrationFiles.ReadDir("migrations")
+	entries, err := store.MigrationFiles.ReadDir("migrations")
 	if err != nil {
 		return fmt.Errorf("read migrations dir: %w", err)
 	}
@@ -37,7 +37,7 @@ func (s *SQLiteStore) migrate() error {
 	for _, name := range names {
 		version := strings.TrimSuffix(name, ".sql")
 		var exists int
-		if err := s.db.QueryRow(
+		if err := db.QueryRow(
 			`SELECT COUNT(*) FROM schema_migrations WHERE version = ?`, version,
 		).Scan(&exists); err != nil {
 			return fmt.Errorf("check migration %s: %w", version, err)
@@ -46,14 +46,14 @@ func (s *SQLiteStore) migrate() error {
 			continue
 		}
 
-		sqlBytes, err := migrationFiles.ReadFile("migrations/" + name)
+		sqlBytes, err := store.MigrationFiles.ReadFile("migrations/" + name)
 		if err != nil {
 			return fmt.Errorf("read migration %s: %w", name, err)
 		}
-		if _, err := s.db.Exec(string(sqlBytes)); err != nil {
+		if _, err := db.Exec(string(sqlBytes)); err != nil {
 			return fmt.Errorf("apply migration %s: %w", name, err)
 		}
-		if _, err := s.db.Exec(
+		if _, err := db.Exec(
 			`INSERT INTO schema_migrations (version) VALUES (?)`, version,
 		); err != nil {
 			return fmt.Errorf("record migration %s: %w", version, err)

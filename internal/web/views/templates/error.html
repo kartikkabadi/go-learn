@@ -1,0 +1,21 @@
+{{define "error.html"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{.Title}}</title>
+  <meta name="description" content="{{.Message}}">
+  <meta name="robots" content="noindex">
+  <link rel="stylesheet" href="/static/theme.css">
+</head>
+<body>
+{{template "nav" .}}
+<main id="main">
+  <h1>{{.Code}}</h1>
+  <p class="muted">{{.Message}}</p>
+  <p><a href="/">Back to home →</a></p>
+</main>
+</body>
+</html>
+{{end}}

@@ -10,6 +10,7 @@
   <meta property="og:title" content="{{.Title}}">
   <meta property="og:description" content="{{.Description}}">
   <meta property="og:type" content="website">
+  <meta property="og:image" content="/og-image.svg">
   <meta property="og:url" content="{{.Canonical}}">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="stylesheet" href="/static/theme.css">
@@ -17,6 +18,7 @@
 </head>
 <body>
 {{template "nav" .}}
+<main id="main">
 <h1>Reference</h1>
 <h2>Glossary</h2>
 <dl>
@@ -38,6 +40,7 @@
   {{end}}
   </tbody>
 </table>
+</main>
 </body>
 </html>
 {{end}}

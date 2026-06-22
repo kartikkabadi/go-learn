@@ -11,8 +11,20 @@ import (
 	"github.com/kartikkabadi/go-learn/internal/service"
 	"github.com/kartikkabadi/go-learn/internal/store"
 	handlers "github.com/kartikkabadi/go-learn/internal/web/handlers"
+	"github.com/kartikkabadi/go-learn/internal/web/middleware"
 	"github.com/kartikkabadi/go-learn/internal/web/views"
 )
+
+// withTestUser creates a user and attaches it to the request context for tests
+// that exercise auth-required handlers.
+func withTestUser(t *testing.T, s store.Store, r *http.Request) *http.Request {
+	t.Helper()
+	u, err := s.CreateUser("handler-test@example.com", "$2a$10$dummyhashfortestonlyxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
+	if err != nil {
+		t.Fatal(err)
+	}
+	return middleware.WithUser(r, &store.User{ID: u.ID, Email: u.Email})
+}
 
 func testHandler(t *testing.T) *handlers.Handler {
 	t.Helper()
@@ -61,7 +73,7 @@ func importTestLesson(t *testing.T, s store.Store) {
 	}
 }
 
-func TestDashboard(t *testing.T) {
+func TestDashboard_Anonymous(t *testing.T) {
 	h := testHandler(t)
 	importTestLesson(t, h.Store)
 
@@ -72,6 +84,38 @@ func TestDashboard(t *testing.T) {
 	resp := w.Result()
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("want 200, got %d", resp.StatusCode)
+	}
+	body := w.Body.String()
+	// Anonymous visitors should see the landing page, not personal stats.
+	if strings.Contains(body, "questions answered") {
+		t.Fatal("anonymous landing page should not contain 'questions answered'")
+	}
+	if strings.Contains(body, "accuracy") {
+		t.Fatal("anonymous landing page should not contain 'accuracy'")
+	}
+	if !strings.Contains(body, "Start learning") {
+		t.Fatal("anonymous landing page should contain 'Start learning' CTA")
+	}
+	resp.Body.Close()
+}
+
+func TestDashboard_Authed(t *testing.T) {
+	h := testHandler(t)
+	importTestLesson(t, h.Store)
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req = withTestUser(t, h.Store, req)
+	w := httptest.NewRecorder()
+	h.Dashboard(w, req)
+
+	resp := w.Result()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("want 200, got %d", resp.StatusCode)
+	}
+	body := w.Body.String()
+	// Authed users should see the dashboard with personal stats.
+	if !strings.Contains(body, "questions answered") {
+		t.Fatal("authed dashboard should contain 'questions answered'")
 	}
 	resp.Body.Close()
 }
@@ -95,7 +139,7 @@ func TestLessonShow_Valid(t *testing.T) {
 	h := testHandler(t)
 	importTestLesson(t, h.Store)
 
-	req := httptest.NewRequest(http.MethodGet, "/lessons/web-t1", nil)
+	req := httptest.NewRequest(http.MethodGet, "/lessons/test", nil)
 	req.SetPathValue("slug", "test")
 	w := httptest.NewRecorder()
 	h.LessonShow(w, req)
@@ -130,8 +174,9 @@ func TestAnswerQuestion_Valid(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "/lessons/web-t1/questions/web-t1:q1/answer",
 		strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req.SetPathValue("slug", "test")
+	req.SetPathValue("id", "web-t1")
 	req.SetPathValue("qid", "web-t1:q1")
+	req = withTestUser(t, h.Store, req)
 	w := httptest.NewRecorder()
 	h.AnswerQuestion(w, req)
 
@@ -150,8 +195,9 @@ func TestAnswerQuestion_EmptyKey(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "/lessons/web-t1/questions/web-t1:q1/answer",
 		strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req.SetPathValue("slug", "test")
+	req.SetPathValue("id", "web-t1")
 	req.SetPathValue("qid", "web-t1:q1")
+	req = withTestUser(t, h.Store, req)
 	w := httptest.NewRecorder()
 	h.AnswerQuestion(w, req)
 

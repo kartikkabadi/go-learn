@@ -35,9 +35,24 @@
       "sectionTag": "quiz",
       "sortOrder": 1,
       "options": [
-        {"key": "a", "label": "Creates int named price", "isCorrect": true, "sortOrder": 1},
-        {"key": "b", "label": "Imports package named price", "isCorrect": false, "sortOrder": 2},
-        {"key": "c", "label": "Defines function named price", "isCorrect": false, "sortOrder": 3}
+        {
+          "key": "a",
+          "label": "Creates int named price",
+          "isCorrect": true,
+          "sortOrder": 1
+        },
+        {
+          "key": "b",
+          "label": "Imports package named price",
+          "isCorrect": false,
+          "sortOrder": 2
+        },
+        {
+          "key": "c",
+          "label": "Defines function named price",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
       ]
     },
     {
@@ -48,9 +63,24 @@
       "sectionTag": "quiz",
       "sortOrder": 2,
       "options": [
-        {"key": "a", "label": "It is an integer type", "isCorrect": false, "sortOrder": 1},
-        {"key": "b", "label": "It is a string type", "isCorrect": true, "sortOrder": 2},
-        {"key": "c", "label": "It is a boolean type", "isCorrect": false, "sortOrder": 3}
+        {
+          "key": "a",
+          "label": "It is an integer type",
+          "isCorrect": false,
+          "sortOrder": 1
+        },
+        {
+          "key": "b",
+          "label": "It is a string type",
+          "isCorrect": true,
+          "sortOrder": 2
+        },
+        {
+          "key": "c",
+          "label": "It is a boolean type",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
       ]
     },
     {
@@ -61,9 +91,24 @@
       "sectionTag": "quiz",
       "sortOrder": 3,
       "options": [
-        {"key": "a", "label": "Score:7 with no space", "isCorrect": false, "sortOrder": 1},
-        {"key": "b", "label": "Only the number seven", "isCorrect": false, "sortOrder": 2},
-        {"key": "c", "label": "Score: then space 7", "isCorrect": true, "sortOrder": 3}
+        {
+          "key": "a",
+          "label": "Score:7 with no space",
+          "isCorrect": false,
+          "sortOrder": 1
+        },
+        {
+          "key": "b",
+          "label": "Only the number seven",
+          "isCorrect": false,
+          "sortOrder": 2
+        },
+        {
+          "key": "c",
+          "label": "Score: then space 7",
+          "isCorrect": true,
+          "sortOrder": 3
+        }
       ]
     }
   ],
@@ -83,10 +128,5 @@
       "url": "https://go.dev/tour/basics/8",
       "notes": "Official interactive variables section"
     }
-  ],
-  "answers": [
-    {"questionId": "0002:q1", "pickedKey": "c", "pickedLabel": "Defines function named price"},
-    {"questionId": "0002:q2", "pickedKey": "b", "pickedLabel": "It is a string type"},
-    {"questionId": "0002:q3", "pickedKey": "a", "pickedLabel": "Score:7 with no space"}
   ]
 }

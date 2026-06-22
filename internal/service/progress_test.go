@@ -17,7 +17,7 @@ func TestAccuracyPercent_NoAnswers(t *testing.T) {
 	defer s.Close()
 
 	p := &service.Progress{Store: s}
-	pct, err := p.AccuracyPercent()
+	pct, err := p.AccuracyPercent("")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -35,7 +35,7 @@ func TestDashboard_EmptyStore(t *testing.T) {
 	defer s.Close()
 
 	p := &service.Progress{Store: s}
-	dash, err := p.Dashboard()
+	dash, err := p.Dashboard("")
 	if err != nil {
 		t.Fatal(err)
 	}
