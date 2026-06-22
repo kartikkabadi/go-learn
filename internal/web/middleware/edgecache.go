@@ -49,9 +49,10 @@ func isCacheable(r *http.Request) bool {
 // responseRecorder captures the response body and headers for caching.
 type responseRecorder struct {
 	http.ResponseWriter
-	buf     bytes.Buffer
-	status  int
-	header  http.Header
+	buf        bytes.Buffer
+	status     int
+	header     http.Header
+	wroteHdr   bool
 }
 
 func newResponseRecorder(w http.ResponseWriter) *responseRecorder {
@@ -62,14 +63,29 @@ func newResponseRecorder(w http.ResponseWriter) *responseRecorder {
 	}
 }
 
+func (r *responseRecorder) ensureHeader() {
+	if r.wroteHdr {
+		return
+	}
+	r.wroteHdr = true
+	r.status = http.StatusOK
+	for k, v := range r.ResponseWriter.Header() {
+		r.header[k] = v
+	}
+}
+
 func (r *responseRecorder) Write(b []byte) (int, error) {
+	r.ensureHeader()
 	r.buf.Write(b)
 	return r.ResponseWriter.Write(b)
 }
 
 func (r *responseRecorder) WriteHeader(code int) {
+	if r.wroteHdr {
+		return
+	}
+	r.wroteHdr = true
 	r.status = code
-	// Copy headers to the recorder.
 	for k, v := range r.ResponseWriter.Header() {
 		r.header[k] = v
 	}
