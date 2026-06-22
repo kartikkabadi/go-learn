@@ -1,4 +1,4 @@
-.PHONY: serve import test build
+.PHONY: serve import test build generate-content
 
 DB := progress/go-learn.db
 BASE := https://go-learn.kartikkabadi.com
@@ -20,10 +20,15 @@ fresh-import:
 	rm -f $(DB)
 	$(MAKE) import
 
+# Generate embedded content Go file from SQLite DB
+generate-content:
+	command go run ./cmd/generate-content
+
 # === Cloudflare Workers deployment ===
 
-# Build WASM binary for Workers
+# Build WASM binary for Workers (generates embedded content first)
 worker:
+	command go run ./cmd/generate-content
 	@mkdir -p build
 	GOOS=js GOARCH=wasm go build -o build/app.wasm ./cmd/worker
 	@ls -lh build/app.wasm
