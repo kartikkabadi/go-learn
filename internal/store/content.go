@@ -413,25 +413,6 @@ func (s *SQLiteStore) LessonProgress(userID string) ([]LessonProgress, error) {
 	return out, rows.Err()
 }
 
-// DashboardStats returns aggregate progress numbers across all lessons.
-// Single query with scalar subqueries — avoids 5 separate round-trips.
-func (s *SQLiteStore) DashboardStats(userID string) (DashboardStats, error) {
-	var st DashboardStats
-	err := s.db.QueryRow(`
-		SELECT
-			(SELECT COUNT(*) FROM lessons),
-			(SELECT COUNT(*) FROM questions),
-			(SELECT COUNT(*) FROM exercises),
-			COALESCE((SELECT COUNT(*) FROM answers WHERE user_id = ?), 0),
-			COALESCE((SELECT SUM(correct) FROM answers WHERE user_id = ?), 0),
-			COALESCE((SELECT COUNT(*) FROM exercise_submissions WHERE user_id = ?), 0)
-	`, userID, userID, userID).Scan(
-		&st.LessonsTotal, &st.QuestionsTotal, &st.ExercisesTotal,
-		&st.QuestionsAnswered, &st.QuestionsCorrect, &st.ExercisesSubmitted,
-	)
-	return st, err
-}
-
 func timeNowRFC3339() string {
 	return time.Now().UTC().Format(time.RFC3339)
 }

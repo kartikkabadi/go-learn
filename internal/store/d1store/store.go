@@ -30,7 +30,7 @@ func Open(dbName string) (*Store, error) {
 	if err != nil {
 		return nil, fmt.Errorf("d1store open: %w", err)
 	}
-	db.SetMaxOpenConns(10)
+	db.SetMaxOpenConns(1)
 	return &Store{db: db}, nil
 }
 
@@ -399,29 +399,6 @@ func (s *Store) LessonProgress(userID string) ([]store.LessonProgress, error) {
 		out[i].ExercisesDone = exByLesson[out[i].LessonID]
 	}
 	return out, nil
-}
-
-// DashboardStats returns aggregate progress numbers. Static totals come from
-// embedded content. User's answered/correct/submitted come from 1 D1 query.
-// Anonymous = 0 D1 queries.
-func (s *Store) DashboardStats(userID string) (store.DashboardStats, error) {
-	st := store.DashboardStats{
-		LessonsTotal:   len(content.Lessons),
-		QuestionsTotal:  len(content.QuestionsByID),
-		ExercisesTotal: len(content.Exercises),
-	}
-	if userID == "" {
-		return st, nil
-	}
-	err := s.db.QueryRow(`
-		SELECT
-			COALESCE((SELECT COUNT(*) FROM answers WHERE user_id = ?), 0),
-			COALESCE((SELECT SUM(correct) FROM answers WHERE user_id = ?), 0),
-			COALESCE((SELECT COUNT(*) FROM exercise_submissions WHERE user_id = ?), 0)
-	`, userID, userID, userID).Scan(
-		&st.QuestionsAnswered, &st.QuestionsCorrect, &st.ExercisesSubmitted,
-	)
-	return st, err
 }
 
 // UserData fetches all user-specific data in 2 D1 queries (answers + submissions).

@@ -44,7 +44,9 @@ func (p *Progress) Dashboard(userID string) (Dashboard, error) {
 	if err != nil {
 		return Dashboard{}, err
 	}
-	exercises, err := p.Store.ListExercises(userID)
+	// ListExercises("") returns embedded content with no submission status (0 D1 queries).
+	// Submission status is attached from UserData below.
+	exercises, err := p.Store.ListExercises("")
 	if err != nil {
 		return Dashboard{}, err
 	}
@@ -80,6 +82,14 @@ func (p *Progress) Dashboard(userID string) (Dashboard, error) {
 			lp.QuestionsCorrect = ac[1]
 		}
 		progress[i] = lp
+	}
+
+	// Attach submission status to exercises from UserData (0 extra D1 queries).
+	for i := range exercises {
+		if ud.SubmissionsByEx[exercises[i].ID] {
+			exercises[i].Submitted = true
+			exercises[i].Correct = ud.CorrectByEx[exercises[i].ID]
+		}
 	}
 
 	var next *store.LessonProgress

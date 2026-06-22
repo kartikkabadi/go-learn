@@ -39,3 +39,4 @@ node_modules/
 
 # Generated content (build artifact, not source)
 internal/content/content_generated.go
+coverage.out

@@ -335,42 +335,86 @@ func TestLessonProgress(t *testing.T) {
 	}
 }
 
-func TestDashboardStats(t *testing.T) {
+func TestUserData(t *testing.T) {
 	s := testStore(t)
 	if err := s.ImportBundle(testBundle); err != nil {
 		t.Fatal(err)
 	}
-	stats, err := s.DashboardStats(testUser(t, s))
+	uid := testUser(t, s)
+
+	// Anonymous: empty data, no error.
+	ud, err := s.UserData("")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if stats.LessonsTotal != 1 {
-		t.Fatalf("want 1 lesson, got %d", stats.LessonsTotal)
+	if ud.TotalAnswered != 0 || ud.TotalCorrect != 0 || ud.TotalSubmitted != 0 {
+		t.Fatalf("want zeros for anonymous, got answered=%d correct=%d submitted=%d",
+			ud.TotalAnswered, ud.TotalCorrect, ud.TotalSubmitted)
 	}
-	if stats.QuestionsTotal != 2 {
-		t.Fatalf("want 2 questions, got %d", stats.QuestionsTotal)
-	}
-	if stats.QuestionsAnswered != 0 {
-		t.Fatalf("want 0 answered, got %d", stats.QuestionsAnswered)
-	}
-	if stats.ExercisesTotal != 1 {
-		t.Fatalf("want 1 exercise, got %d", stats.ExercisesTotal)
-	}
-	if _, err := s.SaveAnswer(testUser(t, s), "t1:q1", "a", "A named memory location"); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := s.SaveAnswer(testUser(t, s), "t1:q2", "var", "var"); err != nil {
-		t.Fatal(err)
-	}
-	stats, err = s.DashboardStats(testUser(t, s))
+
+	// Authenticated with no answers: still zeros.
+	ud, err = s.UserData(uid)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if stats.QuestionsAnswered != 2 {
-		t.Fatalf("want 2 answered, got %d", stats.QuestionsAnswered)
+	if ud.TotalAnswered != 0 {
+		t.Fatalf("want 0 answered, got %d", ud.TotalAnswered)
 	}
-	if stats.QuestionsCorrect != 2 {
-		t.Fatalf("want 2 correct, got %d", stats.QuestionsCorrect)
+
+	// Answer one question correctly.
+	if _, err := s.SaveAnswer(uid, "t1:q1", "a", "A named memory location"); err != nil {
+		t.Fatal(err)
+	}
+	ud, err = s.UserData(uid)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ud.TotalAnswered != 1 {
+		t.Fatalf("want 1 answered, got %d", ud.TotalAnswered)
+	}
+	if ud.TotalCorrect != 1 {
+		t.Fatalf("want 1 correct, got %d", ud.TotalCorrect)
+	}
+	if ac := ud.AnswersByLesson["t1"]; ac[0] != 1 || ac[1] != 1 {
+		t.Fatalf("want [1,1] for lesson, got %v", ac)
+	}
+
+	// Submit an exercise.
+	if err := s.SaveExerciseSubmission(uid, "t1:ex1", "output", true); err != nil {
+		t.Fatal(err)
+	}
+	ud, err = s.UserData(uid)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ud.TotalSubmitted != 1 {
+		t.Fatalf("want 1 submitted, got %d", ud.TotalSubmitted)
+	}
+	if !ud.SubmissionsByEx["t1:ex1"] {
+		t.Fatal("want exercise marked submitted")
+	}
+	if !ud.CorrectByEx["t1:ex1"] {
+		t.Fatal("want exercise marked correct")
+	}
+	if ud.SubmissionsByLesson["t1"] != 1 {
+		t.Fatalf("want 1 submission for lesson, got %d", ud.SubmissionsByLesson["t1"])
+	}
+}
+
+func TestLessonCounts(t *testing.T) {
+	s := testStore(t)
+	if err := s.ImportBundle(testBundle); err != nil {
+		t.Fatal(err)
+	}
+	qCounts, eCounts, err := s.LessonCounts()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if qCounts["t1"] != 2 {
+		t.Fatalf("want 2 questions, got %d", qCounts["t1"])
+	}
+	if eCounts["t1"] != 1 {
+		t.Fatalf("want 1 exercise, got %d", eCounts["t1"])
 	}
 }
 

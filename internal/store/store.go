@@ -48,10 +48,9 @@ type Store interface {
 
 	// Progress (user-scoped)
 	LessonProgress(userID string) ([]LessonProgress, error)
-	DashboardStats(userID string) (DashboardStats, error)
 
 	// UserData fetches all user-specific data in 2 queries (answers + submissions).
-	// Used to compute DashboardStats, LessonProgress, and exercise status in one shot.
+	// Used to compute dashboard stats, lesson progress, and exercise status in one shot.
 	UserData(userID string) (*UserData, error)
 
 	// LessonCounts returns question and exercise counts per lessonID in 1 call.
