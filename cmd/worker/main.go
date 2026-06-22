@@ -94,12 +94,14 @@ func main() {
 	// The buffering gzip middleware breaks the WASM runtime (deferred writes don't work).
 	handler := middleware.RequestID(
 		middleware.Recovery(
-			rateLimiter.Limit(
-				middleware.SecurityHeaders(
-					middleware.LoadUser(st, web.CookieKey)(
-						middleware.ValidateOrigin(
-							middleware.BodySizeLimit(1 << 20)(
-								middleware.Logger(logger, mux),
+			middleware.EdgeCache(
+				rateLimiter.Limit(
+					middleware.SecurityHeaders(
+						middleware.LoadUser(st, web.CookieKey)(
+							middleware.ValidateOrigin(
+								middleware.BodySizeLimit(1 << 20)(
+									middleware.Logger(logger, mux),
+								),
 							),
 						),
 					),
