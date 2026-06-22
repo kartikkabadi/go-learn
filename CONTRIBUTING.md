@@ -20,10 +20,9 @@ Thanks for your interest! go-learn is an open-source Go learning platform built 
 See existing bundles in `content-bundles/` for reference. Each bundle contains:
 - `lesson` — id, title, slug, summary, sortOrder
 - `sections` — HTML body content with headings
-- `questions` — quiz questions with options
+- `questions` — quiz questions with options (correct answer marked per option)
 - `exercises` — practice module references
 - `references` — external links
-- `answers` — correct answer keys for auto-seeding
 
 ## Adding an Exercise
 
