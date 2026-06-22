@@ -3,7 +3,7 @@
     "id": "0009",
     "title": "Pointers",
     "slug": "pointers",
-    "summary": "Reference values by memory address &mdash; understand &amp; and *.",
+    "summary": "Reference values by memory address — understand &amp; and *.",
     "sortOrder": 9
   },
   "sections": [
@@ -130,7 +130,7 @@
     },
     {
       "id": "0009:ref2",
-      "title": "A Tour of Go &mdash; Pointers",
+      "title": "A Tour of Go — Pointers",
       "url": "https://go.dev/tour/moretypes/1",
       "notes": ""
     }

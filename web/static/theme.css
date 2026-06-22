@@ -190,6 +190,8 @@ textarea {
 }
 .review { background: var(--review-bg); border: 1px solid var(--review-border); padding: 1rem; margin: 1rem 0; }
 .checkpoint { background: var(--checkpoint-bg); border: 1px solid var(--checkpoint-border); padding: 1rem; margin: 1rem 0; }
+.lesson-nav { display: flex; justify-content: space-between; gap: 1rem; margin: 2rem 0 1rem; padding-top: 1.5rem; border-top: 1px solid var(--rule); }
+.lesson-nav a { font-size: 0.95rem; }
 .next-action { border-left: 3px solid var(--accent); padding: 1rem 1.25rem; background: var(--card); margin: 1.5rem 0; }
 .auth-form { display: flex; flex-direction: column; gap: 0.5rem; max-width: 22rem; margin: 1.5rem 0; }
 .auth-form label { font-size: 0.9rem; color: var(--muted); }

@@ -1,10 +1,40 @@
 {
   "terms": [
-    {"id": "program", "term": "Program", "definition": "A precise list of instructions written for a computer to follow, step by step.", "sortOrder": 1},
-    {"id": "source-code", "term": "Source code", "definition": "Human-readable text that describes a program. In Go, files end in .go.", "sortOrder": 2},
-    {"id": "variable", "term": "Variable", "definition": "A named place in memory that holds a value you can read or change later.", "sortOrder": 3},
-    {"id": "type", "term": "Type", "definition": "What kind of value something is — e.g. string for text, int for whole numbers.", "sortOrder": 4},
-    {"id": "function", "term": "Function", "definition": "A named block of instructions. func main() is where a runnable program starts.", "sortOrder": 5},
-    {"id": "if", "term": "if statement", "definition": "Runs one branch of code only when a condition is true; otherwise skips or runs else.", "sortOrder": 6}
+    {
+      "id": "program",
+      "term": "Program",
+      "definition": "A precise list of instructions written for a computer to follow, step by step.",
+      "sortOrder": 1
+    },
+    {
+      "id": "source-code",
+      "term": "Source code",
+      "definition": "Human-readable text that describes a program. In Go, files end in .go.",
+      "sortOrder": 2
+    },
+    {
+      "id": "variable",
+      "term": "Variable",
+      "definition": "A named place in memory that holds a value you can read or change later.",
+      "sortOrder": 3
+    },
+    {
+      "id": "type",
+      "term": "Type",
+      "definition": "What kind of value something is — e.g. string for text, int for whole numbers.",
+      "sortOrder": 4
+    },
+    {
+      "id": "function",
+      "term": "Function",
+      "definition": "A named block of instructions. func main() is where a runnable program starts.",
+      "sortOrder": 5
+    },
+    {
+      "id": "if",
+      "term": "if statement",
+      "definition": "Runs one branch of code only when a condition is true; otherwise skips or runs else.",
+      "sortOrder": 6
+    }
   ]
 }

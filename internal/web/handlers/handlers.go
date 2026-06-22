@@ -64,6 +64,8 @@ type LessonPage struct {
 	Sections      []store.LessonSection
 	QuestionViews []QuestionView
 	Exercises     []store.Exercise
+	PrevLesson    *store.Lesson
+	NextLesson    *store.Lesson
 }
 
 type ProgressPage struct {
@@ -150,9 +152,14 @@ func (h *Handler) LessonsIndex(w http.ResponseWriter, r *http.Request) {
 		internalError(w, "lessons index", err)
 		return
 	}
+	allLessons, err := h.Store.ListLessons()
+	if err != nil {
+		internalError(w, "lessons list", err)
+		return
+	}
 	base := h.baseURL(r)
 	h.Views.Render(w, "lessons_index.html", LessonsIndexPage{
-		PageMeta: h.meta(r, "Lessons — go-learn", "Browse all Go lessons with progress tracking and interactive quizzes.", base+"/lessons", ""),
+		PageMeta: h.meta(r, "Go Lessons — Interactive Course — go-learn", "All Go programming lessons in order: variables, if statements, loops, functions, slices, maps, structs, pointers, and methods. Each lesson includes quizzes and exercises.", base+"/lessons", lessonsIndexJSONLD(base, allLessons)),
 		Lessons:  lessons,
 	})
 }
@@ -212,12 +219,34 @@ func (h *Handler) LessonShow(w http.ResponseWriter, r *http.Request) {
 	if desc == "" {
 		desc = "Go lesson: " + lesson.Title
 	}
+
+	// Compute prev/next lesson links for internal linking.
+	allLessons, err := h.Store.ListLessons()
+	if err != nil {
+		internalError(w, "lesson list", err)
+		return
+	}
+	var prev, next *store.Lesson
+	for i, l := range allLessons {
+		if l.ID == lesson.ID {
+			if i > 0 {
+				prev = &allLessons[i-1]
+			}
+			if i < len(allLessons)-1 {
+				next = &allLessons[i+1]
+			}
+			break
+		}
+	}
+
 	h.Views.Render(w, "lesson_show.html", LessonPage{
-		PageMeta:      h.meta(r, "Learn Go: "+lesson.Title+" — go-learn", desc, base+"/lessons/"+lesson.Slug, lessonJSONLD(base, lesson)),
+		PageMeta:      h.meta(r, "Learn Go: "+lesson.Title+" — go-learn", desc, base+"/lessons/"+lesson.Slug, lessonJSONLD(base, lesson, questions)),
 		Lesson:        lesson,
 		Sections:      sections,
 		QuestionViews: qviews,
 		Exercises:     exercises,
+		PrevLesson:    prev,
+		NextLesson:    next,
 	})
 }
 
@@ -302,7 +331,7 @@ func (h *Handler) Reference(w http.ResponseWriter, r *http.Request) {
 	}
 	base := h.baseURL(r)
 	h.Views.Render(w, "reference.html", ReferencePage{
-		PageMeta:   h.meta(r, "Reference — go-learn", "Go glossary of terms and external learning resources.", base+"/reference", ""),
+		PageMeta:   h.meta(r, "Go Reference — Glossary and Resources — go-learn", "Go programming glossary: definitions for variables, functions, slices, maps, structs, pointers, and methods. Plus curated Go learning resources.", base+"/reference", glossaryJSONLD(base, terms)),
 		Terms:      terms,
 		References: refs,
 	})
@@ -440,8 +469,8 @@ func courseJSONLD(base string, s store.Store) template.JS {
 	return template.JS(js)
 }
 
-func lessonJSONLD(base string, l *store.Lesson) template.JS {
-	js := fmt.Sprintf(`{
+func lessonJSONLD(base string, l *store.Lesson, questions []store.Question) template.JS {
+	learningResource := fmt.Sprintf(`{
   "@context":"https://schema.org",
   "@type":"LearningResource",
   "name":"%s",
@@ -451,10 +480,95 @@ func lessonJSONLD(base string, l *store.Lesson) template.JS {
   "inLanguage":"en",
   "url":"%s/lessons/%s"
 }`, template.JSEscapeString(l.Title), template.JSEscapeString(l.Summary), template.JSEscapeString(l.Title), template.JSEscapeString(base), template.JSEscapeString(l.Slug))
-	return template.JS(js)
+
+	breadcrumb := fmt.Sprintf(`{
+  "@context":"https://schema.org",
+  "@type":"BreadcrumbList",
+  "itemListElement":[
+    {"@type":"ListItem","position":1,"name":"Home","item":"%s/"},
+    {"@type":"ListItem","position":2,"name":"Lessons","item":"%s/lessons"},
+    {"@type":"ListItem","position":3,"name":"%s","item":"%s/lessons/%s"}
+  ]
+}`, template.JSEscapeString(base), template.JSEscapeString(base), template.JSEscapeString(l.Title), template.JSEscapeString(base), template.JSEscapeString(l.Slug))
+
+	// Build FAQPage from quiz questions — each question becomes a Q&A pair
+	// that AI answer engines can extract and cite.
+	var faqs []string
+	for _, q := range questions {
+		if q.SectionTag == "review" {
+			continue
+		}
+		prompt := template.JSEscapeString(q.Prompt)
+		// Find the correct answer label
+		var answer string
+		for _, opt := range q.Options {
+			if opt.IsCorrect {
+				answer = template.JSEscapeString(opt.Label)
+				break
+			}
+		}
+		if q.QuestionType == "text" {
+			answer = template.JSEscapeString(q.CorrectKey)
+		}
+		if answer == "" {
+			continue
+		}
+		faqs = append(faqs, fmt.Sprintf(`{"@type":"Question","name":"%s","acceptedAnswer":{"@type":"Answer","text":"%s"}}`, prompt, answer))
+	}
+
+	parts := []string{learningResource, breadcrumb}
+	if len(faqs) > 0 {
+		parts = append(parts, fmt.Sprintf(`{
+  "@context":"https://schema.org",
+  "@type":"FAQPage",
+  "mainEntity":[%s]
+}`, strings.Join(faqs, ",")))
+	}
+
+	return template.JS("[" + strings.Join(parts, ",") + "]")
+}
+
+func lessonsIndexJSONLD(base string, lessons []store.Lesson) template.JS {
+	var items []string
+	for _, l := range lessons {
+		if l.Slug == "" {
+			continue
+		}
+		items = append(items, fmt.Sprintf(`{"@type":"ListItem","position":%d,"name":"%s","url":"%s/lessons/%s"}`,
+			l.SortOrder, template.JSEscapeString(l.Title), template.JSEscapeString(base), template.JSEscapeString(l.Slug)))
+	}
+	if len(items) == 0 {
+		return ""
+	}
+	return template.JS(fmt.Sprintf(`{
+  "@context":"https://schema.org",
+  "@type":"ItemList",
+  "name":"Go Lessons",
+  "description":"Interactive Go programming lessons with quizzes and exercises.",
+  "itemListElement":[%s]
+}`, strings.Join(items, ",")))
+}
+
+func glossaryJSONLD(base string, terms []store.GlossaryTerm) template.JS {
+	var defs []string
+	for _, t := range terms {
+		defs = append(defs, fmt.Sprintf(`{"@type":"DefinedTerm","name":"%s","description":"%s"}`,
+			template.JSEscapeString(t.Term), template.JSEscapeString(t.Definition)))
+	}
+	if len(defs) == 0 {
+		return ""
+	}
+	return template.JS(fmt.Sprintf(`{
+  "@context":"https://schema.org",
+  "@type":"DefinedTermSet",
+  "name":"Go Programming Glossary",
+  "url":"%s/reference",
+  "hasDefinedTerm":[%s]
+}`, template.JSEscapeString(base), strings.Join(defs, ",")))
 }
 
 // Sitemap generates an XML sitemap for search engines.
+// Auth-only pages (/progress, /login, /signup) are excluded to conserve crawl budget.
 func (h *Handler) Sitemap(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/xml; charset=utf-8")
 	base := h.baseURL(r)
@@ -468,10 +582,9 @@ func (h *Handler) Sitemap(w http.ResponseWriter, r *http.Request) {
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>%s/</loc><lastmod>%s</lastmod><changefreq>weekly</changefreq><priority>1.0</priority></url>
   <url><loc>%s/lessons</loc><lastmod>%s</lastmod><changefreq>weekly</changefreq><priority>0.9</priority></url>
-  <url><loc>%s/progress</loc><changefreq>daily</changefreq><priority>0.3</priority></url>
   <url><loc>%s/reference</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
   <url><loc>%s/practice</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
-`, base, today, base, today, base, base, base)
+`, base, today, base, today, base, base)
 	for _, l := range lessons {
 		if l.Slug == "" {
 			continue
@@ -484,10 +597,12 @@ func (h *Handler) Sitemap(w http.ResponseWriter, r *http.Request) {
 `)
 }
 
-// RobotsTXT serves a robots.txt file for search engines.
+// RobotsTXT serves a robots.txt file for search engines and AI crawlers.
+// Explicitly allows AI input (grounding/RAG) via Content-Signal.
 func (h *Handler) RobotsTXT(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	fmt.Fprintln(w, "User-agent: *")
+	fmt.Fprintln(w, "Content-Signal: search=yes, ai-input=yes, ai-train=no")
 	fmt.Fprintln(w, "Allow: /")
 	fmt.Fprintln(w, "")
 	fmt.Fprintln(w, "Sitemap: "+h.baseURL(r)+"/sitemap.xml")

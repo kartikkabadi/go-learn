@@ -3,7 +3,7 @@
     "id": "0006",
     "title": "Slices",
     "slug": "slices",
-    "summary": "Dynamic arrays &mdash; store multiple values of the same type together.",
+    "summary": "Dynamic arrays — store multiple values of the same type together.",
     "sortOrder": 6
   },
   "sections": [
@@ -164,7 +164,7 @@
     },
     {
       "id": "0006:ref2",
-      "title": "A Tour of Go &mdash; Slices",
+      "title": "A Tour of Go — Slices",
       "url": "https://go.dev/tour/moretypes/7",
       "notes": ""
     }

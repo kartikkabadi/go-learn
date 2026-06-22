@@ -10,6 +10,7 @@
   <meta property="og:title" content="{{.Title}}">
   <meta property="og:description" content="{{.Description}}">
   <meta property="og:type" content="article">
+  <meta property="og:image" content="/og-image.svg">
   <meta property="og:url" content="{{.Canonical}}">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="stylesheet" href="/static/theme.css">
@@ -58,6 +59,13 @@
   <p><a href="/practice#{{.ID}}">Submit on Practice page →</a></p>
 </div>
 {{end}}
+{{end}}
+
+{{if or .PrevLesson .NextLesson}}
+<nav class="lesson-nav" aria-label="Lesson navigation">
+{{if .PrevLesson}}<a href="/lessons/{{.PrevLesson.Slug}}" rel="prev">← {{.PrevLesson.Title}}</a>{{else}}<span></span>{{end}}
+{{if .NextLesson}}<a href="/lessons/{{.NextLesson.Slug}}" rel="next">{{.NextLesson.Title}} →</a>{{end}}
+</nav>
 {{end}}
 </main>
 </body>

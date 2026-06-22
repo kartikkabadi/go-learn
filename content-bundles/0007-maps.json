@@ -3,7 +3,7 @@
     "id": "0007",
     "title": "Maps",
     "slug": "maps",
-    "summary": "Key-value pairs &mdash; look up values by a key.",
+    "summary": "Key-value pairs — look up values by a key.",
     "sortOrder": 7
   },
   "sections": [
@@ -130,7 +130,7 @@
     },
     {
       "id": "0007:ref2",
-      "title": "A Tour of Go &mdash; Maps",
+      "title": "A Tour of Go — Maps",
       "url": "https://go.dev/tour/moretypes/11",
       "notes": ""
     }
