@@ -1,0 +1,22 @@
+{
+  "insights": [
+    {
+      "id": "weak-main",
+      "title": "Execution starts in main",
+      "body": "Programs start inside the main function, not at import or package lines.",
+      "kind": "weak_spot"
+    },
+    {
+      "id": "weak-colon-equals",
+      "title": ":= declares a variable",
+      "body": "The := operator creates a variable. It is not func (function definition).",
+      "kind": "weak_spot"
+    },
+    {
+      "id": "weak-println",
+      "title": "Println adds spaces",
+      "body": "fmt.Println separates each argument with a space. Println(\"Score:\", 7) prints Score: 7.",
+      "kind": "weak_spot"
+    }
+  ]
+}

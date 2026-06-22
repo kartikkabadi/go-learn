@@ -1,0 +1,18 @@
+{{define "quiz_choice_partial"}}
+<div class="quiz-options">
+{{if .Question.Answer}}
+  {{range .Question.Options}}
+    <button type="button" disabled class="{{if eq $.Question.Answer.PickedKey .OptionKey}}{{if $.Question.Answer.Correct}}correct{{else}}wrong{{end}}{{else}}{{if .IsCorrect}}correct{{end}}{{end}}">{{.Label}}</button>
+  {{end}}
+  <div class="{{if .Question.Answer.Correct}}feedback ok{{else}}feedback no{{end}}">{{if .Question.Answer.Correct}}Correct.{{else}}Not quite — see highlighted answer.{{end}}</div>
+{{else}}
+  {{range .Question.Options}}
+    <button type="button"
+      hx-post="/lessons/{{$.LessonID}}/questions/{{$.Question.ID}}/answer"
+      hx-vals='{"pickedKey":"{{.OptionKey}}","pickedLabel":"{{.Label}}"}'
+      hx-target="#quiz-body-{{$.Question.ID}}"
+      hx-swap="innerHTML">{{.Label}}</button>
+  {{end}}
+{{end}}
+</div>
+{{end}}

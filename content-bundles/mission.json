@@ -1,0 +1,13 @@
+{
+  "why": "Learn to code so I can build a real side project, automate repetitive tasks in my life or work, and finally understand how software and computers actually work.",
+  "successCriteria": [
+    "I can write and run small Go programs from scratch without hand-holding",
+    "I understand what a program is, what running code means, and how files become output",
+    "I can use Go to solve a small real problem as a capstone"
+  ],
+  "constraints": [
+    "Complete beginner — explain jargon before using it",
+    "Intense pace: ~6+ hours per week",
+    "Solo learning with the agent as teacher"
+  ]
+}

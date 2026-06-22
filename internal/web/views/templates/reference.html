@@ -1,0 +1,43 @@
+{{define "reference.html"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{.Title}}</title>
+  <meta name="description" content="{{.Description}}">
+  {{if .Canonical}}<link rel="canonical" href="{{.Canonical}}">{{end}}
+  <meta property="og:title" content="{{.Title}}">
+  <meta property="og:description" content="{{.Description}}">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="{{.Canonical}}">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="stylesheet" href="/static/theme.css">
+  {{if .JSONLD}}<script type="application/ld+json">{{.JSONLD}}</script>{{end}}
+</head>
+<body>
+{{template "nav" .}}
+<h1>Reference</h1>
+<h2>Glossary</h2>
+<dl>
+{{range .Terms}}
+  <dt><strong>{{.Term}}</strong></dt>
+  <dd>{{.Definition}}</dd>
+{{end}}
+</dl>
+<h2>External resources</h2>
+<table class="data">
+  <thead><tr><th>Title</th><th>Notes</th><th>Lesson</th></tr></thead>
+  <tbody>
+  {{range .References}}
+    <tr>
+      <td><a href="{{.URL}}">{{.Title}}</a></td>
+      <td>{{.Notes}}</td>
+      <td>{{if .LessonID}}{{.LessonID}}{{else}}—{{end}}</td>
+    </tr>
+  {{end}}
+  </tbody>
+</table>
+</body>
+</html>
+{{end}}

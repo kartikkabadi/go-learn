@@ -1,0 +1,60 @@
+{{define "dashboard.html"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{.Title}}</title>
+  <meta name="description" content="{{.Description}}">
+  {{if .Canonical}}<link rel="canonical" href="{{.Canonical}}">{{end}}
+  <meta property="og:title" content="{{.Title}}">
+  <meta property="og:description" content="{{.Description}}">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="{{.Canonical}}">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="stylesheet" href="/static/theme.css">
+  <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+  {{if .JSONLD}}<script type="application/ld+json">{{.JSONLD}}</script>{{end}}
+</head>
+<body>
+{{template "nav" .}}
+<h1>go-learn</h1>
+<p class="muted">Your Go learning workspace</p>
+
+{{if .Data.NextLesson}}
+<div class="next-action">
+  <strong>Continue:</strong>
+  <a href="/lessons/{{.Data.NextLesson.Slug}}">Lesson {{.Data.NextLesson.LessonID}} — {{.Data.NextLesson.Title}}</a>
+</div>
+{{end}}
+
+<div class="stat-row">
+  <div class="stat"><strong>{{.Data.Stats.QuestionsAnswered}}</strong><span>questions answered</span></div>
+  <div class="stat"><strong>{{.Data.Stats.QuestionsCorrect}}</strong><span>correct</span></div>
+  <div class="stat"><strong>{{accuracy .Data.Stats.QuestionsCorrect .Data.Stats.QuestionsAnswered}}%</strong><span>accuracy</span></div>
+  <div class="stat"><strong>{{.Data.Stats.ExercisesSubmitted}}/{{.Data.Stats.ExercisesTotal}}</strong><span>exercises done</span></div>
+</div>
+
+{{if .Data.Mission}}
+<h2>Mission</h2>
+<div class="card"><p>{{.Data.Mission.Why}}</p></div>
+{{end}}
+
+<h2>Lessons</h2>
+{{range .Data.Lessons}}
+<div class="card">
+  <a href="/lessons/{{.Slug}}"><strong>Lesson {{.LessonID}}</strong> — {{.Title}}</a>
+  <div class="progress-bar"><span style="width: {{percent (lessonDone .QuestionsAnswered .ExercisesDone) (lessonTotal .QuestionsTotal .ExerciseTotal)}}%"></span></div>
+  <p class="muted">Quiz: {{.QuestionsAnswered}}/{{.QuestionsTotal}} · Exercises: {{.ExercisesDone}}/{{.ExerciseTotal}}</p>
+</div>
+{{end}}
+
+{{if .Data.WeakSpots}}
+<h2>Weak spots</h2>
+{{range .Data.WeakSpots}}
+<div class="card review"><strong>{{.Title}}</strong><p>{{.Body}}</p></div>
+{{end}}
+{{end}}
+</body>
+</html>
+{{end}}

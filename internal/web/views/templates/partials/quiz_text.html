@@ -1,0 +1,13 @@
+{{define "quiz_text_partial"}}
+{{if .Question.Answer}}
+  <p><code>{{.Question.Answer.PickedLabel}}</code></p>
+  <div class="{{if .Question.Answer.Correct}}result ok{{else}}result no{{end}}">{{if .Question.Answer.Correct}}Correct.{{else}}Not quite — answer is: {{.Question.CorrectKey}}{{end}}</div>
+{{else}}
+  <form hx-post="/lessons/{{.LessonID}}/questions/{{.Question.ID}}/answer"
+        hx-target="#quiz-body-{{.Question.ID}}" hx-swap="innerHTML">
+    <input type="text" name="pickedKey" placeholder="type your answer" required>
+    <input type="hidden" name="pickedLabel" value="">
+    <button class="btn" type="submit">Check</button>
+  </form>
+{{end}}
+{{end}}

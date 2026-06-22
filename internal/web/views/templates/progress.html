@@ -1,0 +1,40 @@
+{{define "progress.html"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{.Title}}</title>
+  <meta name="description" content="{{.Description}}">
+  {{if .Canonical}}<link rel="canonical" href="{{.Canonical}}">{{end}}
+  <meta property="og:title" content="{{.Title}}">
+  <meta property="og:description" content="{{.Description}}">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="{{.Canonical}}">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="stylesheet" href="/static/theme.css">
+  {{if .JSONLD}}<script type="application/ld+json">{{.JSONLD}}</script>{{end}}
+</head>
+<body>
+{{template "nav" .}}
+<h1>Progress</h1>
+{{if not .Answers}}
+<p class="muted">No answers yet.</p>
+{{else}}
+<table class="data">
+  <thead><tr><th>Lesson</th><th>Question</th><th>Your answer</th><th>Result</th></tr></thead>
+  <tbody>
+  {{range .Answers}}
+    <tr>
+      <td>{{.LessonID}}</td>
+      <td>{{.Prompt}}</td>
+      <td>{{.PickedLabel}}</td>
+      <td class="{{if .Correct}}ok{{else}}bad{{end}}">{{if .Correct}}Correct{{else}}Wrong — {{.CorrectLabel}}{{end}}</td>
+    </tr>
+  {{end}}
+  </tbody>
+</table>
+{{end}}
+</body>
+</html>
+{{end}}

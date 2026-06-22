@@ -1,0 +1,57 @@
+{{define "lesson_show.html"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{.Title}}</title>
+  <meta name="description" content="{{.Description}}">
+  {{if .Canonical}}<link rel="canonical" href="{{.Canonical}}">{{end}}
+  <meta property="og:title" content="{{.Title}}">
+  <meta property="og:description" content="{{.Description}}">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="{{.Canonical}}">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="stylesheet" href="/static/theme.css">
+  <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+  {{if .JSONLD}}<script type="application/ld+json">{{.JSONLD}}</script>{{end}}
+</head>
+<body>
+{{template "nav" .}}
+<p class="muted"><a href="/lessons">← Lessons</a></p>
+<h1>Lesson {{.Lesson.ID}} — {{.Lesson.Title}}</h1>
+<p class="muted">{{.Lesson.Summary}}</p>
+
+{{range .Sections}}
+<h2>{{.Heading}}</h2>
+<div>{{.BodyHTML}}</div>
+{{end}}
+
+{{range .QuestionViews}}
+<div class="quiz-block {{if .Review}}review{{end}}" id="quiz-{{.Question.ID}}">
+  {{if .Review}}<h3>Review</h3>{{else if eq .Question.QuestionType "text"}}<h3>Predict</h3>{{else}}<h3>Question</h3>{{end}}
+  <p>{{.Question.Prompt}}</p>
+  <div id="quiz-body-{{.Question.ID}}">
+    {{if eq .Question.QuestionType "text"}}
+      {{template "quiz_text_partial" .}}
+    {{else}}
+      {{template "quiz_choice_partial" .}}
+    {{end}}
+  </div>
+</div>
+{{end}}
+
+{{if .Exercises}}
+<h2>Practice</h2>
+{{range .Exercises}}
+<div class="checkpoint">
+  <strong>{{.Title}}</strong>
+  <p>{{.Instructions}}</p>
+  <p><code>{{.Path}}</code>{{if .Submitted}} — submitted{{else}} — not yet submitted{{end}}</p>
+  <p><a href="/practice#{{.ID}}">Submit on Practice page →</a></p>
+</div>
+{{end}}
+{{end}}
+</body>
+</html>
+{{end}}

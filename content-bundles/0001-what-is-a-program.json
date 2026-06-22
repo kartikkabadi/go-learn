@@ -1,0 +1,98 @@
+{
+  "lesson": {
+    "id": "0001",
+    "title": "What Is a Program?",
+    "slug": "what-is-a-program",
+    "summary": "Understand what a program is and run your first Go program.",
+    "sortOrder": 1
+  },
+  "sections": [
+    {
+      "id": "0001:s1",
+      "heading": "Computers are obedient, not clever",
+      "bodyHtml": "<p>A computer does not understand your goals. It only does what you tell it, one instruction at a time.</p><p>A program is a precise recipe the machine follows. That is <strong>programming</strong>.</p>",
+      "sortOrder": 1
+    },
+    {
+      "id": "0001:s2",
+      "heading": "Where Go fits in",
+      "bodyHtml": "<p>You write Go <strong>source code</strong> in <code>.go</code> files. The <strong>Go compiler</strong> translates your text into instructions the machine runs.</p><pre><code>You write main.go → go run → output on screen</code></pre>",
+      "sortOrder": 2
+    },
+    {
+      "id": "0001:s3",
+      "heading": "Run your first program",
+      "bodyHtml": "<pre><code>cd practice/hello\ngo run .</code></pre><p>You should see <code>Hello, world!</code> — that is <strong>output</strong>.</p>",
+      "sortOrder": 3
+    },
+    {
+      "id": "0001:s4",
+      "heading": "Read the code",
+      "bodyHtml": "<pre><code>package main\n\nimport \"fmt\"\n\nfunc main() {\n    fmt.Println(\"Hello, world!\")\n}</code></pre><ul><li><code>package main</code> — runnable program</li><li><code>import \"fmt\"</code> — printing library</li><li><code>func main()</code> — execution starts here</li></ul>",
+      "sortOrder": 4
+    }
+  ],
+  "questions": [
+    {
+      "id": "0001:q1",
+      "prompt": "A program is best described as:",
+      "correctKey": "b",
+      "questionType": "choice",
+      "sectionTag": "quiz",
+      "sortOrder": 1,
+      "options": [
+        {"key": "a", "label": "A physical computer part", "isCorrect": false, "sortOrder": 1},
+        {"key": "b", "label": "Precise instructions for CPU", "isCorrect": true, "sortOrder": 2},
+        {"key": "c", "label": "A kind of computer virus", "isCorrect": false, "sortOrder": 3}
+      ]
+    },
+    {
+      "id": "0001:q2",
+      "prompt": "What does go run . do?",
+      "correctKey": "c",
+      "questionType": "choice",
+      "sectionTag": "quiz",
+      "sortOrder": 2,
+      "options": [
+        {"key": "a", "label": "Deletes your source code", "isCorrect": false, "sortOrder": 1},
+        {"key": "b", "label": "Installs Go from internet", "isCorrect": false, "sortOrder": 2},
+        {"key": "c", "label": "Runs program in folder", "isCorrect": true, "sortOrder": 3}
+      ]
+    },
+    {
+      "id": "0001:q3",
+      "prompt": "Where does a Go program start executing?",
+      "correctKey": "a",
+      "questionType": "choice",
+      "sectionTag": "quiz",
+      "sortOrder": 3,
+      "options": [
+        {"key": "a", "label": "Inside the main function", "isCorrect": true, "sortOrder": 1},
+        {"key": "b", "label": "At the import statement", "isCorrect": false, "sortOrder": 2},
+        {"key": "c", "label": "At the package line", "isCorrect": false, "sortOrder": 3}
+      ]
+    }
+  ],
+  "exercises": [
+    {
+      "id": "0001:ex1",
+      "title": "Hello, world",
+      "path": "practice/hello",
+      "instructions": "Run go run . and confirm you see Hello, world!",
+      "sortOrder": 1
+    }
+  ],
+  "references": [
+    {
+      "id": "0001:ref1",
+      "title": "Get started with Go",
+      "url": "https://go.dev/doc/tutorial/getting-started",
+      "notes": "Official Hello World tutorial"
+    }
+  ],
+  "answers": [
+    {"questionId": "0001:q1", "pickedKey": "b", "pickedLabel": "Precise instructions for CPU"},
+    {"questionId": "0001:q2", "pickedKey": "c", "pickedLabel": "Runs program in folder"},
+    {"questionId": "0001:q3", "pickedKey": "b", "pickedLabel": "At the import statement"}
+  ]
+}

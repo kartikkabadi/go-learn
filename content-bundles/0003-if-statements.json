@@ -1,0 +1,110 @@
+{
+  "lesson": {
+    "id": "0003",
+    "title": "Decisions with if",
+    "slug": "if-statements",
+    "summary": "Make your program branch based on conditions.",
+    "sortOrder": 3
+  },
+  "sections": [
+    {
+      "id": "0003:s1",
+      "heading": "Programs that branch",
+      "bodyHtml": "<p>An <code>if</code> statement <strong>skips</strong> some lines depending on a condition.</p><pre><code>if temperature > 25 {\n    fmt.Println(\"It is hot.\")\n} else {\n    fmt.Println(\"It is cool.\")\n}</code></pre>",
+      "sortOrder": 1
+    },
+    {
+      "id": "0003:s2",
+      "heading": "Comparisons",
+      "bodyHtml": "<p>Use <code>==</code> to compare (not <code>=</code>). Common operators: <code>!=</code> <code>&gt;</code> <code>&lt;</code> <code>&gt;=</code> <code>&lt;=</code></p>",
+      "sortOrder": 2
+    },
+    {
+      "id": "0003:s3",
+      "heading": "Your turn",
+      "bodyHtml": "<p>Open <code>practice/decisions/main.go</code>. Add an if/else: print <code>You are an adult.</code> when <code>age &gt;= 18</code>, else <code>You are a minor.</code></p>",
+      "sortOrder": 3
+    }
+  ],
+  "questions": [
+    {
+      "id": "0003:review-1",
+      "prompt": "Where does a Go program start executing?",
+      "correctKey": "main",
+      "questionType": "choice",
+      "sectionTag": "review",
+      "sortOrder": 1,
+      "options": [
+        {"key": "import", "label": "At the import statement", "isCorrect": false, "sortOrder": 1},
+        {"key": "main", "label": "Inside the main function", "isCorrect": true, "sortOrder": 2},
+        {"key": "package", "label": "At the package line", "isCorrect": false, "sortOrder": 3}
+      ]
+    },
+    {
+      "id": "0003:review-2",
+      "prompt": "What does count := 5 do?",
+      "correctKey": "var",
+      "questionType": "choice",
+      "sectionTag": "review",
+      "sortOrder": 2,
+      "options": [
+        {"key": "var", "label": "Creates int named count", "isCorrect": true, "sortOrder": 1},
+        {"key": "func", "label": "Defines function named count", "isCorrect": false, "sortOrder": 2},
+        {"key": "import", "label": "Imports package named count", "isCorrect": false, "sortOrder": 3}
+      ]
+    },
+    {
+      "id": "0003:predict-1",
+      "prompt": "Exactly what prints? (x := 10; if x > 5 { fmt.Println(\"big\") })",
+      "correctKey": "big",
+      "questionType": "text",
+      "sectionTag": "predict",
+      "sortOrder": 3,
+      "options": []
+    },
+    {
+      "id": "0003:quiz-1",
+      "prompt": "Which condition checks if score equals 100?",
+      "correctKey": "eq",
+      "questionType": "choice",
+      "sectionTag": "quiz",
+      "sortOrder": 4,
+      "options": [
+        {"key": "assign", "label": "if score = 100", "isCorrect": false, "sortOrder": 1},
+        {"key": "eq", "label": "if score == 100", "isCorrect": true, "sortOrder": 2},
+        {"key": "declare", "label": "if score := 100", "isCorrect": false, "sortOrder": 3}
+      ]
+    },
+    {
+      "id": "0003:quiz-2",
+      "prompt": "learningGo := true then if learningGo { ... } — does the if-block run?",
+      "correctKey": "yes",
+      "questionType": "choice",
+      "sectionTag": "quiz",
+      "sortOrder": 5,
+      "options": [
+        {"key": "yes", "label": "Yes, the block runs", "isCorrect": true, "sortOrder": 1},
+        {"key": "no", "label": "No, it is skipped", "isCorrect": false, "sortOrder": 2},
+        {"key": "age", "label": "Only if age is 18", "isCorrect": false, "sortOrder": 3}
+      ]
+    }
+  ],
+  "exercises": [
+    {
+      "id": "0003:ex1",
+      "title": "Age decision",
+      "path": "practice/decisions",
+      "instructions": "Write if/else for age >= 18. Run with age 15 and age 20, paste both outputs.",
+      "sortOrder": 1
+    }
+  ],
+  "references": [
+    {
+      "id": "0003:ref1",
+      "title": "A Tour of Go — If and else",
+      "url": "https://go.dev/tour/flowcontrol/1",
+      "notes": "Official if/else section"
+    }
+  ],
+  "answers": []
+}

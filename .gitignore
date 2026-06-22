@@ -1,0 +1,22 @@
+# Built binaries
+bin/
+server
+
+# Database (local copy - schema is in migrations, content comes from bundles)
+progress/go-learn.db
+*.db
+
+# Development artifacts (codegraph, cursor, omo state)
+.codegraph
+.cursor
+.omo
+
+# Learning records (contains PII; scrub before push)
+learning-records/
+
+# Environment
+.env
+.env.local
+
+# OS
+.DS_Store

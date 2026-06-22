@@ -1,0 +1,7 @@
+{{define "quiz_answer_partial"}}
+{{if eq .Question.QuestionType "text"}}
+  {{template "quiz_text_partial" .}}
+{{else}}
+  {{template "quiz_choice_partial" .}}
+{{end}}
+{{end}}

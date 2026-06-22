@@ -1,0 +1,92 @@
+{
+  "lesson": {
+    "id": "0002",
+    "title": "Variables & Printing",
+    "slug": "variables-and-printing",
+    "summary": "Store data in variables and print it with fmt.Println.",
+    "sortOrder": 2
+  },
+  "sections": [
+    {
+      "id": "0002:s1",
+      "heading": "Variables are named boxes",
+      "bodyHtml": "<pre><code>name := \"Alex\"</code></pre><p>The <code>:=</code> symbol means declare and assign — you will use it constantly.</p>",
+      "sortOrder": 1
+    },
+    {
+      "id": "0002:s2",
+      "heading": "Types",
+      "bodyHtml": "<pre><code>name := \"Alex\"   // string\nage  := 25       // int\ndone := false    // bool</code></pre>",
+      "sortOrder": 2
+    },
+    {
+      "id": "0002:s3",
+      "heading": "Printing variables",
+      "bodyHtml": "<pre><code>fmt.Println(\"Name:\", name)\nfmt.Println(name, age)</code></pre><p>Println prints each argument separated by spaces.</p>",
+      "sortOrder": 3
+    }
+  ],
+  "questions": [
+    {
+      "id": "0002:q1",
+      "prompt": "What does price := 9 do?",
+      "correctKey": "a",
+      "questionType": "choice",
+      "sectionTag": "quiz",
+      "sortOrder": 1,
+      "options": [
+        {"key": "a", "label": "Creates int named price", "isCorrect": true, "sortOrder": 1},
+        {"key": "b", "label": "Imports package named price", "isCorrect": false, "sortOrder": 2},
+        {"key": "c", "label": "Defines function named price", "isCorrect": false, "sortOrder": 3}
+      ]
+    },
+    {
+      "id": "0002:q2",
+      "prompt": "What type is \"hello\"?",
+      "correctKey": "b",
+      "questionType": "choice",
+      "sectionTag": "quiz",
+      "sortOrder": 2,
+      "options": [
+        {"key": "a", "label": "It is an integer type", "isCorrect": false, "sortOrder": 1},
+        {"key": "b", "label": "It is a string type", "isCorrect": true, "sortOrder": 2},
+        {"key": "c", "label": "It is a boolean type", "isCorrect": false, "sortOrder": 3}
+      ]
+    },
+    {
+      "id": "0002:q3",
+      "prompt": "What does fmt.Println(\"Score:\", 7) print?",
+      "correctKey": "c",
+      "questionType": "choice",
+      "sectionTag": "quiz",
+      "sortOrder": 3,
+      "options": [
+        {"key": "a", "label": "Score:7 with no space", "isCorrect": false, "sortOrder": 1},
+        {"key": "b", "label": "Only the number seven", "isCorrect": false, "sortOrder": 2},
+        {"key": "c", "label": "Score: then space 7", "isCorrect": true, "sortOrder": 3}
+      ]
+    }
+  ],
+  "exercises": [
+    {
+      "id": "0002:ex1",
+      "title": "Your variables",
+      "path": "practice/variables",
+      "instructions": "Change name and age, add learningGo bool, run go run .",
+      "sortOrder": 1
+    }
+  ],
+  "references": [
+    {
+      "id": "0002:ref1",
+      "title": "A Tour of Go — Variables",
+      "url": "https://go.dev/tour/basics/8",
+      "notes": "Official interactive variables section"
+    }
+  ],
+  "answers": [
+    {"questionId": "0002:q1", "pickedKey": "c", "pickedLabel": "Defines function named price"},
+    {"questionId": "0002:q2", "pickedKey": "b", "pickedLabel": "It is a string type"},
+    {"questionId": "0002:q3", "pickedKey": "a", "pickedLabel": "Score:7 with no space"}
+  ]
+}

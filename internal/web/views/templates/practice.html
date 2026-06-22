@@ -1,0 +1,39 @@
+{{define "practice.html"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{.Title}}</title>
+  <meta name="description" content="{{.Description}}">
+  {{if .Canonical}}<link rel="canonical" href="{{.Canonical}}">{{end}}
+  <meta property="og:title" content="{{.Title}}">
+  <meta property="og:description" content="{{.Description}}">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="{{.Canonical}}">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="stylesheet" href="/static/theme.css">
+  <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+  {{if .JSONLD}}<script type="application/ld+json">{{.JSONLD}}</script>{{end}}
+</head>
+<body>
+{{template "nav" .}}
+<h1>Practice</h1>
+<p class="muted">Run exercises in your terminal, then paste the output here.</p>
+{{range .Exercises}}
+<div class="card" id="{{.ID}}">
+  <h2>{{.Title}} <span class="muted">(Lesson {{.LessonID}})</span></h2>
+  <p>{{.Instructions}}</p>
+  <p><code>cd {{.Path}} && go run .</code></p>
+  {{if .Submitted}}<p class="ok">Submitted</p><pre>{{.Output}}</pre>{{end}}
+  <form hx-post="/practice/{{.ID}}/submit" hx-target="#submit-result-{{.ID}}" hx-swap="innerHTML">
+    <label>Paste terminal output:</label>
+    <textarea name="output" rows="4">{{.Output}}</textarea>
+    <button class="btn" type="submit">Save submission</button>
+  </form>
+  <div id="submit-result-{{.ID}}"></div>
+</div>
+{{end}}
+</body>
+</html>
+{{end}}
