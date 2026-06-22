@@ -4,5 +4,5 @@ package staticassets
 
 import "embed"
 
-//go:embed theme.css
+//go:embed theme.css htmx.min.js og-image.svg
 var FS embed.FS
