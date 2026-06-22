@@ -20,3 +20,12 @@ learning-records/
 
 # OS
 .DS_Store
+
+# Wrangler/Workers artifacts
+.wrangler/
+build/app.wasm
+build/worker.wasm
+build/*.wasm
+package.json
+package-lock.json
+node_modules/

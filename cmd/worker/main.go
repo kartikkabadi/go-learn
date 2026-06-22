@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/kartikkabadi/go-learn/internal/service"
 	"github.com/kartikkabadi/go-learn/internal/web/handlers"
@@ -50,7 +51,25 @@ func main() {
 	mux.HandleFunc("GET /sitemap.xml", web.Sitemap)
 	mux.HandleFunc("GET /robots.txt", web.RobotsTXT)
 
+	// Middleware stack
+	rateLimiter := middleware.NewRateLimiter(10, 30*time.Second)
+	go func() {
+		ticker := time.NewTicker(5 * time.Minute)
+		for range ticker.C {
+			rateLimiter.Cleanup()
+		}
+	}()
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
-	handler := middleware.Recovery(middleware.Logger(logger, mux))
+	handler := middleware.Recovery(
+		rateLimiter.Limit(
+			middleware.SecurityHeaders(
+				middleware.ValidateOrigin(
+					middleware.BodySizeLimit(1<<20)(
+						middleware.Logger(logger, mux),
+					),
+				),
+			),
+		),
+	)
 	workers.Serve(handler)
 }

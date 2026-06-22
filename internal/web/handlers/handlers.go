@@ -192,10 +192,15 @@ func (h *Handler) AnswerQuestion(w http.ResponseWriter, r *http.Request) {
 		badRequest(w, "pickedKey required")
 		return
 	}
+	if len(pickedKey) > 200 || len(pickedLabel) > 500 {
+		badRequest(w, "value too long")
+		return
+	}
 
 	answer, err := h.Store.SaveAnswer(questionID, pickedKey, pickedLabel)
 	if err != nil {
-		badRequest(w, err.Error())
+		slog.Error("save answer", "questionId", questionID, "error", err)
+		http.Error(w, "invalid answer", http.StatusBadRequest)
 		return
 	}
 
@@ -299,6 +304,10 @@ func (h *Handler) SubmitExercise(w http.ResponseWriter, r *http.Request) {
 		badRequest(w, "output required")
 		return
 	}
+	if len(output) > 100000 {
+		badRequest(w, "output too long")
+		return
+	}
 	if err := h.Store.SaveExerciseSubmission(id, output); err != nil {
 		internalError(w, "submit exercise", err)
 		return
@@ -312,14 +321,6 @@ func baseURL(r *http.Request) string {
 	return "https://" + r.Host
 }
 
-func baseURL_old(r *http.Request) string {
-	scheme := "http"
-	if r.TLS != nil {
-		scheme = "https"
-	}
-	return scheme + "://" + r.Host
-}
-
 func courseJSONLD(s store.Store) template.JS {
 	lessons, err := s.ListLessons()
 	if err != nil {
@@ -327,7 +328,8 @@ func courseJSONLD(s store.Store) template.JS {
 	}
 	var itemList []string
 	for _, l := range lessons {
-		itemList = append(itemList, fmt.Sprintf(`{"@type":"ListItem","position":%d,"item":"https://go-learn.example.com/lessons/%s"}`, l.SortOrder, l.Slug))
+		slug := template.JSEscapeString(l.Slug)
+		itemList = append(itemList, fmt.Sprintf(`{"@type":"ListItem","position":%d,"item":"https://go-learn.example.com/lessons/%s"}`, l.SortOrder, slug))
 	}
 	items := strings.Join(itemList, ",")
 	js := fmt.Sprintf(`{

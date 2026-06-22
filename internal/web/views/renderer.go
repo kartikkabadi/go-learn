@@ -4,6 +4,7 @@ import (
 	"embed"
 	"html/template"
 	"io"
+	"log/slog"
 	"net/http"
 )
 
@@ -56,7 +57,8 @@ func New() (*Renderer, error) {
 func (r *Renderer) Render(w http.ResponseWriter, name string, data any) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	if err := r.templates.ExecuteTemplate(w, name, data); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		slog.Error("render template", "name", name, "error", err)
+		http.Error(w, "internal error", http.StatusInternalServerError)
 	}
 }
 

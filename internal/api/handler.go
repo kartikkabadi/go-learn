@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 
 	"github.com/kartikkabadi/go-learn/internal/store"
@@ -28,9 +29,14 @@ func (h *Handler) SaveAnswer(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid json", http.StatusBadRequest)
 		return
 	}
+	if req.QuestionID == "" || req.PickedKey == "" {
+		http.Error(w, "questionId and pickedKey required", http.StatusBadRequest)
+		return
+	}
 	answer, err := h.Store.SaveAnswer(req.QuestionID, req.PickedKey, req.PickedLabel)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		slog.Error("save answer", "questionId", req.QuestionID, "error", err)
+		http.Error(w, "invalid answer", http.StatusBadRequest)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -42,7 +48,8 @@ func (h *Handler) ListAnswers(w http.ResponseWriter, r *http.Request) {
 	if lessonID != "" {
 		answers, err := h.Store.ListAnswersByLesson(lessonID)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			slog.Error("list answers by lesson", "lessonId", lessonID, "error", err)
+			http.Error(w, "internal error", http.StatusInternalServerError)
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
@@ -51,7 +58,8 @@ func (h *Handler) ListAnswers(w http.ResponseWriter, r *http.Request) {
 	}
 	answers, err := h.Store.ListAnswers()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		slog.Error("list answers", "error", err)
+		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
 	}
 	if answers == nil {
@@ -65,7 +73,8 @@ func (h *Handler) GetAnswer(w http.ResponseWriter, r *http.Request) {
 	questionID := r.PathValue("questionId")
 	answer, err := h.Store.GetAnswer(questionID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		slog.Error("get answer", "questionId", questionID, "error", err)
+		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
 	}
 	if answer == nil {
