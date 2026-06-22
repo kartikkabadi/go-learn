@@ -5,13 +5,13 @@ package d1store
 import (
 	"database/sql"
 	"fmt"
-	"sync"
 
 	"github.com/kartikkabadi/go-learn/internal/store"
 )
 
 // contentCache holds all static lesson content in memory.
-// On Cloudflare Workers, this persists for the lifetime of the isolate,
+// On Cloudflare Workers, this persists for the lifetime of the Store
+// (created once in main(), reused across requests on the same isolate),
 // eliminating D1 round-trips for content that only changes on deploy.
 type contentCache struct {
 	lessons       []store.Lesson
@@ -28,25 +28,16 @@ type contentCache struct {
 	mission       *store.Mission
 }
 
-type cacheState struct {
-	data    *contentCache
-	loadErr error
-}
-
-var (
-	cacheMu   sync.Mutex
-	cacheOnce cacheState
-)
-
-// loadCache loads all static content from D1 into memory. Called once per isolate.
+// loadCache returns the cached static content, loading it from D1 on first call.
+// The cache lives on the Store struct, which persists for the isolate's lifetime.
 func (s *Store) loadCache() (*contentCache, error) {
-	cacheMu.Lock()
-	defer cacheMu.Unlock()
-	if cacheOnce.data != nil {
-		return cacheOnce.data, nil
+	s.cacheMu.Lock()
+	defer s.cacheMu.Unlock()
+	if s.cache != nil {
+		return s.cache, nil
 	}
-	if cacheOnce.loadErr != nil {
-		return nil, cacheOnce.loadErr
+	if s.cacheErr != nil {
+		return nil, s.cacheErr
 	}
 
 	c := &contentCache{
@@ -59,39 +50,39 @@ func (s *Store) loadCache() (*contentCache, error) {
 	}
 
 	if err := s.loadLessons(c); err != nil {
-		cacheOnce.loadErr = err
+		s.cacheErr = err
 		return nil, err
 	}
 	if err := s.loadSections(c); err != nil {
-		cacheOnce.loadErr = err
+		s.cacheErr = err
 		return nil, err
 	}
 	if err := s.loadQuestions(c); err != nil {
-		cacheOnce.loadErr = err
+		s.cacheErr = err
 		return nil, err
 	}
 	if err := s.loadExercises(c); err != nil {
-		cacheOnce.loadErr = err
+		s.cacheErr = err
 		return nil, err
 	}
 	if err := s.loadGlossary(c); err != nil {
-		cacheOnce.loadErr = err
+		s.cacheErr = err
 		return nil, err
 	}
 	if err := s.loadReferences(c); err != nil {
-		cacheOnce.loadErr = err
+		s.cacheErr = err
 		return nil, err
 	}
 	if err := s.loadInsights(c); err != nil {
-		cacheOnce.loadErr = err
+		s.cacheErr = err
 		return nil, err
 	}
 	if err := s.loadMission(c); err != nil {
-		cacheOnce.loadErr = err
+		s.cacheErr = err
 		return nil, err
 	}
 
-	cacheOnce.data = c
+	s.cache = c
 	return c, nil
 }
 

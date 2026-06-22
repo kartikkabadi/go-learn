@@ -9,6 +9,7 @@ import (
 	"database/sql"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/kartikkabadi/go-learn/internal/store"
@@ -22,7 +23,10 @@ var _ store.Store = (*Store)(nil)
 // Static content is cached in memory after first load (see cache.go),
 // eliminating D1 round-trips for content that only changes on deploy.
 type Store struct {
-	db *sql.DB
+	db      *sql.DB
+	cacheMu sync.Mutex
+	cache   *contentCache
+	cacheErr error
 }
 
 // Open opens a D1-backed store. dbName is the D1 binding name from wrangler.jsonc.
