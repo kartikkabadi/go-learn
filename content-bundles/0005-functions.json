@@ -1,0 +1,139 @@
+{
+  "lesson": {
+    "id": "0005",
+    "title": "Functions",
+    "slug": "functions",
+    "summary": "Write reusable blocks of code with functions.",
+    "sortOrder": 5
+  },
+  "sections": [
+    {
+      "id": "0005:s1",
+      "heading": "Defining a function",
+      "bodyHtml": "<p>A <strong>function</strong> is a reusable block of code. You give it a name and call it by that name.</p><pre><code>func greet(name string) {\n    fmt.Println(\"Hello,\", name)\n}</code></pre><p><code>name string</code> is a <strong>parameter</strong> — data you pass in.</p><p>Call it:</p><pre><code>greet(\"Alice\")\ngreet(\"Bob\")</code></pre><p>You have been using functions already: <code>fmt.Println</code> is a function.</p>",
+      "sortOrder": 1
+    },
+    {
+      "id": "0005:s2",
+      "heading": "Return values",
+      "bodyHtml": "<p>A function can send a value back with <code>return</code>.</p><pre><code>func add(a, b int) int {\n    return a + b\n}</code></pre><p>The <code>int</code> before <code>{</code> is the <strong>return type</strong>.</p><p>Use the result:</p><pre><code>sum := add(3, 7)\nfmt.Println(sum)   // 10</code></pre><p>Go functions can return <strong>multiple values</strong>:</p><pre><code>func divide(a, b int) (int, int) {\n    return a / b, a % b\n}</code></pre><p>Call with two variables:</p><pre><code>quotient, remainder := divide(10, 3)</code></pre>",
+      "sortOrder": 2
+    },
+    {
+      "id": "0005:s3",
+      "heading": "Your turn",
+      "bodyHtml": "<p>Open <code>practice/functions/main.go</code>. Write a function <code>double(n int) int</code> that returns <code>n * 2</code>. Then call it with a few numbers and print the results.</p>",
+      "sortOrder": 3
+    }
+  ],
+  "questions": [
+    {
+      "id": "0005:quiz-1",
+      "prompt": "How do you define a function named <code>double</code> that takes an <code>int</code> and returns an <code>int</code>?",
+      "correctKey": "func",
+      "questionType": "choice",
+      "sectionTag": "quiz",
+      "sortOrder": 1,
+      "options": [
+        {
+          "key": "func",
+          "label": "func double(x int) int { ... }",
+          "isCorrect": true,
+          "sortOrder": 1
+        },
+        {
+          "key": "let",
+          "label": "let double(x int) = int { ... }",
+          "isCorrect": false,
+          "sortOrder": 2
+        },
+        {
+          "key": "def",
+          "label": "def double(x int) -> int { ... }",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "0005:quiz-2",
+      "prompt": "What does <code>return</code> do inside a function?",
+      "correctKey": "send",
+      "questionType": "choice",
+      "sectionTag": "quiz",
+      "sortOrder": 2,
+      "options": [
+        {
+          "key": "send",
+          "label": "Sends a value back to the caller and exits",
+          "isCorrect": true,
+          "sortOrder": 1
+        },
+        {
+          "key": "print",
+          "label": "Prints a value to the screen",
+          "isCorrect": false,
+          "sortOrder": 2
+        },
+        {
+          "key": "loop",
+          "label": "Repeats the function body",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "0005:quiz-3",
+      "prompt": "Can a Go function return multiple values?",
+      "correctKey": "yes",
+      "questionType": "choice",
+      "sectionTag": "quiz",
+      "sortOrder": 3,
+      "options": [
+        {
+          "key": "yes",
+          "label": "Yes, by listing types in parentheses",
+          "isCorrect": true,
+          "sortOrder": 1
+        },
+        {
+          "key": "no",
+          "label": "No, Go only allows one return value",
+          "isCorrect": false,
+          "sortOrder": 2
+        },
+        {
+          "key": "maybe",
+          "label": "Only if you use a slice",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
+      ]
+    }
+  ],
+  "exercises": [
+    {
+      "id": "0005:ex1",
+      "title": "Double function",
+      "path": "practice/functions",
+      "instructions": "Write a function double(n int) int that returns n * 2. Call it with 3, 7, and 21, and print each result.",
+      "sortOrder": 1
+    }
+  ],
+  "references": [
+    {
+      "id": "0005:ref1",
+      "title": "A Tour of Go — Functions",
+      "url": "https://go.dev/tour/basics/4",
+      "notes": "Official interactive functions section"
+    },
+    {
+      "id": "0005:ref2",
+      "title": "Go by Example: Functions",
+      "url": "https://gobyexample.com/functions",
+      "notes": "Function examples with multiple returns"
+    }
+  ],
+  "answers": []
+}

@@ -1,0 +1,16 @@
+name = "go-learn"
+main = "build/worker.mjs"
+compatibility_date = "2026-06-22"
+
+# $5 Workers Paid plan
+workers_dev = true
+
+# D1 database binding
+[[d1_databases]]
+binding = "DB"
+database_name = "go-learn-db"
+database_id = ""
+
+# Environment variables
+[vars]
+D1_DB_NAME = "go-learn-db"

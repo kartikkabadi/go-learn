@@ -1,0 +1,173 @@
+{
+  "lesson": {
+    "id": "0004",
+    "title": "Loops",
+    "slug": "loops",
+    "summary": "Repeat code with for loops — Go's only loop keyword.",
+    "sortOrder": 4
+  },
+  "sections": [
+    {
+      "id": "0004:s1",
+      "heading": "The for loop",
+      "bodyHtml": "<p>A <strong>loop</strong> repeats code.</p><p>Go has one loop keyword: <code>for</code>.</p><pre><code>for i := 0; i &lt; 5; i++ {\n    fmt.Println(i)\n}</code></pre><p>Three parts separated by <code>;</code>:</p><ul><li><code>i := 0</code> — start here</li><li><code>i &lt; 5</code> — keep going while true</li><li><code>i++</code> — add 1 each round</li></ul><p>Run it — you will see 0, 1, 2, 3, 4 on separate lines.</p>",
+      "sortOrder": 1
+    },
+    {
+      "id": "0004:s2",
+      "heading": "Range loop",
+      "bodyHtml": "<p>Use <code>range</code> to loop over items in a slice:</p><pre><code>names := []string{\"Alice\", \"Bob\", \"Charlie\"}\nfor i, name := range names {\n    fmt.Println(i, name)\n}</code></pre><p><code>i</code> is the index (0, 1, 2...). <code>name</code> is each value.</p><p>If you don’t need the index, use <code>_</code> (underscore) to ignore it:</p><pre><code>for _, name := range names {\n    fmt.Println(name)\n}</code></pre>",
+      "sortOrder": 2
+    },
+    {
+      "id": "0004:s3",
+      "heading": "Break and continue",
+      "bodyHtml": "<p><code>break</code> — exit the loop immediately.</p><pre><code>for i := 0; i &lt; 10; i++ {\n    if i == 5 {\n        break\n    }\n    fmt.Println(i)\n}\n// prints 0, 1, 2, 3, 4</code></pre><p><code>continue</code> — skip the rest of this round, go to next iteration.</p><pre><code>for i := 0; i &lt; 5; i++ {\n    if i == 2 {\n        continue\n    }\n    fmt.Println(i)\n}\n// prints 0, 1, 3, 4</code></pre>",
+      "sortOrder": 3
+    },
+    {
+      "id": "0004:s4",
+      "heading": "Your turn",
+      "bodyHtml": "<p>Open <code>practice/loops/main.go</code>. Use a <code>for</code> loop to print numbers 1 to 5.</p><p>Hint: start at 1, keep going while <code>i &lt;= 5</code>, add 1 each time.</p>",
+      "sortOrder": 4
+    }
+  ],
+  "questions": [
+    {
+      "id": "0004:review-1",
+      "prompt": "Which condition checks if score equals 100?",
+      "correctKey": "eq",
+      "questionType": "choice",
+      "sectionTag": "review",
+      "sortOrder": 1,
+      "options": [
+        {
+          "key": "assign",
+          "label": "if score = 100",
+          "isCorrect": false,
+          "sortOrder": 1
+        },
+        {
+          "key": "eq",
+          "label": "if score == 100",
+          "isCorrect": true,
+          "sortOrder": 2
+        },
+        {
+          "key": "declare",
+          "label": "if score := 100",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "0004:q1",
+      "prompt": "How many times does the body of <code>for i := 0; i &lt; 3; i++</code> run?",
+      "correctKey": "three",
+      "questionType": "choice",
+      "sectionTag": "quiz",
+      "sortOrder": 2,
+      "options": [
+        {
+          "key": "two",
+          "label": "2 times",
+          "isCorrect": false,
+          "sortOrder": 1
+        },
+        {
+          "key": "three",
+          "label": "3 times",
+          "isCorrect": true,
+          "sortOrder": 2
+        },
+        {
+          "key": "four",
+          "label": "4 times",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "0004:q2",
+      "prompt": "What does <code>range</code> do in a for loop?",
+      "correctKey": "walk",
+      "questionType": "choice",
+      "sectionTag": "quiz",
+      "sortOrder": 3,
+      "options": [
+        {
+          "key": "walk",
+          "label": "Walks over each element in a slice",
+          "isCorrect": true,
+          "sortOrder": 1
+        },
+        {
+          "key": "compare",
+          "label": "Compares two numbers",
+          "isCorrect": false,
+          "sortOrder": 2
+        },
+        {
+          "key": "random",
+          "label": "Picks a random element",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "0004:q3",
+      "prompt": "What does <code>break</code> do inside a loop?",
+      "correctKey": "exit",
+      "questionType": "choice",
+      "sectionTag": "quiz",
+      "sortOrder": 4,
+      "options": [
+        {
+          "key": "exit",
+          "label": "Exits the loop immediately",
+          "isCorrect": true,
+          "sortOrder": 1
+        },
+        {
+          "key": "restart",
+          "label": "Restarts the loop from the beginning",
+          "isCorrect": false,
+          "sortOrder": 2
+        },
+        {
+          "key": "skip",
+          "label": "Skips the next iteration",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
+      ]
+    }
+  ],
+  "exercises": [
+    {
+      "id": "0004:ex1",
+      "title": "Counting with loops",
+      "path": "practice/loops",
+      "instructions": "Edit main.go to print numbers 1 to 5 using a for loop.",
+      "sortOrder": 1
+    }
+  ],
+  "references": [
+    {
+      "id": "0004:ref1",
+      "title": "A Tour of Go — For",
+      "url": "https://go.dev/tour/flowcontrol/1",
+      "notes": "Official interactive for loop section"
+    },
+    {
+      "id": "0004:ref2",
+      "title": "Go by Example: Range",
+      "url": "https://gobyexample.com/range",
+      "notes": "Range loop examples with slices"
+    }
+  ],
+  "answers": []
+}
