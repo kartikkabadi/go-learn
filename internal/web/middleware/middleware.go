@@ -1,10 +1,10 @@
 package middleware
 
 import (
-	"strings"
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 )

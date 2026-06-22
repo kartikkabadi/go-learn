@@ -10,17 +10,17 @@ import (
 
 // gzipableTypes are content types that benefit from gzip compression.
 var gzipableTypes = map[string]bool{
-	"text/html":                    true,
-	"text/css":                     true,
-	"text/plain":                   true,
-	"application/javascript":       true,
-	"text/javascript":              true,
-	"application/json":             true,
-	"application/xml":              true,
-	"application/atom+xml":         true,
-	"application/rss+xml":          true,
-	"application/manifest+json":    true,
-	"image/svg+xml":                true,
+	"text/html":                 true,
+	"text/css":                  true,
+	"text/plain":                true,
+	"application/javascript":    true,
+	"text/javascript":           true,
+	"application/json":          true,
+	"application/xml":           true,
+	"application/atom+xml":      true,
+	"application/rss+xml":       true,
+	"application/manifest+json": true,
+	"image/svg+xml":             true,
 }
 
 // gzipWriter buffers the response, then gzips it if the content type is

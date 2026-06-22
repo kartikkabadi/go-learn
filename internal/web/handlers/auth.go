@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kartikkabadi/go-learn/internal/web/cookies"
 	"github.com/kartikkabadi/go-learn/internal/web/middleware"
 	"github.com/kartikkabadi/go-learn/internal/web/views"
 	"golang.org/x/crypto/bcrypt"
@@ -163,7 +164,7 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusFound)
 }
 
-// startSession creates a session row and sets the cookie.
+// startSession creates a session row and sets the signed cookie.
 func (h *Handler) startSession(w http.ResponseWriter, r *http.Request, userID string) {
 	expiresAt := time.Now().Add(sessionTTL).UTC().Format(time.RFC3339)
 	sess, err := h.Store.CreateSession(userID, expiresAt)
@@ -175,7 +176,7 @@ func (h *Handler) startSession(w http.ResponseWriter, r *http.Request, userID st
 	secure := r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == "https"
 	http.SetCookie(w, &http.Cookie{
 		Name:     sessionCookieName,
-		Value:    sess.Token,
+		Value:    cookies.Sign(sess.Token, h.CookieKey),
 		Path:     "/",
 		Expires:  time.Now().Add(sessionTTL),
 		MaxAge:   int(sessionTTL.Seconds()),
@@ -188,16 +189,16 @@ func (h *Handler) startSession(w http.ResponseWriter, r *http.Request, userID st
 func (h *Handler) renderSignupError(w http.ResponseWriter, r *http.Request, email, msg string) {
 	h.Views.Render(w, "signup.html", signupPage{
 		PageMeta: views.PageMeta{Title: "Sign up — go-learn"},
-		Email:   email,
-		Error:   msg,
+		Email:    email,
+		Error:    msg,
 	})
 }
 
 func (h *Handler) renderLoginError(w http.ResponseWriter, r *http.Request, email, next, msg string) {
 	h.Views.Render(w, "login.html", loginPage{
 		PageMeta: views.PageMeta{Title: "Log in — go-learn"},
-		Email:   email,
-		Next:    next,
-		Error:   msg,
+		Email:    email,
+		Next:     next,
+		Error:    msg,
 	})
 }

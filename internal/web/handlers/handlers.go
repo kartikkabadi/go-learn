@@ -34,10 +34,11 @@ func (h *Handler) meta(r *http.Request, title, desc, canonical string, jsonld te
 
 // Handler wires together the store, service layer, and template renderer for web routes.
 type Handler struct {
-	Store    store.Store
-	Progress *service.Progress
-	Views    *views.Renderer
-	BaseURL  string // canonical site URL; empty = derive per-request
+	Store     store.Store
+	Progress  *service.Progress
+	Views     *views.Renderer
+	BaseURL   string // canonical site URL; empty = derive per-request
+	CookieKey []byte // HMAC key for signing session cookies
 }
 
 type DashboardPage struct {
@@ -58,10 +59,10 @@ type QuestionView struct {
 
 type LessonPage struct {
 	views.PageMeta
-	Lesson         *store.Lesson
-	Sections       []store.LessonSection
-	QuestionViews  []QuestionView
-	Exercises      []store.Exercise
+	Lesson        *store.Lesson
+	Sections      []store.LessonSection
+	QuestionViews []QuestionView
+	Exercises     []store.Exercise
 }
 
 type ProgressPage struct {
@@ -112,7 +113,7 @@ func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 	base := h.baseURL(r)
 	h.Views.Render(w, "dashboard.html", DashboardPage{
 		PageMeta: h.meta(r, "Home — go-learn", "Go learning workspace with interactive lessons, quizzes, and practice exercises.", base+"/", courseJSONLD(base, h.Store)),
-		Data:    data,
+		Data:     data,
 	})
 }
 
@@ -151,7 +152,7 @@ func (h *Handler) LessonsIndex(w http.ResponseWriter, r *http.Request) {
 	base := h.baseURL(r)
 	h.Views.Render(w, "lessons_index.html", LessonsIndexPage{
 		PageMeta: h.meta(r, "Lessons — go-learn", "Browse all Go lessons with progress tracking and interactive quizzes.", base+"/lessons", ""),
-		Lessons: lessons,
+		Lessons:  lessons,
 	})
 }
 
@@ -280,7 +281,7 @@ func (h *Handler) ProgressPage(w http.ResponseWriter, r *http.Request) {
 	base := h.baseURL(r)
 	h.Views.Render(w, "progress.html", ProgressPage{
 		PageMeta: h.meta(r, "Progress — go-learn", "Track your quiz answers and learning progress in Go.", base+"/progress", ""),
-		Answers: answers,
+		Answers:  answers,
 	})
 }
 
@@ -297,7 +298,7 @@ func (h *Handler) Reference(w http.ResponseWriter, r *http.Request) {
 	}
 	base := h.baseURL(r)
 	h.Views.Render(w, "reference.html", ReferencePage{
-		PageMeta: h.meta(r, "Reference — go-learn", "Go glossary of terms and external learning resources.", base+"/reference", ""),
+		PageMeta:   h.meta(r, "Reference — go-learn", "Go glossary of terms and external learning resources.", base+"/reference", ""),
 		Terms:      terms,
 		References: refs,
 	})
@@ -327,7 +328,7 @@ func (h *Handler) Practice(w http.ResponseWriter, r *http.Request) {
 	}
 	base := h.baseURL(r)
 	h.Views.Render(w, "practice.html", PracticePage{
-		PageMeta: h.meta(r, "Practice — go-learn", "Hands-on Go programming exercises to reinforce your learning.", base+"/practice", ""),
+		PageMeta:  h.meta(r, "Practice — go-learn", "Hands-on Go programming exercises to reinforce your learning.", base+"/practice", ""),
 		Exercises: evs,
 	})
 }

@@ -3,6 +3,8 @@
 package main
 
 import (
+	"crypto/rand"
+	"encoding/base64"
 	"log/slog"
 	"net/http"
 	"os"
@@ -10,13 +12,26 @@ import (
 	"time"
 
 	"github.com/kartikkabadi/go-learn/internal/service"
+	"github.com/kartikkabadi/go-learn/internal/store/d1store"
 	"github.com/kartikkabadi/go-learn/internal/web/handlers"
 	"github.com/kartikkabadi/go-learn/internal/web/middleware"
 	"github.com/kartikkabadi/go-learn/internal/web/views"
-	"github.com/kartikkabadi/go-learn/internal/store/d1store"
 	"github.com/kartikkabadi/go-learn/web/static"
 	"github.com/syumai/workers"
 )
+
+func cookieKey() []byte {
+	k := os.Getenv("COOKIE_KEY")
+	if k != "" {
+		return []byte(k)
+	}
+	b := make([]byte, 32)
+	if _, err := rand.Read(b); err != nil {
+		slog.Error("generate cookie key", "error", err)
+		os.Exit(1)
+	}
+	return b
+}
 
 func main() {
 	renderer, err := views.New()
@@ -39,10 +54,11 @@ func main() {
 
 	prog := &service.Progress{Store: st}
 	web := &handlers.Handler{
-		Store:    st,
-		Progress: prog,
-		Views:    renderer,
-		BaseURL:  os.Getenv("CANONICAL_BASE"),
+		Store:     st,
+		Progress:  prog,
+		Views:     renderer,
+		BaseURL:   os.Getenv("CANONICAL_BASE"),
+		CookieKey: cookieKey(),
 	}
 
 	mux := http.NewServeMux()
@@ -81,9 +97,9 @@ func main() {
 		middleware.Recovery(
 			rateLimiter.Limit(
 				middleware.SecurityHeaders(
-					middleware.LoadUser(st)(
+					middleware.LoadUser(st, web.CookieKey)(
 						middleware.ValidateOrigin(
-							middleware.BodySizeLimit(1<<20)(
+							middleware.BodySizeLimit(1 << 20)(
 								middleware.Logger(logger, mux),
 							),
 						),

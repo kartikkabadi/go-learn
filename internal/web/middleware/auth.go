@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/kartikkabadi/go-learn/internal/store"
+	"github.com/kartikkabadi/go-learn/internal/web/cookies"
 )
 
 type contextKey string
@@ -20,22 +21,27 @@ func UserFromContext(r *http.Request) *store.User {
 	return nil
 }
 
-// LoadUser looks up the session cookie and attaches the user to the request context.
-// It runs on every request; unmatched/missing sessions are silently treated as anonymous.
-func LoadUser(s store.Store) func(http.Handler) http.Handler {
+// LoadUser looks up the signed session cookie and attaches the user to the request context.
+// It runs on every request; unmatched/missing/invalid sessions are silently treated as anonymous.
+func LoadUser(s store.Store, key []byte) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			c, err := r.Cookie("session")
 			if err == nil && c.Value != "" {
-				sess, err := s.GetSession(c.Value)
+				token, err := cookies.Verify(c.Value, key)
 				if err != nil {
-					slog.Error("get session", "error", err)
-				} else if sess != nil {
-					user, err := s.GetUserByID(sess.UserID)
+					slog.Debug("invalid session cookie", "error", err)
+				} else {
+					sess, err := s.GetSession(token)
 					if err != nil {
-						slog.Error("get user by id", "error", err)
-					} else if user != nil {
-						r = r.WithContext(context.WithValue(r.Context(), userKey, user))
+						slog.Error("get session", "error", err)
+					} else if sess != nil {
+						user, err := s.GetUserByID(sess.UserID)
+						if err != nil {
+							slog.Error("get user by id", "error", err)
+						} else if user != nil {
+							r = r.WithContext(context.WithValue(r.Context(), userKey, user))
+						}
 					}
 				}
 			}
