@@ -250,7 +250,9 @@ func (s *Store) ListLessonSections(lessonID string) ([]store.LessonSection, erro
 	return out, rows.Err()
 }
 
-// ListQuestionsByLesson returns all questions for a lesson, with options and answers.
+// ListQuestionsByLesson returns all questions for a lesson, with options and
+// the user's answers populated. Uses 3 queries (questions, options, answers)
+// instead of 1+2N to avoid N+1 round-trips on D1.
 func (s *Store) ListQuestionsByLesson(userID, lessonID string) ([]store.Question, error) {
 	rows, err := s.db.Query(`
 		SELECT id, lesson_id, prompt, correct_key, question_type, section_tag, sort_order
@@ -259,7 +261,6 @@ func (s *Store) ListQuestionsByLesson(userID, lessonID string) ([]store.Question
 	if err != nil {
 		return nil, fmt.Errorf("ListQuestionsByLesson: %w", err)
 	}
-
 	var out []store.Question
 	for rows.Next() {
 		var q store.Question
@@ -275,17 +276,66 @@ func (s *Store) ListQuestionsByLesson(userID, lessonID string) ([]store.Question
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("ListQuestionsByLesson: %w", err)
 	}
+	if len(out) == 0 {
+		return out, nil
+	}
+
+	// Batch-fetch options for all questions in this lesson.
+	optRows, err := s.db.Query(`
+		SELECT question_id, option_key, label, is_correct, sort_order
+		FROM question_options
+		WHERE question_id IN (SELECT id FROM questions WHERE lesson_id = ?)
+		ORDER BY sort_order
+	`, lessonID)
+	if err != nil {
+		return nil, fmt.Errorf("ListQuestionsByLesson options: %w", err)
+	}
+	optsByQ := make(map[string][]store.QuestionOption)
+	for optRows.Next() {
+		var o store.QuestionOption
+		var correct int
+		if err := optRows.Scan(&o.QuestionID, &o.OptionKey, &o.Label, &correct, &o.SortOrder); err != nil {
+			optRows.Close()
+			return nil, fmt.Errorf("ListQuestionsByLesson options: %w", err)
+		}
+		o.IsCorrect = correct == 1
+		optsByQ[o.QuestionID] = append(optsByQ[o.QuestionID], o)
+	}
+	if err := optRows.Close(); err != nil {
+		return nil, fmt.Errorf("ListQuestionsByLesson options: %w", err)
+	}
+
+	// Batch-fetch answers for this user+lesson (only if logged in).
+	var ansByQ map[string]*store.Answer
+	if userID != "" {
+		ansRows, err := s.db.Query(`
+			SELECT question_id, picked_key, picked_label, correct, answered_at
+			FROM answers
+			WHERE user_id = ? AND question_id IN (SELECT id FROM questions WHERE lesson_id = ?)
+		`, userID, lessonID)
+		if err != nil {
+			return nil, fmt.Errorf("ListQuestionsByLesson answers: %w", err)
+		}
+		ansByQ = make(map[string]*store.Answer)
+		for ansRows.Next() {
+			var a store.Answer
+			var correct int
+			if err := ansRows.Scan(&a.QuestionID, &a.PickedKey, &a.PickedLabel, &correct, &a.AnsweredAt); err != nil {
+				ansRows.Close()
+				return nil, fmt.Errorf("ListQuestionsByLesson answers: %w", err)
+			}
+			a.Correct = correct == 1
+			ansByQ[a.QuestionID] = &a
+		}
+		if err := ansRows.Close(); err != nil {
+			return nil, fmt.Errorf("ListQuestionsByLesson answers: %w", err)
+		}
+	}
 
 	for i := range out {
-		out[i].Options, err = s.listOptions(out[i].ID)
-		if err != nil {
-			return nil, fmt.Errorf("ListQuestionsByLesson: %w", err)
-		}
-		if userID != "" {
-			out[i].Answer, err = s.GetAnswer(userID, out[i].ID)
-			if err != nil {
-				return nil, fmt.Errorf("ListQuestionsByLesson: %w", err)
-			}
+		out[i].Options = optsByQ[out[i].ID]
+		if ansByQ != nil {
+			out[i].Answer = ansByQ[out[i].ID]
 		}
 	}
 	return out, nil
@@ -479,64 +529,67 @@ func (s *Store) GetMission() (*store.Mission, error) {
 	return &m, nil
 }
 
-// LessonProgress returns progress stats for every lesson.
+// LessonProgress returns progress stats for every lesson for the given user.
+// Single query with correlated subqueries + grouped LEFT JOINs — avoids N+1.
 func (s *Store) LessonProgress(userID string) ([]store.LessonProgress, error) {
-	lessons, err := s.ListLessons()
+	rows, err := s.db.Query(`
+		SELECT
+			l.id, l.title, l.slug, l.sort_order,
+			(SELECT COUNT(*) FROM questions q WHERE q.lesson_id = l.id),
+			COALESCE(qa.answered, 0),
+			COALESCE(qa.correct, 0),
+			(SELECT COUNT(*) FROM exercises e WHERE e.lesson_id = l.id),
+			COALESCE(es.done, 0)
+		FROM lessons l
+		LEFT JOIN (
+			SELECT q.lesson_id, COUNT(*) AS answered, COALESCE(SUM(a.correct), 0) AS correct
+			FROM answers a JOIN questions q ON q.id = a.question_id
+			WHERE a.user_id = ?
+			GROUP BY q.lesson_id
+		) qa ON qa.lesson_id = l.id
+		LEFT JOIN (
+			SELECT e.lesson_id, COUNT(*) AS done
+			FROM exercise_submissions es JOIN exercises e ON e.id = es.exercise_id
+			WHERE es.user_id = ?
+			GROUP BY e.lesson_id
+		) es ON es.lesson_id = l.id
+		ORDER BY l.sort_order
+	`, userID, userID)
 	if err != nil {
 		return nil, fmt.Errorf("LessonProgress: %w", err)
 	}
+	defer rows.Close()
 	var out []store.LessonProgress
-	for _, l := range lessons {
-		lp := store.LessonProgress{LessonID: l.ID, Title: l.Title, Slug: l.Slug, SortOrder: l.SortOrder}
-		if err := s.db.QueryRow(`SELECT COUNT(*) FROM questions WHERE lesson_id = ?`, l.ID).Scan(&lp.QuestionsTotal); err != nil {
-			return nil, fmt.Errorf("LessonProgress: %w", err)
-		}
-		if err := s.db.QueryRow(`
-			SELECT COUNT(*), COALESCE(SUM(a.correct), 0)
-			FROM answers a JOIN questions q ON q.id = a.question_id
-			WHERE a.user_id = ? AND q.lesson_id = ?
-		`, userID, l.ID).Scan(&lp.QuestionsAnswered, &lp.QuestionsCorrect); err != nil {
-			return nil, fmt.Errorf("LessonProgress: %w", err)
-		}
-		if err := s.db.QueryRow(`SELECT COUNT(*) FROM exercises WHERE lesson_id = ?`, l.ID).Scan(&lp.ExerciseTotal); err != nil {
-			return nil, fmt.Errorf("LessonProgress: %w", err)
-		}
-		if err := s.db.QueryRow(`
-			SELECT COUNT(*) FROM exercise_submissions s
-			JOIN exercises e ON e.id = s.exercise_id
-			WHERE s.user_id = ? AND e.lesson_id = ?
-		`, userID, l.ID).Scan(&lp.ExercisesDone); err != nil {
+	for rows.Next() {
+		var lp store.LessonProgress
+		if err := rows.Scan(
+			&lp.LessonID, &lp.Title, &lp.Slug, &lp.SortOrder,
+			&lp.QuestionsTotal, &lp.QuestionsAnswered, &lp.QuestionsCorrect,
+			&lp.ExerciseTotal, &lp.ExercisesDone,
+		); err != nil {
 			return nil, fmt.Errorf("LessonProgress: %w", err)
 		}
 		out = append(out, lp)
 	}
-	return out, nil
+	return out, rows.Err()
 }
 
 // DashboardStats returns aggregate progress numbers across all lessons.
+// Single query with scalar subqueries — avoids 5 separate round-trips.
 func (s *Store) DashboardStats(userID string) (store.DashboardStats, error) {
 	var st store.DashboardStats
-	err := s.db.QueryRow(`SELECT COUNT(*) FROM lessons`).Scan(&st.LessonsTotal)
-	if err != nil {
-		return st, err
-	}
-	err = s.db.QueryRow(`SELECT COUNT(*) FROM questions`).Scan(&st.QuestionsTotal)
-	if err != nil {
-		return st, err
-	}
-	err = s.db.QueryRow(
-		`SELECT COUNT(*), COALESCE(SUM(correct), 0) FROM answers WHERE user_id = ?`, userID,
-	).Scan(&st.QuestionsAnswered, &st.QuestionsCorrect)
-	if err != nil {
-		return st, err
-	}
-	err = s.db.QueryRow(`SELECT COUNT(*) FROM exercises`).Scan(&st.ExercisesTotal)
-	if err != nil {
-		return st, err
-	}
-	err = s.db.QueryRow(
-		`SELECT COUNT(*) FROM exercise_submissions WHERE user_id = ?`, userID,
-	).Scan(&st.ExercisesSubmitted)
+	err := s.db.QueryRow(`
+		SELECT
+			(SELECT COUNT(*) FROM lessons),
+			(SELECT COUNT(*) FROM questions),
+			(SELECT COUNT(*) FROM exercises),
+			COALESCE((SELECT COUNT(*) FROM answers WHERE user_id = ?), 0),
+			COALESCE((SELECT SUM(correct) FROM answers WHERE user_id = ?), 0),
+			COALESCE((SELECT COUNT(*) FROM exercise_submissions WHERE user_id = ?), 0)
+	`, userID, userID, userID).Scan(
+		&st.LessonsTotal, &st.QuestionsTotal, &st.ExercisesTotal,
+		&st.QuestionsAnswered, &st.QuestionsCorrect, &st.ExercisesSubmitted,
+	)
 	return st, err
 }
 
