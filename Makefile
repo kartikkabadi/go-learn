@@ -1,6 +1,7 @@
 .PHONY: serve import test build
 
 DB := progress/go-learn.db
+BASE := https://go-learn.kartikkabadi.com
 
 serve:
 	go run ./cmd/server
@@ -34,6 +35,11 @@ worker-init:
 # Deploy to Cloudflare Workers (requires wrangler login)
 deploy: worker
 	wrangler deploy
+	@echo "warming edge cache..."
+	@for path in / /lessons /lessons/what-is-a-program /practice /reference /login /signup /progress /health /sitemap.xml /robots.txt; do \
+		curl -sS -o /dev/null "$(BASE)$$path" & \
+	done; wait
+	@echo "cache warmed"
 
 # Preview locally
 preview: worker
