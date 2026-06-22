@@ -50,6 +50,14 @@ type Store interface {
 	LessonProgress(userID string) ([]LessonProgress, error)
 	DashboardStats(userID string) (DashboardStats, error)
 
+	// UserData fetches all user-specific data in 2 queries (answers + submissions).
+	// Used to compute DashboardStats, LessonProgress, and exercise status in one shot.
+	UserData(userID string) (*UserData, error)
+
+	// LessonCounts returns question and exercise counts per lessonID in 1 call.
+	// d1store: 0 D1 queries (embedded content). SQLiteStore: 2 SQL queries.
+	LessonCounts() (questionCounts, exerciseCounts map[string]int, err error)
+
 	// Content import
 	ImportBundle(b ContentBundle) error
 	ImportMission(b MissionBundle) error
@@ -207,4 +215,96 @@ func boolToInt(v bool) int {
 		return 1
 	}
 	return 0
+}
+
+// UserData fetches all user-specific data in 2 queries (answers + submissions).
+func (s *SQLiteStore) UserData(userID string) (*UserData, error) {
+	ud := &UserData{
+		AnswersByLesson:     make(map[string][2]int),
+		SubmissionsByEx:     make(map[string]bool),
+		CorrectByEx:         make(map[string]bool),
+		SubmissionsByLesson: make(map[string]int),
+	}
+	if userID == "" {
+		return ud, nil
+	}
+
+	rows, err := s.db.Query(`
+		SELECT q.lesson_id, COUNT(*), COALESCE(SUM(a.correct), 0)
+		FROM answers a JOIN questions q ON q.id = a.question_id
+		WHERE a.user_id = ?
+		GROUP BY q.lesson_id
+	`, userID)
+	if err != nil {
+		return nil, fmt.Errorf("UserData answers: %w", err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var lid string
+		var answered, correct int
+		if err := rows.Scan(&lid, &answered, &correct); err != nil {
+			return nil, fmt.Errorf("UserData answers: %w", err)
+		}
+		ud.AnswersByLesson[lid] = [2]int{answered, correct}
+		ud.TotalAnswered += answered
+		ud.TotalCorrect += correct
+	}
+
+	esRows, err := s.db.Query(`
+		SELECT es.exercise_id, e.lesson_id, es.correct
+		FROM exercise_submissions es JOIN exercises e ON e.id = es.exercise_id
+		WHERE es.user_id = ?
+	`, userID)
+	if err != nil {
+		return nil, fmt.Errorf("UserData submissions: %w", err)
+	}
+	defer esRows.Close()
+	for esRows.Next() {
+		var exID, lessonID string
+		var correct int
+		if err := esRows.Scan(&exID, &lessonID, &correct); err != nil {
+			return nil, fmt.Errorf("UserData submissions: %w", err)
+		}
+		ud.SubmissionsByEx[exID] = true
+		ud.CorrectByEx[exID] = correct == 1
+		ud.SubmissionsByLesson[lessonID]++
+		ud.TotalSubmitted++
+	}
+
+	return ud, nil
+}
+
+// LessonCounts returns question and exercise counts per lessonID.
+func (s *SQLiteStore) LessonCounts() (map[string]int, map[string]int, error) {
+	qRows, err := s.db.Query(`SELECT lesson_id, COUNT(*) FROM questions GROUP BY lesson_id`)
+	if err != nil {
+		return nil, nil, fmt.Errorf("LessonCounts questions: %w", err)
+	}
+	defer qRows.Close()
+	qCounts := make(map[string]int)
+	for qRows.Next() {
+		var lid string
+		var n int
+		if err := qRows.Scan(&lid, &n); err != nil {
+			return nil, nil, fmt.Errorf("LessonCounts questions: %w", err)
+		}
+		qCounts[lid] = n
+	}
+
+	eRows, err := s.db.Query(`SELECT lesson_id, COUNT(*) FROM exercises GROUP BY lesson_id`)
+	if err != nil {
+		return nil, nil, fmt.Errorf("LessonCounts exercises: %w", err)
+	}
+	defer eRows.Close()
+	eCounts := make(map[string]int)
+	for eRows.Next() {
+		var lid string
+		var n int
+		if err := eRows.Scan(&lid, &n); err != nil {
+			return nil, nil, fmt.Errorf("LessonCounts exercises: %w", err)
+		}
+		eCounts[lid] = n
+	}
+
+	return qCounts, eCounts, nil
 }

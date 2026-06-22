@@ -3,11 +3,7 @@
 // DO NOT EDIT — run `make generate-content` to regenerate.
 package content
 
-import (
-	"html/template"
-
-	"github.com/kartikkabadi/go-learn/internal/store"
-)
+import "github.com/kartikkabadi/go-learn/internal/store"
 
 // Lessons, Sections, Questions, Exercises, Glossary, References, Insights, Mission
 // are populated by the generated file content_generated.go.
@@ -34,6 +30,3 @@ func init() {
 	QuestionsByID = map[string]*store.Question{}
 	ExercisesByLesson = map[string][]store.Exercise{}
 }
-
-// _ keeps template import alive — generated code uses template.HTML.
-var _ template.HTML

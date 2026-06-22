@@ -424,6 +424,78 @@ func (s *Store) DashboardStats(userID string) (store.DashboardStats, error) {
 	return st, err
 }
 
+// UserData fetches all user-specific data in 2 D1 queries (answers + submissions).
+// Anonymous users get an empty UserData with 0 D1 queries.
+func (s *Store) UserData(userID string) (*store.UserData, error) {
+	ud := &store.UserData{
+		AnswersByLesson:     make(map[string][2]int),
+		SubmissionsByEx:     make(map[string]bool),
+		CorrectByEx:         make(map[string]bool),
+		SubmissionsByLesson: make(map[string]int),
+	}
+	if userID == "" {
+		return ud, nil
+	}
+
+	// Query 1: all answers grouped by lesson.
+	rows, err := s.db.Query(`
+		SELECT q.lesson_id, COUNT(*), COALESCE(SUM(a.correct), 0)
+		FROM answers a JOIN questions q ON q.id = a.question_id
+		WHERE a.user_id = ?
+		GROUP BY q.lesson_id
+	`, userID)
+	if err != nil {
+		return nil, fmt.Errorf("UserData answers: %w", err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var lid string
+		var answered, correct int
+		if err := rows.Scan(&lid, &answered, &correct); err != nil {
+			return nil, fmt.Errorf("UserData answers: %w", err)
+		}
+		ud.AnswersByLesson[lid] = [2]int{answered, correct}
+		ud.TotalAnswered += answered
+		ud.TotalCorrect += correct
+	}
+
+	// Query 2: all exercise submissions.
+	esRows, err := s.db.Query(`
+		SELECT es.exercise_id, e.lesson_id, es.correct
+		FROM exercise_submissions es JOIN exercises e ON e.id = es.exercise_id
+		WHERE es.user_id = ?
+	`, userID)
+	if err != nil {
+		return nil, fmt.Errorf("UserData submissions: %w", err)
+	}
+	defer esRows.Close()
+	for esRows.Next() {
+		var exID, lessonID string
+		var correct int
+		if err := esRows.Scan(&exID, &lessonID, &correct); err != nil {
+			return nil, fmt.Errorf("UserData submissions: %w", err)
+		}
+		ud.SubmissionsByEx[exID] = true
+		ud.CorrectByEx[exID] = correct == 1
+		ud.SubmissionsByLesson[lessonID]++
+		ud.TotalSubmitted++
+	}
+
+	return ud, nil
+}
+
+// LessonCounts returns question and exercise counts per lessonID from embedded
+// content. 0 D1 queries.
+func (s *Store) LessonCounts() (map[string]int, map[string]int, error) {
+	qCounts := make(map[string]int, len(content.Lessons))
+	eCounts := make(map[string]int, len(content.Lessons))
+	for _, l := range content.Lessons {
+		qCounts[l.ID] = len(content.Questions[l.ID])
+		eCounts[l.ID] = len(content.ExercisesByLesson[l.ID])
+	}
+	return qCounts, eCounts, nil
+}
+
 func boolToInt(v bool) int {
 	if v {
 		return 1

@@ -1,10 +1,6 @@
 package service
 
-import (
-	"sync"
-
-	"github.com/kartikkabadi/go-learn/internal/store"
-)
+import "github.com/kartikkabadi/go-learn/internal/store"
 
 // Progress aggregates store data into dashboard views for the web handlers.
 type Progress struct {
@@ -22,44 +18,73 @@ type Dashboard struct {
 }
 
 // Dashboard assembles stats, mission, lessons, weak spots, and the next uncompleted lesson.
-// All 5 store queries run in parallel to minimize D1 round-trip latency.
+// Uses UserData (2 D1 queries) for all user-specific data, plus store methods for
+// static content (0 D1 queries in d1store — returns embedded content).
+// Anonymous: 0 D1 queries. Authenticated: 2 D1 queries.
 func (p *Progress) Dashboard(userID string) (Dashboard, error) {
-	var (
-		stats     store.DashboardStats
-		mission   *store.Mission
-		lessons   []store.LessonProgress
-		weak      []store.Insight
-		exercises []store.Exercise
-	)
-	var sErr, mErr, lErr, wErr, eErr error
-	var wg sync.WaitGroup
-	wg.Add(5)
-	go func() { defer wg.Done(); stats, sErr = p.Store.DashboardStats(userID) }()
-	go func() { defer wg.Done(); mission, mErr = p.Store.GetMission() }()
-	go func() { defer wg.Done(); lessons, lErr = p.Store.LessonProgress(userID) }()
-	go func() { defer wg.Done(); weak, wErr = p.Store.ListActiveInsights("weak_spot") }()
-	go func() { defer wg.Done(); exercises, eErr = p.Store.ListExercises(userID) }()
-	wg.Wait()
+	ud, err := p.Store.UserData(userID)
+	if err != nil {
+		return Dashboard{}, err
+	}
 
-	if sErr != nil {
-		return Dashboard{}, sErr
+	// Static content via store (0 D1 queries in d1store — embedded).
+	lessons, err := p.Store.ListLessons()
+	if err != nil {
+		return Dashboard{}, err
 	}
-	if mErr != nil {
-		return Dashboard{}, mErr
+	mission, err := p.Store.GetMission()
+	if err != nil {
+		return Dashboard{}, err
 	}
-	if lErr != nil {
-		return Dashboard{}, lErr
+	weak, err := p.Store.ListActiveInsights("weak_spot")
+	if err != nil {
+		return Dashboard{}, err
 	}
-	if wErr != nil {
-		return Dashboard{}, wErr
+	qCounts, eCounts, err := p.Store.LessonCounts()
+	if err != nil {
+		return Dashboard{}, err
 	}
-	if eErr != nil {
-		return Dashboard{}, eErr
+	exercises, err := p.Store.ListExercises(userID)
+	if err != nil {
+		return Dashboard{}, err
+	}
+
+	// Compute DashboardStats from lesson counts + user data.
+	stats := store.DashboardStats{
+		LessonsTotal:       len(lessons),
+		QuestionsAnswered:  ud.TotalAnswered,
+		QuestionsCorrect:   ud.TotalCorrect,
+		ExercisesSubmitted: ud.TotalSubmitted,
+	}
+	for _, n := range qCounts {
+		stats.QuestionsTotal += n
+	}
+	for _, n := range eCounts {
+		stats.ExercisesTotal += n
+	}
+
+	// Compute LessonProgress from lessons + counts + user data.
+	progress := make([]store.LessonProgress, len(lessons))
+	for i, l := range lessons {
+		lp := store.LessonProgress{
+			LessonID:       l.ID,
+			Title:          l.Title,
+			Slug:           l.Slug,
+			SortOrder:      l.SortOrder,
+			QuestionsTotal: qCounts[l.ID],
+			ExerciseTotal:  eCounts[l.ID],
+			ExercisesDone:  ud.SubmissionsByLesson[l.ID],
+		}
+		if ac, ok := ud.AnswersByLesson[l.ID]; ok {
+			lp.QuestionsAnswered = ac[0]
+			lp.QuestionsCorrect = ac[1]
+		}
+		progress[i] = lp
 	}
 
 	var next *store.LessonProgress
-	for i := range lessons {
-		lp := &lessons[i]
+	for i := range progress {
+		lp := &progress[i]
 		if lp.QuestionsAnswered < lp.QuestionsTotal || lp.ExercisesDone < lp.ExerciseTotal {
 			next = lp
 			break
@@ -69,7 +94,7 @@ func (p *Progress) Dashboard(userID string) (Dashboard, error) {
 	return Dashboard{
 		Stats:      stats,
 		Mission:    mission,
-		Lessons:    lessons,
+		Lessons:    progress,
 		WeakSpots:  weak,
 		Exercises:  exercises,
 		NextLesson: next,

@@ -133,3 +133,16 @@ type DashboardStats struct {
 	ExercisesTotal     int
 	ExercisesSubmitted int
 }
+
+// UserData holds all user-specific data fetched in 2 queries (answers + submissions).
+// Used to compute DashboardStats, LessonProgress, and exercise status without
+// additional D1 round-trips.
+type UserData struct {
+	AnswersByLesson     map[string][2]int // [answered, correct] per lesson
+	TotalAnswered       int
+	TotalCorrect        int
+	SubmissionsByEx     map[string]bool // exerciseID -> submitted
+	CorrectByEx         map[string]bool // exerciseID -> correct
+	SubmissionsByLesson map[string]int  // lessonID -> count
+	TotalSubmitted      int
+}
