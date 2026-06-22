@@ -91,7 +91,7 @@ func main() {
 					middleware.Gzip(
 						middleware.LoadUser(st, cfg.CookieKey)(
 							middleware.ValidateOrigin(
-								middleware.BodySizeLimit(1<<20)(
+								middleware.BodySizeLimit(1 << 20)(
 									middleware.Logger(slogLogger, mux),
 								),
 							),
@@ -120,7 +120,9 @@ func main() {
 		<-sig
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
-		srv.Shutdown(ctx)
+		if err := srv.Shutdown(ctx); err != nil {
+			slog.Error("server shutdown", "error", err)
+		}
 	}()
 
 	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {

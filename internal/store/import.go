@@ -34,13 +34,13 @@ type BundleSection struct {
 
 // BundleQuestion is the JSON structure for a quiz question in a bundle.
 type BundleQuestion struct {
-	ID           string              `json:"id"`
-	Prompt       string              `json:"prompt"`
-	CorrectKey   string              `json:"correctKey"`
-	QuestionType string              `json:"questionType"`
-	SectionTag   string              `json:"sectionTag"`
-	SortOrder    int                 `json:"sortOrder"`
-	Options      []BundleOption      `json:"options"`
+	ID           string         `json:"id"`
+	Prompt       string         `json:"prompt"`
+	CorrectKey   string         `json:"correctKey"`
+	QuestionType string         `json:"questionType"`
+	SectionTag   string         `json:"sectionTag"`
+	SortOrder    int            `json:"sortOrder"`
+	Options      []BundleOption `json:"options"`
 }
 
 type BundleOption struct {
@@ -60,17 +60,17 @@ type BundleExercise struct {
 }
 
 type BundleReference struct {
-	ID      string `json:"id"`
-	Title   string `json:"title"`
-	URL     string `json:"url"`
-	Notes   string `json:"notes"`
+	ID    string `json:"id"`
+	Title string `json:"title"`
+	URL   string `json:"url"`
+	Notes string `json:"notes"`
 }
 
 // MissionBundle is the JSON structure for importing mission data.
 type MissionBundle struct {
-	Why              string   `json:"why"`
-	SuccessCriteria  []string `json:"successCriteria"`
-	Constraints      []string `json:"constraints"`
+	Why             string   `json:"why"`
+	SuccessCriteria []string `json:"successCriteria"`
+	Constraints     []string `json:"constraints"`
 }
 
 // InsightsBundle wraps a list of insights for JSON import.

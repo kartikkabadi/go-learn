@@ -84,18 +84,15 @@ func (s *SQLiteStore) ListQuestionsByLesson(userID, lessonID string) ([]Question
 	if err != nil {
 		return nil, fmt.Errorf("ListQuestionsByLesson: %w", err)
 	}
+	defer rows.Close()
 
 	var out []Question
 	for rows.Next() {
 		var q Question
 		if err := rows.Scan(&q.ID, &q.LessonID, &q.Prompt, &q.CorrectKey, &q.QuestionType, &q.SectionTag, &q.SortOrder); err != nil {
-			rows.Close()
 			return nil, fmt.Errorf("ListQuestionsByLesson: %w", err)
 		}
 		out = append(out, q)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, fmt.Errorf("ListQuestionsByLesson: %w", err)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("ListQuestionsByLesson: %w", err)

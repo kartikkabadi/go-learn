@@ -14,7 +14,7 @@ import (
 // Open opens (or creates and migrates) the SQLite database at dbPath.
 // It returns a SQLiteStore ready for use, with migrations applied automatically.
 func Open(dbPath string) (*SQLiteStore, error) {
-	if err := os.MkdirAll(filepath.Dir(dbPath), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(dbPath), 0o750); err != nil {
 		return nil, fmt.Errorf("create db dir: %w", err)
 	}
 

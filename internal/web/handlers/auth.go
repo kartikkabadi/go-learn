@@ -107,7 +107,8 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	next := strings.TrimSpace(r.URL.Query().Get("next"))
-	if next == "" {
+	// Restrict next to same-site relative paths to prevent open redirect.
+	if next == "" || !strings.HasPrefix(next, "/") || strings.HasPrefix(next, "//") {
 		next = "/"
 	}
 	if r.Method == http.MethodGet {
@@ -153,12 +154,14 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 			slog.Error("delete session", "error", err)
 		}
 	}
+	secure := r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == "https"
 	http.SetCookie(w, &http.Cookie{
 		Name:     sessionCookieName,
 		Value:    "",
 		Path:     "/",
 		MaxAge:   -1,
 		HttpOnly: true,
+		Secure:   secure,
 		SameSite: http.SameSiteLaxMode,
 	})
 	http.Redirect(w, r, "/", http.StatusFound)

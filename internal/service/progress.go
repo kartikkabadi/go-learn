@@ -9,12 +9,12 @@ type Progress struct {
 
 // Dashboard bundles all data needed to render the home page.
 type Dashboard struct {
-	Stats       store.DashboardStats
-	Mission     *store.Mission
-	Lessons     []store.LessonProgress
-	WeakSpots   []store.Insight
-	Exercises   []store.Exercise
-	NextLesson  *store.LessonProgress
+	Stats      store.DashboardStats
+	Mission    *store.Mission
+	Lessons    []store.LessonProgress
+	WeakSpots  []store.Insight
+	Exercises  []store.Exercise
+	NextLesson *store.LessonProgress
 }
 
 // Dashboard assembles stats, mission, lessons, weak spots, and the next uncompleted lesson.

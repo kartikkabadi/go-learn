@@ -33,9 +33,9 @@ func main() {
 
 	// Non-lesson JSON files handled separately below.
 	nonLesson := map[string]bool{
-		"mission.json":   true,
-		"glossary.json":  true,
-		"insights.json":  true,
+		"mission.json":  true,
+		"glossary.json": true,
+		"insights.json": true,
 	}
 	var lessonFiles []string
 	for _, e := range entries {

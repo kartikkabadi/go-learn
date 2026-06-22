@@ -3,6 +3,7 @@ package middleware
 import (
 	"compress/gzip"
 	"io"
+	"log/slog"
 	"net/http"
 	"strings"
 	"sync"
@@ -56,12 +57,19 @@ func (g *gzipWriter) flush(acceptsGzip bool) {
 		gz := gzipPool.Get().(*gzip.Writer)
 		defer gzipPool.Put(gz)
 		gz.Reset(g.ResponseWriter)
-		defer gz.Close()
-		gz.Write(g.buf)
+		if _, err := gz.Write(g.buf); err != nil {
+			slog.Error("gzip write", "error", err)
+			return
+		}
+		if err := gz.Close(); err != nil {
+			slog.Error("gzip close", "error", err)
+		}
 		return
 	}
 	g.ResponseWriter.WriteHeader(g.status)
-	g.ResponseWriter.Write(g.buf)
+	if _, err := g.ResponseWriter.Write(g.buf); err != nil {
+		slog.Error("response write", "error", err)
+	}
 }
 
 var gzipPool = sync.Pool{
