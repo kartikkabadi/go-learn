@@ -298,32 +298,6 @@ func TestListAnswers(t *testing.T) {
 	}
 }
 
-func TestListAnswersByLesson(t *testing.T) {
-	s := testStore(t)
-	if err := s.ImportBundle(testBundle); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := s.SaveAnswer(testUser(t, s), "t1:q1", "b", "A type of loop"); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := s.SaveAnswer(testUser(t, s), "t1:q2", "var", "var"); err != nil {
-		t.Fatal(err)
-	}
-	answers, err := s.ListAnswersByLesson(testUser(t, s), "t1")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(answers) != 2 {
-		t.Fatalf("want 2 answers, got %d", len(answers))
-	}
-	if answers[0].Correct {
-		t.Fatal("expected first answer incorrect (picked b)")
-	}
-	if !answers[1].Correct {
-		t.Fatal("expected second answer correct")
-	}
-}
-
 func TestLessonProgress(t *testing.T) {
 	s := testStore(t)
 	if err := s.ImportBundle(testBundle); err != nil {

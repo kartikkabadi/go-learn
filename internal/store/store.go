@@ -25,7 +25,6 @@ type Store interface {
 	SaveAnswer(userID, questionID, pickedKey, pickedLabel string) (Answer, error)
 	GetAnswer(userID, questionID string) (*Answer, error)
 	ListAnswers(userID string) ([]AnswerRow, error)
-	ListAnswersByLesson(userID, lessonID string) ([]Answer, error)
 
 	// Lessons / questions / sections (global content)
 	ListLessons() ([]Lesson, error)
@@ -199,33 +198,6 @@ func (s *SQLiteStore) ListAnswers(userID string) ([]AnswerRow, error) {
 		}
 		row.Correct = correct == 1
 		out = append(out, row)
-	}
-	return out, rows.Err()
-}
-
-// ListAnswersByLesson returns answers for a specific lesson by a user.
-func (s *SQLiteStore) ListAnswersByLesson(userID, lessonID string) ([]Answer, error) {
-	rows, err := s.db.Query(`
-		SELECT a.question_id, a.picked_key, a.picked_label, a.correct, a.answered_at
-		FROM answers a
-		JOIN questions q ON q.id = a.question_id
-		WHERE a.user_id = ? AND q.lesson_id = ?
-		ORDER BY q.sort_order
-	`, userID, lessonID)
-	if err != nil {
-		return nil, fmt.Errorf("list lesson answers: %w", err)
-	}
-	defer rows.Close()
-
-	var out []Answer
-	for rows.Next() {
-		var a Answer
-		var correct int
-		if err := rows.Scan(&a.QuestionID, &a.PickedKey, &a.PickedLabel, &correct, &a.AnsweredAt); err != nil {
-			return nil, fmt.Errorf("scan lesson answer: %w", err)
-		}
-		a.Correct = correct == 1
-		out = append(out, a)
 	}
 	return out, rows.Err()
 }

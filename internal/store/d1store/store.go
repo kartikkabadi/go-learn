@@ -179,33 +179,6 @@ func (s *Store) ListAnswers(userID string) ([]store.AnswerRow, error) {
 	return out, rows.Err()
 }
 
-// ListAnswersByLesson returns answers for a specific lesson in sort order.
-func (s *Store) ListAnswersByLesson(userID, lessonID string) ([]store.Answer, error) {
-	rows, err := s.db.Query(`
-		SELECT a.question_id, a.picked_key, a.picked_label, a.correct, a.answered_at
-		FROM answers a
-		JOIN questions q ON q.id = a.question_id
-		WHERE a.user_id = ? AND q.lesson_id = ?
-		ORDER BY q.sort_order
-	`, userID, lessonID)
-	if err != nil {
-		return nil, fmt.Errorf("list lesson answers: %w", err)
-	}
-	defer rows.Close()
-
-	var out []store.Answer
-	for rows.Next() {
-		var a store.Answer
-		var correct int
-		if err := rows.Scan(&a.QuestionID, &a.PickedKey, &a.PickedLabel, &correct, &a.AnsweredAt); err != nil {
-			return nil, fmt.Errorf("scan lesson answer: %w", err)
-		}
-		a.Correct = correct == 1
-		out = append(out, a)
-	}
-	return out, rows.Err()
-}
-
 // ListLessons returns all lessons ordered by sort_order.
 func (s *Store) ListLessons() ([]store.Lesson, error) {
 	rows, err := s.db.Query(`SELECT id, title, slug, summary, sort_order FROM lessons ORDER BY sort_order`)

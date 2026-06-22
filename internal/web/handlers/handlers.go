@@ -491,16 +491,6 @@ func (h *Handler) NotFound(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// InternalError renders a friendly 500 page.
-func (h *Handler) InternalError(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusInternalServerError)
-	h.Views.Render(w, "error.html", errorPage{
-		PageMeta: views.PageMeta{Title: "Something went wrong — go-learn", Canonical: h.baseURL(r) + r.URL.Path},
-		Code:     500,
-		Message:  "Something went wrong on our end. Try again in a moment.",
-	})
-}
-
 type errorPage struct {
 	views.PageMeta
 	Code    int

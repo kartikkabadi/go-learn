@@ -177,16 +177,12 @@ func (h *Handler) startSession(w http.ResponseWriter, r *http.Request, userID st
 		Name:     sessionCookieName,
 		Value:    sess.Token,
 		Path:     "/",
-		Expires:  expiresAtTime(),
+		Expires:  time.Now().Add(sessionTTL),
 		MaxAge:   int(sessionTTL.Seconds()),
 		HttpOnly: true,
 		Secure:   secure,
 		SameSite: http.SameSiteLaxMode,
 	})
-}
-
-func expiresAtTime() time.Time {
-	return time.Now().Add(sessionTTL)
 }
 
 func (h *Handler) renderSignupError(w http.ResponseWriter, r *http.Request, email, msg string) {

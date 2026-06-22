@@ -13,7 +13,6 @@ type ContentBundle struct {
 	Questions  []BundleQuestion  `json:"questions"`
 	Exercises  []BundleExercise  `json:"exercises"`
 	References []BundleReference `json:"references"`
-	Answers    []BundleAnswer    `json:"answers"`
 }
 
 // BundleLesson is the JSON structure for lesson metadata in a content bundle.
@@ -65,12 +64,6 @@ type BundleReference struct {
 	Title   string `json:"title"`
 	URL     string `json:"url"`
 	Notes   string `json:"notes"`
-}
-
-type BundleAnswer struct {
-	QuestionID  string `json:"questionId"`
-	PickedKey   string `json:"pickedKey"`
-	PickedLabel string `json:"pickedLabel"`
 }
 
 // MissionBundle is the JSON structure for importing mission data.
@@ -211,9 +204,7 @@ func (s *SQLiteStore) ImportBundle(b ContentBundle) error {
 		}
 	}
 
-	// Answers are no longer seeded from bundles — they are per-user and created
-	// at runtime via SaveAnswer. The BundleAnswer type is retained for backwards
-	// compatibility with existing bundle files but is intentionally ignored.
+	// Answers are per-user and created at runtime via SaveAnswer.
 
 	return tx.Commit()
 }

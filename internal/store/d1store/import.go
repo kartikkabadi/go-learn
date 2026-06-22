@@ -99,9 +99,7 @@ func (s *Store) ImportBundle(b store.ContentBundle) error {
 		}
 	}
 
-	// Answers are no longer seeded from bundles — they are per-user and created
-	// at runtime via SaveAnswer. The BundleAnswer type is retained for backwards
-	// compatibility with existing bundle files but is intentionally ignored.
+	// Answers are per-user and created at runtime via SaveAnswer.
 
 	return nil
 }

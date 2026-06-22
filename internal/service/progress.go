@@ -58,25 +58,3 @@ func (p *Progress) Dashboard(userID string) (Dashboard, error) {
 		NextLesson: next,
 	}, nil
 }
-
-// AccuracyPercent returns overall quiz accuracy as a percentage (0-100) for a user.
-func (p *Progress) AccuracyPercent(userID string) (int, error) {
-	stats, err := p.Store.DashboardStats(userID)
-	if err != nil {
-		return 0, err
-	}
-	if stats.QuestionsAnswered == 0 {
-		return 0, nil
-	}
-	return (stats.QuestionsCorrect * 100) / stats.QuestionsAnswered, nil
-}
-
-// LessonCompletionPercent returns a lesson completion percentage including both quizzes and exercises.
-func LessonCompletionPercent(lp store.LessonProgress) int {
-	total := lp.QuestionsTotal + lp.ExerciseTotal
-	if total == 0 {
-		return 0
-	}
-	done := lp.QuestionsAnswered + lp.ExercisesDone
-	return (done * 100) / total
-}
