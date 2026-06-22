@@ -1,9 +1,5 @@
 //go:build js && wasm
 
-// Command worker runs the go-learn HTTP server on Cloudflare Workers
-// via the syumai/workers WASM runtime. Build with:
-//
-//	GOOS=js GOARCH=wasm go build -o build/worker.wasm ./cmd/worker
 package main
 
 import (
@@ -11,11 +7,11 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/kartikkabadi/go-learn/internal/store/d1store"
 	"github.com/kartikkabadi/go-learn/internal/service"
 	"github.com/kartikkabadi/go-learn/internal/web/handlers"
 	"github.com/kartikkabadi/go-learn/internal/web/middleware"
 	"github.com/kartikkabadi/go-learn/internal/web/views"
+	"github.com/kartikkabadi/go-learn/internal/store/d1store"
 	"github.com/kartikkabadi/go-learn/web/static"
 	"github.com/syumai/workers"
 )
@@ -27,12 +23,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	// D1 database binding name from wrangler.toml
-	dbName := os.Getenv("D1_DB_NAME")
-	if dbName == "" {
-		dbName = "go-learn-db"
-	}
-	st, err := d1store.Open(dbName)
+	st, err := d1store.Open("DB")
 	if err != nil {
 		slog.Error("d1store", "error", err)
 		os.Exit(1)
@@ -48,7 +39,6 @@ func main() {
 
 	mux := http.NewServeMux()
 	mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.FS(staticassets.FS))))
-
 	mux.HandleFunc("GET /{$}", web.Dashboard)
 	mux.HandleFunc("GET /lessons", web.LessonsIndex)
 	mux.HandleFunc("GET /lessons/{slug}", web.LessonShow)

@@ -309,6 +309,10 @@ func (h *Handler) SubmitExercise(w http.ResponseWriter, r *http.Request) {
 // --- SEO helpers ---
 
 func baseURL(r *http.Request) string {
+	return "https://" + r.Host
+}
+
+func baseURL_old(r *http.Request) string {
 	scheme := "http"
 	if r.TLS != nil {
 		scheme = "https"
@@ -360,7 +364,7 @@ func lessonJSONLD(l *store.Lesson) template.JS {
 // Sitemap generates an XML sitemap for search engines.
 func (h *Handler) Sitemap(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/xml; charset=utf-8")
-	base := "https://go-learn.example.com"
+	base := baseURL(r)
 	lessons, err := h.Store.ListLessons()
 	if err != nil {
 		internalError(w, "sitemap", err)
@@ -389,5 +393,5 @@ func (h *Handler) RobotsTXT(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "User-agent: *")
 	fmt.Fprintln(w, "Allow: /")
 	fmt.Fprintln(w, "")
-	fmt.Fprintln(w, "Sitemap: https://go-learn.example.com/sitemap.xml")
+	fmt.Fprintln(w, "Sitemap: "+baseURL(r)+"/sitemap.xml")
 }
