@@ -3,11 +3,10 @@
 [![CI](https://github.com/kartikkabadi/go-learn/actions/workflows/ci.yml/badge.svg)](https://github.com/kartikkabadi/go-learn/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Go 1.26+](https://img.shields.io/badge/Go-1.26+-00ADD8.svg)](https://go.dev)
-[![Zero JS framework](https://img.shields.io/badge/JS_framework-zero-00ADD8.svg)](#)
+[![Tailwind CSS](https://img.shields.io/badge/CSS-Tailwind_v4-38BDF8.svg)](#)
 
 A free, interactive Go programming course with lessons, quizzes, and hands-on exercises.
-Server-rendered with Go + HTMX. No JavaScript framework, no build step, no dependencies
-on the frontend. Deployed on Cloudflare Workers with D1.
+Server-rendered with Go + HTMX. Tailwind CSS (compiled, no JS framework). Deployed on Cloudflare Workers with D1.
 
 **→ [go-learn.kartikkabadi.com](https://go-learn.kartikkabadi.com)**
 
@@ -62,7 +61,7 @@ experience required.
 | Layer | Technology |
 |-------|-----------|
 | Backend | Go 1.26, `net/http`, `html/template` |
-| Frontend | HTMX 2.x, vanilla CSS, no build step |
+| Frontend | HTMX 2.x, Tailwind CSS v4, shadcn-inspired tokens |
 | Database | SQLite (`modernc.org/sqlite`) — local dev |
 | Database | Cloudflare D1 — production |
 | Deploy | Cloudflare Workers (WASM) |
@@ -89,9 +88,19 @@ experience required.
 │   │   └── views/         # Templates + renderer
 ├── content-bundles/       # JSON lesson content (source of truth)
 ├── practice/              # Exercise modules (independent Go programs)
-├── web/static/            # CSS, HTMX, OG image
+├── web/static/            # input.css (source), theme.css (compiled), HTMX, OG image
 └── wrangler.toml.example  # Workers deployment config template
 ```
+
+## Development
+
+```bash
+make import    # load content bundles into SQLite
+make css       # compile Tailwind (web/static/input.css → theme.css)
+make serve     # http://127.0.0.1:4173/
+```
+
+Visual design rules live in [`DESIGN.md`](DESIGN.md). Run `make css-watch` while editing templates or CSS.
 
 ## Security
 

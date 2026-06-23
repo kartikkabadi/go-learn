@@ -33,8 +33,6 @@ wrangler.toml
 build/app.wasm
 build/worker.wasm
 build/*.wasm
-package.json
-package-lock.json
 node_modules/
 
 # Generated content (build artifact, not source)

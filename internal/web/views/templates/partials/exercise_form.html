@@ -1,0 +1,20 @@
+{{define "exercise_form_partial"}}
+<div class="checkpoint" id="ex-{{.ID}}">
+  <h3>{{.Title}}</h3>
+  <p class="checkpoint-instructions">{{.Instructions}}</p>
+  <pre class="checkpoint-cmd"><code>cd {{.Path}} && go run .</code></pre>
+  {{if .Submitted}}
+    {{if .Correct}}<p class="ok">Submitted correctly</p>{{else}}<p class="warn">Submitted, but output does not match expected</p>{{end}}
+    <pre class="checkpoint-output">{{.Output}}</pre>
+  {{end}}
+  <form class="practice-form" hx-post="/practice/{{.ID}}/submit" hx-target="#submit-result-{{.ID}}" hx-swap="innerHTML" hx-indicator="#submit-spinner-{{.ID}}">
+    <label for="output-{{.ID}}">Paste terminal output</label>
+    <textarea id="output-{{.ID}}" name="output" rows="4" placeholder="Paste what your terminal printed…">{{.Output}}</textarea>
+    <button class="btn btn-primary" type="submit">
+      <span class="htmx-indicator loader-dots" id="submit-spinner-{{.ID}}" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span></span>
+      Save submission
+    </button>
+  </form>
+  <div id="submit-result-{{.ID}}" aria-live="polite"></div>
+</div>
+{{end}}

@@ -1,65 +1,52 @@
 {{define "lesson_show.html"}}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{.Title}}</title>
-  <meta name="description" content="{{.Description}}">
-  {{if .Canonical}}<link rel="canonical" href="{{.Canonical}}">{{end}}
-  <meta property="og:title" content="{{.Title}}">
-  <meta property="og:description" content="{{.Description}}">
-  <meta property="og:type" content="article">
-  <meta property="og:image" content="/og-image.svg">
-  <meta property="og:url" content="{{.Canonical}}">
-  <meta name="twitter:card" content="summary_large_image">
-  <link rel="stylesheet" href="/static/theme.css">
-  <script src="/static/htmx.min.js"></script>
-  {{if .JSONLD}}<script type="application/ld+json">{{.JSONLD}}</script>{{end}}
-</head>
-<body>
-{{template "nav" .}}
-<main id="main">
-<p class="muted"><a href="/lessons">← Lessons</a></p>
-<h1>Lesson {{.Lesson.ID}} — {{.Lesson.Title}}</h1>
-<p class="muted">{{.Lesson.Summary}}</p>
+{{template "page_start" .}}
+<div class="page-header">
+  <p class="back-link muted"><a href="/lessons">← Lessons</a></p>
+  <h1>Lesson {{.Lesson.ID}} — {{.Lesson.Title}}</h1>
+  <p class="muted">{{.Lesson.Summary}}</p>
+</div>
 
-{{range .Sections}}
-<h2>{{.Heading}}</h2>
-<div>{{.BodyHTML}}</div>
+<div class="lesson-meta">
+{{if gt .Progress.CheckpointsTotal 0}}
+<div class="lesson-stepper" aria-label="Lesson progress">
+  <div class="lesson-stepper-label">
+    <span>Checkpoints</span>
+    <span><strong>{{.Progress.CheckpointsDone}}</strong> / {{.Progress.CheckpointsTotal}}</span>
+  </div>
+  <div class="progress-bar"><span style="width: {{percent .Progress.CheckpointsDone .Progress.CheckpointsTotal}}%"></span></div>
+</div>
 {{end}}
 
 {{if not .PageMeta.Authed}}
-{{if .QuestionViews}}
-<p class="auth-prompt"><a href="/login?next=/lessons/{{.Lesson.Slug}}">Log in</a> or <a href="/signup">sign up</a> to save your quiz answers and track progress.</p>
+<p class="auth-prompt"><a href="/login?next=/lessons/{{.Lesson.Slug}}">Log in</a> or <a href="/signup">sign up</a> to save quiz answers and exercise submissions.</p>
 {{end}}
-{{end}}
+</div>
 
-{{range .QuestionViews}}
-<div class="quiz-block {{if .Review}}review{{end}}" id="quiz-{{.Question.ID}}">
-  {{if .Review}}<h3>Review</h3>{{else if eq .Question.QuestionType "text"}}<h3>Predict</h3>{{else}}<h3>Question</h3>{{end}}
-  <p>{{.Question.Prompt}}</p>
-  <div id="quiz-body-{{.Question.ID}}">
-    {{if eq .Question.QuestionType "text"}}
-      {{template "quiz_text_partial" .}}
+<div class="lesson-flow">
+{{range .Blocks}}
+{{if eq .Kind "section"}}
+<h2>{{.Section.Heading}}</h2>
+<div class="prose-lesson">{{.Section.BodyHTML}}</div>
+{{else if eq .Kind "question"}}
+<div class="quiz-block {{if .Question.Review}}is-review{{end}}" id="quiz-{{.Question.Question.ID}}">
+  <div class="quiz-header">
+    {{if .Question.Review}}<h3>Review</h3>{{else if eq .Question.Question.QuestionType "text"}}<h3>Predict</h3>{{else}}<h3>Question</h3>{{end}}
+    <span class="htmx-indicator loader-dots" id="quiz-spinner-{{.Question.Question.ID}}" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span></span>
+  </div>
+  <p class="quiz-prompt">{{.Question.Question.Prompt}}</p>
+  <div id="quiz-body-{{.Question.Question.ID}}" aria-live="polite">
+    {{if eq .Question.Question.QuestionType "text"}}
+      {{template "quiz_text_partial" .Question}}
     {{else}}
-      {{template "quiz_choice_partial" .}}
+      {{template "quiz_choice_partial" .Question}}
     {{end}}
   </div>
 </div>
+{{else if eq .Kind "exercise"}}
+{{template "exercise_form_partial" .Exercise}}
 {{end}}
-
-{{if .Exercises}}
-<h2>Practice</h2>
-{{range .Exercises}}
-<div class="checkpoint">
-  <strong>{{.Title}}</strong>
-  <p>{{.Instructions}}</p>
-  <p><code>{{.Path}}</code>{{if .Submitted}} — submitted{{else}} — not yet submitted{{end}}</p>
-  <p><a href="/practice#{{.ID}}">Submit on Practice page →</a></p>
+{{end}}
 </div>
-{{end}}
-{{end}}
 
 {{if or .PrevLesson .NextLesson}}
 <nav class="lesson-nav" aria-label="Lesson navigation">
@@ -67,7 +54,5 @@
 {{if .NextLesson}}<a href="/lessons/{{.NextLesson.Slug}}" rel="next">{{.NextLesson.Title}} →</a>{{end}}
 </nav>
 {{end}}
-</main>
-</body>
-</html>
+{{template "page_end" .}}
 {{end}}

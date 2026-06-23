@@ -1,0 +1,12 @@
+{
+  "name": "go-learn",
+  "private": true,
+  "scripts": {
+    "css:build": "npx @tailwindcss/cli -i web/static/input.css -o web/static/theme.css --minify",
+    "css:watch": "npx @tailwindcss/cli -i web/static/input.css -o web/static/theme.css --watch"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.1.11",
+    "tailwindcss": "^4.1.11"
+  }
+}

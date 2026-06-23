@@ -1,34 +1,23 @@
 {{define "dashboard.html"}}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{.Title}}</title>
-  <meta name="description" content="{{.Description}}">
-  {{if .Canonical}}<link rel="canonical" href="{{.Canonical}}">{{end}}
-  <meta property="og:title" content="{{.Title}}">
-  <meta property="og:description" content="{{.Description}}">
-  <meta property="og:type" content="website">
-  <meta property="og:image" content="/og-image.svg">
-  <meta property="og:url" content="{{.Canonical}}">
-  <meta name="twitter:card" content="summary_large_image">
-  <link rel="stylesheet" href="/static/theme.css">
-  <script src="/static/htmx.min.js"></script>
-  {{if .JSONLD}}<script type="application/ld+json">{{.JSONLD}}</script>{{end}}
-</head>
-<body>
-{{template "nav" .}}
-<main id="main">
-<h1>go-learn</h1>
-<p class="muted">Your Go learning workspace</p>
-
-{{if .Data.NextLesson}}
-<div class="next-action">
-  <strong>Continue:</strong>
-  <a href="/lessons/{{.Data.NextLesson.Slug}}">Lesson {{.Data.NextLesson.LessonID}} — {{.Data.NextLesson.Title}}</a>
-</div>
-{{end}}
+{{template "page_start" .}}
+<section class="continue-hub">
+  {{if .Data.NextLesson}}
+  <div class="continue-card card">
+    <p class="continue-eyebrow">Continue learning</p>
+    <h1 class="continue-title">Lesson {{.Data.NextLesson.LessonID}} — {{.Data.NextLesson.Title}}</h1>
+    <div class="progress-bar"><span style="width: {{percent (lessonDone .Data.NextLesson.QuestionsAnswered .Data.NextLesson.ExercisesDone) (lessonTotal .Data.NextLesson.QuestionsTotal .Data.NextLesson.ExerciseTotal)}}%"></span></div>
+    <p class="muted">Quiz {{.Data.NextLesson.QuestionsAnswered}}/{{.Data.NextLesson.QuestionsTotal}} · Exercises {{.Data.NextLesson.ExercisesDone}}/{{.Data.NextLesson.ExerciseTotal}}</p>
+    <p><a href="/lessons/{{.Data.NextLesson.Slug}}" class="btn btn-primary">Resume lesson</a></p>
+  </div>
+  {{else}}
+  <div class="continue-card card">
+    <p class="continue-eyebrow">All caught up</p>
+    <h1 class="continue-title">You finished every lesson</h1>
+    <p class="muted">Review weak spots below or revisit any lesson to reinforce concepts.</p>
+    <p><a href="/lessons" class="btn btn-primary">Browse lessons</a></p>
+  </div>
+  {{end}}
+</section>
 
 <div class="stat-row">
   <div class="stat"><strong>{{.Data.Stats.QuestionsAnswered}}</strong><span>questions answered</span></div>
@@ -38,26 +27,28 @@
 </div>
 
 {{if .Data.Mission}}
-<h2>Mission</h2>
-<div class="card"><p>{{.Data.Mission.Why}}</p></div>
+<h2 class="section-head">Mission</h2>
+<div class="card"><p class="mb-0">{{.Data.Mission.Why}}</p></div>
 {{end}}
 
-<h2>Lessons</h2>
+<h2 class="section-head">Your lessons</h2>
+<div class="lesson-list">
 {{range .Data.Lessons}}
-<div class="card">
-  <a href="/lessons/{{.Slug}}"><strong>Lesson {{.LessonID}}</strong> — {{.Title}}</a>
+<div class="card lesson-row">
+  <a href="/lessons/{{.Slug}}" class="lesson-row-link"><strong>Lesson {{.LessonID}}</strong> — {{.Title}}</a>
   <div class="progress-bar"><span style="width: {{percent (lessonDone .QuestionsAnswered .ExercisesDone) (lessonTotal .QuestionsTotal .ExerciseTotal)}}%"></span></div>
-  <p class="muted">Quiz: {{.QuestionsAnswered}}/{{.QuestionsTotal}} · Exercises: {{.ExercisesDone}}/{{.ExerciseTotal}}</p>
+  <p class="muted lesson-row-meta">Quiz: {{.QuestionsAnswered}}/{{.QuestionsTotal}} · Exercises: {{.ExercisesDone}}/{{.ExerciseTotal}}</p>
 </div>
 {{end}}
+</div>
 
 {{if .Data.WeakSpots}}
-<h2>Weak spots</h2>
+<h2 class="section-head">Weak spots</h2>
+<div class="stack-tight">
 {{range .Data.WeakSpots}}
-<div class="card review"><strong>{{.Title}}</strong><p>{{.Body}}</p></div>
+<div class="card review"><strong>{{.Title}}</strong><p class="mb-0">{{.Body}}</p></div>
 {{end}}
+</div>
 {{end}}
-</main>
-</body>
-</html>
+{{template "page_end" .}}
 {{end}}

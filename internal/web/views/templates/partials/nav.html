@@ -2,19 +2,26 @@
 <header>
 <a href="#main" class="skip-link">Skip to content</a>
 <nav class="site-nav" aria-label="Primary">
-  <a href="/">Home</a>
-  <a href="/lessons">Lessons</a>
-  <a href="/progress">Progress</a>
-  <a href="/reference">Reference</a>
-  <a href="/practice">Practice</a>
+  <a href="/" class="nav-brand">go-learn</a>
+  <details class="nav-menu">
+    <summary class="nav-menu-summary">Menu</summary>
+    <div class="nav-menu-body">
+      <a href="/lessons">Lessons</a>
+      {{if .PageMeta.Authed}}<a href="/progress">Progress</a>{{end}}
+      <a href="/reference">Reference</a>
+      <a href="/practice">Practice</a>
+    </div>
+  </details>
   <span class="nav-spacer"></span>
-  {{if .PageMeta.Authed}}
-    <span class="nav-user">{{.PageMeta.UserEmail}}</span>
-    <form method="POST" action="/logout" class="nav-form"><button type="submit" class="nav-link">Log out</button></form>
-  {{else}}
-    <a href="/login">Log in</a>
-    <a href="/signup" class="nav-cta">Sign up</a>
-  {{end}}
+  <div class="nav-auth">
+    {{if .PageMeta.Authed}}
+      <span class="nav-user">{{.PageMeta.UserEmail}}</span>
+      <form method="POST" action="/logout" class="nav-form"><button type="submit" class="nav-link">Log out</button></form>
+    {{else}}
+      <a href="/login">Log in</a>
+      <a href="/signup" class="nav-cta">Sign up</a>
+    {{end}}
+  </div>
 </nav>
 </header>
 {{end}}

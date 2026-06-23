@@ -41,7 +41,7 @@ func (h *Handler) Signup(w http.ResponseWriter, r *http.Request) {
 	}
 	if r.Method == http.MethodGet {
 		h.Views.Render(w, "signup.html", signupPage{
-			PageMeta: views.PageMeta{Title: "Sign up — go-learn", Description: "Create a free go-learn account to track your Go progress."},
+			PageMeta: views.PageMeta{Title: "Sign up — go-learn", Description: "Create a free go-learn account to track your Go progress.", NoIndex: true},
 		})
 		return
 	}
@@ -113,7 +113,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 	if r.Method == http.MethodGet {
 		h.Views.Render(w, "login.html", loginPage{
-			PageMeta: views.PageMeta{Title: "Log in — go-learn", Description: "Log in to your go-learn account."},
+			PageMeta: views.PageMeta{Title: "Log in — go-learn", Description: "Log in to your go-learn account.", NoIndex: true},
 			Next:     next,
 		})
 		return
@@ -191,7 +191,7 @@ func (h *Handler) startSession(w http.ResponseWriter, r *http.Request, userID st
 
 func (h *Handler) renderSignupError(w http.ResponseWriter, r *http.Request, email, msg string) {
 	h.Views.Render(w, "signup.html", signupPage{
-		PageMeta: views.PageMeta{Title: "Sign up — go-learn"},
+		PageMeta: views.PageMeta{Title: "Sign up — go-learn", NoIndex: true},
 		Email:    email,
 		Error:    msg,
 	})
@@ -199,7 +199,7 @@ func (h *Handler) renderSignupError(w http.ResponseWriter, r *http.Request, emai
 
 func (h *Handler) renderLoginError(w http.ResponseWriter, r *http.Request, email, next, msg string) {
 	h.Views.Render(w, "login.html", loginPage{
-		PageMeta: views.PageMeta{Title: "Log in — go-learn"},
+		PageMeta: views.PageMeta{Title: "Log in — go-learn", NoIndex: true},
 		Email:    email,
 		Next:     next,
 		Error:    msg,

@@ -1,33 +1,15 @@
 {{define "reference.html"}}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{.Title}}</title>
-  <meta name="description" content="{{.Description}}">
-  {{if .Canonical}}<link rel="canonical" href="{{.Canonical}}">{{end}}
-  <meta property="og:title" content="{{.Title}}">
-  <meta property="og:description" content="{{.Description}}">
-  <meta property="og:type" content="website">
-  <meta property="og:image" content="/og-image.svg">
-  <meta property="og:url" content="{{.Canonical}}">
-  <meta name="twitter:card" content="summary_large_image">
-  <link rel="stylesheet" href="/static/theme.css">
-  {{if .JSONLD}}<script type="application/ld+json">{{.JSONLD}}</script>{{end}}
-</head>
-<body>
-{{template "nav" .}}
-<main id="main">
+{{template "page_start" .}}
 <h1>Reference</h1>
 <h2>Glossary</h2>
-<dl>
+<dl class="space-y-4">
 {{range .Terms}}
-  <dt><strong>{{.Term}}</strong></dt>
-  <dd>{{.Definition}}</dd>
+  <dt class="font-medium"><strong>{{.Term}}</strong></dt>
+  <dd class="muted mb-4 ml-0">{{.Definition}}</dd>
 {{end}}
 </dl>
 <h2>External resources</h2>
+<div class="table-wrap">
 <table class="data">
   <thead><tr><th>Title</th><th>Notes</th><th>Lesson</th></tr></thead>
   <tbody>
@@ -40,7 +22,6 @@
   {{end}}
   </tbody>
 </table>
-</main>
-</body>
-</html>
+</div>
+{{template "page_end" .}}
 {{end}}

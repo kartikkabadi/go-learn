@@ -1,0 +1,617 @@
+@import "tailwindcss";
+
+@source "../../internal/web/views/templates/**/*.html";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-success-muted: var(--success-muted);
+  --color-destructive-muted: var(--destructive-muted);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+:root {
+  color-scheme: light dark;
+  --radius: 0.5rem;
+  --background: oklch(0.985 0.002 90);
+  --foreground: oklch(0.21 0.006 285);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.21 0.006 285);
+  --muted: oklch(0.96 0.002 90);
+  --muted-foreground: oklch(0.52 0.015 285);
+  --border: oklch(0.9 0.004 90);
+  --input: oklch(0.9 0.004 90);
+  --primary: oklch(0.52 0.11 210);
+  --primary-foreground: oklch(0.99 0 0);
+  --accent: oklch(0.96 0.01 210);
+  --accent-foreground: oklch(0.35 0.08 210);
+  --destructive: oklch(0.55 0.2 25);
+  --success: oklch(0.52 0.14 155);
+  --success-foreground: oklch(0.99 0 0);
+  --success-muted: oklch(0.95 0.03 155);
+  --destructive-muted: oklch(0.96 0.02 25);
+  --ring: oklch(0.52 0.11 210);
+  --try-bg: oklch(0.97 0.015 210);
+  --review-bg: oklch(0.97 0.015 300);
+  --review-border: oklch(0.88 0.03 300);
+  --checkpoint-bg: oklch(0.98 0.02 85);
+  --checkpoint-border: oklch(0.88 0.04 85);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: oklch(0.17 0.005 285);
+    --foreground: oklch(0.95 0.005 285);
+    --card: oklch(0.22 0.006 285);
+    --card-foreground: oklch(0.95 0.005 285);
+    --muted: oklch(0.25 0.006 285);
+    --muted-foreground: oklch(0.68 0.01 285);
+    --border: oklch(0.3 0.006 285);
+    --input: oklch(0.3 0.006 285);
+    --primary: oklch(0.72 0.12 210);
+    --primary-foreground: oklch(0.17 0.005 285);
+    --accent: oklch(0.28 0.02 210);
+    --accent-foreground: oklch(0.85 0.06 210);
+    --destructive: oklch(0.68 0.17 25);
+    --success: oklch(0.72 0.14 155);
+    --success-muted: oklch(0.28 0.04 155);
+    --destructive-muted: oklch(0.28 0.04 25);
+    --ring: oklch(0.72 0.12 210);
+    --try-bg: oklch(0.24 0.02 210);
+    --review-bg: oklch(0.24 0.02 300);
+    --review-border: oklch(0.34 0.03 300);
+    --checkpoint-bg: oklch(0.26 0.02 85);
+    --checkpoint-border: oklch(0.36 0.03 85);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border box-border;
+  }
+
+  html {
+    @apply scroll-smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans text-base leading-relaxed antialiased;
+  }
+
+  a {
+    @apply text-primary underline-offset-4 hover:underline;
+  }
+
+  h1 {
+    @apply mb-2 text-3xl font-semibold tracking-tight md:text-4xl;
+  }
+
+  h2 {
+    @apply mb-3 text-xl font-semibold tracking-tight;
+  }
+
+  h3 {
+    @apply mb-2 text-base font-medium;
+  }
+
+  p {
+    @apply leading-relaxed;
+  }
+
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-ring;
+  }
+
+  pre {
+    @apply overflow-x-auto rounded-lg border bg-muted p-4 text-sm;
+  }
+
+  code {
+    @apply rounded-md bg-muted px-1.5 py-0.5 font-mono text-[0.85em];
+  }
+
+  pre code {
+    @apply bg-transparent p-0;
+  }
+
+  table.data {
+    @apply my-4 w-full border-collapse text-sm;
+  }
+
+  table.data th,
+  table.data td {
+    @apply border-b border-border px-3 py-2.5 text-left align-top;
+  }
+
+  table.data th {
+    @apply text-muted-foreground font-medium;
+  }
+
+  textarea,
+  input[type="text"],
+  input[type="email"],
+  input[type="password"] {
+    @apply w-full rounded-md border border-input bg-card px-3 py-2 text-foreground;
+  }
+
+  textarea {
+    @apply font-mono text-sm;
+  }
+}
+
+@layer components {
+  .skip-link {
+    @apply sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground;
+  }
+
+  .site-shell {
+    @apply mx-auto min-h-dvh max-w-3xl px-4 py-6 pb-16 md:px-6 md:py-8;
+  }
+
+  .site-nav {
+    @apply relative mb-6 flex flex-wrap items-center gap-3 border-b border-border pb-4 text-sm md:mb-8;
+  }
+
+  .nav-brand {
+    @apply text-base font-semibold text-foreground no-underline hover:no-underline;
+  }
+
+  .nav-menu {
+    @apply md:contents;
+  }
+
+  .nav-menu-summary {
+    @apply list-none cursor-pointer rounded-md border border-input bg-card px-3 py-1.5 text-sm font-medium shadow-sm md:hidden;
+  }
+
+  .nav-menu-summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .nav-menu-body {
+    @apply absolute left-0 top-full z-50 mt-2 flex min-w-48 flex-col gap-0.5 rounded-xl border bg-card p-1.5 shadow-md md:static md:mt-0 md:min-w-0 md:flex-row md:flex-wrap md:items-center md:gap-x-4 md:border-0 md:bg-transparent md:p-0 md:shadow-none;
+  }
+
+  .nav-menu-body a {
+    @apply rounded-md px-3 py-2 text-foreground no-underline hover:bg-accent hover:text-accent-foreground md:px-0 md:py-0 md:hover:bg-transparent md:hover:underline;
+  }
+
+  .nav-menu:not([open]) .nav-menu-body {
+    @apply hidden md:flex;
+  }
+
+  .nav-auth {
+    @apply flex flex-wrap items-center gap-x-4 gap-y-2;
+  }
+
+  .nav-spacer {
+    @apply flex-1;
+  }
+
+  .nav-user {
+    @apply text-muted-foreground text-sm;
+  }
+
+  .nav-form {
+    @apply inline;
+  }
+
+  .nav-link {
+    @apply cursor-pointer border-0 bg-transparent p-0 text-primary hover:underline;
+    font: inherit;
+  }
+
+  .nav-cta {
+    @apply inline-flex items-center rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground no-underline hover:bg-primary/90 hover:no-underline;
+  }
+
+  .muted {
+    @apply text-muted-foreground;
+  }
+
+  .card {
+    @apply rounded-xl border bg-card p-5 text-card-foreground shadow-sm;
+  }
+
+  .card p:last-child,
+  .checkpoint p:last-child,
+  .quiz-block p:last-child {
+    @apply mb-0;
+  }
+
+  .section-head {
+    @apply mb-4 mt-10 text-xl font-semibold tracking-tight;
+  }
+
+  .section-head:first-child {
+    @apply mt-0;
+  }
+
+  .page-header {
+    @apply mb-6 space-y-2;
+  }
+
+  .page-header h1 {
+    @apply mb-0;
+  }
+
+  .page-lead {
+    @apply -mt-1 mb-6;
+  }
+
+  .back-link {
+    @apply mb-1;
+  }
+
+  .page-sections {
+    @apply space-y-10;
+  }
+
+  .stack-tight {
+    @apply space-y-3;
+  }
+
+  .lesson-meta {
+    @apply mb-8 space-y-4;
+  }
+
+  .lesson-flow {
+    @apply space-y-8;
+  }
+
+  .lesson-flow > h2 {
+    @apply mb-2 mt-0 text-lg;
+  }
+
+  .lesson-list {
+    @apply space-y-3;
+  }
+
+  .lesson-row-title {
+    @apply mb-2 mt-0 text-base font-semibold;
+  }
+
+  .lesson-row-title a,
+  .lesson-row-link {
+    @apply font-medium text-foreground no-underline hover:underline;
+  }
+
+  .lesson-row-meta {
+    @apply mb-0 mt-2 text-sm;
+  }
+
+  .lesson-card-link {
+    @apply font-medium text-foreground no-underline hover:underline;
+  }
+
+  .stat-row {
+    @apply mb-8 flex flex-wrap gap-3;
+  }
+
+  .stat {
+    @apply min-w-[calc(50%-0.375rem)] flex-1 rounded-xl border bg-card p-4 shadow-sm sm:min-w-32 sm:flex-none;
+  }
+
+  .stat strong {
+    @apply block text-2xl font-semibold text-primary;
+  }
+
+  .stat span {
+    @apply text-muted-foreground text-sm;
+  }
+
+  .progress-bar {
+    @apply h-2 overflow-hidden rounded-full bg-muted;
+  }
+
+  .lesson-stepper .progress-bar,
+  .lesson-row .progress-bar,
+  .continue-card .progress-bar {
+    @apply mt-2;
+  }
+
+  .progress-bar > span {
+    @apply block h-full rounded-full bg-primary transition-[width] duration-300;
+  }
+
+  .btn {
+    @apply inline-flex cursor-pointer items-center justify-center rounded-md border border-input bg-card px-4 py-2.5 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground;
+  }
+
+  .btn-large {
+    @apply px-6 py-3 text-base;
+  }
+
+  .btn-primary {
+    @apply border-transparent bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground;
+  }
+
+  .quiz-block {
+    @apply rounded-xl border border-primary/25 bg-[var(--try-bg)] p-5 shadow-sm;
+  }
+
+  .quiz-block.is-review {
+    @apply border-[var(--review-border)] bg-[var(--review-bg)];
+  }
+
+  .quiz-header {
+    @apply mb-2 flex items-center justify-between gap-3;
+  }
+
+  .quiz-block h3 {
+    @apply mb-0 text-xs font-semibold tracking-wider text-primary uppercase;
+  }
+
+  .quiz-prompt {
+    @apply mb-3 text-[0.95rem] leading-relaxed;
+  }
+
+  .quiz-options {
+    @apply flex flex-col gap-2;
+  }
+
+  .quiz-options button {
+    @apply w-full cursor-pointer rounded-md border border-input bg-card px-4 py-2.5 text-left text-sm shadow-sm transition-colors hover:border-primary/50 hover:bg-accent disabled:cursor-default disabled:opacity-80;
+  }
+
+  .quiz-options button.correct {
+    @apply border-success bg-[var(--success-muted)] text-foreground;
+  }
+
+  .quiz-options button.wrong {
+    @apply border-destructive bg-[var(--destructive-muted)] text-foreground;
+  }
+
+  .feedback.ok,
+  .result.ok,
+  .ok {
+    @apply mt-2 text-sm text-success;
+  }
+
+  .feedback.no,
+  .result.no,
+  .bad {
+    @apply mt-2 text-sm text-destructive;
+  }
+
+  .warn {
+    @apply mt-2 text-sm text-amber-600 dark:text-amber-400;
+  }
+
+  .review {
+    @apply rounded-xl border border-[var(--review-border)] bg-[var(--review-bg)] p-5;
+  }
+
+  .checkpoint {
+    @apply rounded-xl border border-[var(--checkpoint-border)] bg-[var(--checkpoint-bg)] p-5 shadow-sm;
+  }
+
+  .checkpoint h3 {
+    @apply mb-2 mt-0 text-base font-semibold normal-case tracking-normal;
+  }
+
+  .checkpoint-instructions {
+    @apply mb-3 text-sm leading-relaxed;
+  }
+
+  .checkpoint-cmd {
+    @apply mb-4 text-sm;
+  }
+
+  .checkpoint-output {
+    @apply mb-4 text-sm;
+  }
+
+  .practice-form,
+  .quiz-answer-form {
+    @apply flex flex-col gap-3;
+  }
+
+  .practice-form label,
+  .quiz-answer-form label {
+    @apply text-sm font-medium text-muted-foreground;
+  }
+
+  .practice-form .btn,
+  .quiz-answer-form .btn {
+    @apply self-start;
+  }
+
+  .lesson-nav {
+    @apply mt-10 flex justify-between gap-4 border-t border-border pt-6 text-sm;
+  }
+
+  .next-action {
+    @apply my-6 rounded-xl border-l-4 border-primary bg-card p-4 shadow-sm;
+  }
+
+  .auth-form {
+    @apply my-6 flex max-w-sm flex-col gap-2;
+  }
+
+  .auth-form label {
+    @apply text-muted-foreground text-sm;
+  }
+
+  .auth-prompt {
+    @apply rounded-lg border border-primary/20 border-l-4 border-l-primary bg-card p-4 text-sm;
+  }
+
+  .hero {
+    @apply relative overflow-hidden rounded-2xl border bg-card px-5 py-10 text-center shadow-sm md:px-8 md:py-12;
+  }
+
+  .hero::before {
+    content: "";
+    @apply pointer-events-none absolute inset-0 opacity-40;
+    background-image: radial-gradient(circle at 1px 1px, var(--border) 1px, transparent 0);
+    background-size: 20px 20px;
+  }
+
+  .hero > * {
+    @apply relative;
+  }
+
+  .hero-badge {
+    @apply mb-4 inline-block rounded-full border border-primary/30 bg-accent px-3 py-1 text-xs font-medium tracking-wide text-accent-foreground uppercase;
+  }
+
+  .hero h1 {
+    @apply mb-3;
+  }
+
+  .hero-sub {
+    @apply mx-auto mb-6 max-w-xl text-lg text-muted-foreground;
+  }
+
+  .hero-features {
+    @apply mt-5 flex flex-wrap justify-center gap-2;
+  }
+
+  .hero-pill {
+    @apply rounded-full border bg-background px-3 py-1 text-xs text-muted-foreground;
+  }
+
+  .continue-hub {
+    @apply mb-6;
+  }
+
+  .continue-card {
+    @apply border-l-4 border-l-primary;
+  }
+
+  .continue-card h1.continue-title {
+    @apply mb-3 mt-0 text-2xl;
+  }
+
+  .continue-card p:last-child {
+    @apply mb-0 mt-4;
+  }
+
+  .continue-eyebrow {
+    @apply mb-1 text-xs font-medium tracking-wide text-primary uppercase;
+  }
+
+  .lesson-stepper {
+    @apply rounded-lg border bg-card px-4 py-3;
+  }
+
+  .lesson-stepper-label {
+    @apply mb-2 flex justify-between text-sm text-muted-foreground;
+  }
+
+  .prose-lesson p {
+    @apply my-2.5;
+  }
+
+  .prose-lesson p:last-child {
+    @apply mb-0;
+  }
+
+  .prose-lesson ul {
+    @apply my-3 list-disc space-y-1.5 pl-5;
+  }
+
+  .prose-lesson li {
+    @apply text-foreground;
+  }
+
+  .loader-dots {
+    @apply inline-grid grid-cols-3 gap-0.5 align-middle;
+  }
+
+  .loader-dots > span {
+    @apply size-1 rounded-full bg-primary;
+    animation: dot-matrix 0.9s ease-in-out infinite;
+  }
+
+  .loader-dots > span:nth-child(2) {
+    animation-delay: 0.15s;
+  }
+
+  .loader-dots > span:nth-child(3) {
+    animation-delay: 0.3s;
+  }
+
+  .loader-dots > span:nth-child(4) {
+    animation-delay: 0.45s;
+  }
+
+  .loader-dots > span:nth-child(5) {
+    animation-delay: 0.6s;
+  }
+
+  .loader-dots > span:nth-child(6) {
+    animation-delay: 0.75s;
+  }
+
+  @keyframes dot-matrix {
+    0%,
+    100% {
+      opacity: 0.25;
+      transform: scale(0.85);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  .quiz-pending .loader-dots {
+    @apply ml-2;
+  }
+
+  .lesson-grid {
+    @apply grid gap-3 sm:grid-cols-2;
+  }
+
+  .lesson-card p {
+    @apply mt-2 mb-0 text-sm text-muted-foreground;
+  }
+
+  .cta-section {
+    @apply border-t border-border pt-8 text-center;
+  }
+
+  .cta-copy {
+    @apply mx-auto mb-5 max-w-md text-muted-foreground;
+  }
+
+  .cta-foot {
+    @apply mt-4 mb-0;
+  }
+
+  .table-wrap {
+    @apply -mx-4 overflow-x-auto px-4 md:mx-0 md:px-0;
+  }
+
+  .htmx-indicator {
+    @apply hidden;
+  }
+
+  .htmx-request .htmx-indicator,
+  .htmx-request.htmx-indicator {
+    @apply inline-grid;
+  }
+}

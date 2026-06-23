@@ -1,0 +1,17 @@
+{{define "head"}}
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{.Title}}</title>
+{{if .Description}}<meta name="description" content="{{.Description}}">{{end}}
+{{if .NoIndex}}<meta name="robots" content="noindex">{{end}}
+{{if .Canonical}}<link rel="canonical" href="{{.Canonical}}">{{end}}
+<meta property="og:title" content="{{.Title}}">
+{{if .Description}}<meta property="og:description" content="{{.Description}}">{{end}}
+<meta property="og:type" content="{{if .OgType}}{{.OgType}}{{else}}website{{end}}">
+<meta property="og:image" content="/og-image.svg">
+{{if .Canonical}}<meta property="og:url" content="{{.Canonical}}">{{end}}
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="/static/theme.css">
+{{if .HTMX}}<script src="/static/htmx.min.js"></script>{{end}}
+{{if .JSONLD}}<script type="application/ld+json">{{.JSONLD}}</script>{{end}}
+{{end}}

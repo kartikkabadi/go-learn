@@ -14,6 +14,9 @@ type PageMeta struct {
 	Description string
 	Canonical   string
 	JSONLD      template.JS
+	OgType      string // og:type — default "website" in template
+	NoIndex     bool
+	HTMX        bool // load htmx.min.js
 	Authed      bool
 	UserEmail   string
 }

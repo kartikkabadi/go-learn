@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"log/slog"
 	"net/http"
+	"sort"
 	"strings"
 	"time"
 
@@ -53,19 +54,41 @@ type LessonsIndexPage struct {
 }
 
 type QuestionView struct {
-	LessonID string
-	Question store.Question
-	Review   bool
+	LessonID  string
+	Question  store.Question
+	Review    bool
+	Ephemeral bool // graded but not saved (anonymous)
+}
+
+type LessonBlockKind string
+
+const (
+	BlockSection  LessonBlockKind = "section"
+	BlockQuestion LessonBlockKind = "question"
+	BlockExercise LessonBlockKind = "exercise"
+)
+
+type LessonBlock struct {
+	Kind      LessonBlockKind
+	SortOrder int
+	Section   *store.LessonSection
+	Question  *QuestionView
+	Exercise  *ExerciseView
 }
 
 type LessonPage struct {
 	views.PageMeta
-	Lesson        *store.Lesson
-	Sections      []store.LessonSection
-	QuestionViews []QuestionView
-	Exercises     []store.Exercise
-	PrevLesson    *store.Lesson
-	NextLesson    *store.Lesson
+	Lesson     *store.Lesson
+	Blocks     []LessonBlock
+	Progress   LessonProgressSummary
+	PrevLesson *store.Lesson
+	NextLesson *store.Lesson
+}
+
+// LessonProgressSummary counts interactive checkpoints (quizzes + exercises) in a lesson.
+type LessonProgressSummary struct {
+	CheckpointsTotal int
+	CheckpointsDone  int
 }
 
 type ProgressPage struct {
@@ -214,6 +237,22 @@ func (h *Handler) LessonShow(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
+	var exviews []ExerciseView
+	for _, ex := range exercises {
+		ev := ExerciseView{Exercise: ex}
+		if ex.Submitted && uid != "" {
+			out, ok, err := h.Store.GetExerciseSubmission(uid, ex.ID)
+			if err != nil {
+				internalError(w, "lesson exercise submission", err)
+				return
+			}
+			if ok {
+				ev.Output = out
+			}
+		}
+		exviews = append(exviews, ev)
+	}
+
 	base := h.baseURL(r)
 	desc := lesson.Summary
 	if desc == "" {
@@ -239,23 +278,35 @@ func (h *Handler) LessonShow(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	lessonMeta := h.meta(r, "Learn Go: "+lesson.Title+" — go-learn", desc, base+"/lessons/"+lesson.Slug, lessonJSONLD(base, lesson, questions))
+	lessonMeta.HTMX = true
+	lessonMeta.OgType = "article"
+
+	var checkpointProg LessonProgressSummary
+	for _, q := range questions {
+		checkpointProg.CheckpointsTotal++
+		if q.Answer != nil {
+			checkpointProg.CheckpointsDone++
+		}
+	}
+	for _, ex := range exercises {
+		checkpointProg.CheckpointsTotal++
+		if ex.Submitted {
+			checkpointProg.CheckpointsDone++
+		}
+	}
+
 	h.Views.Render(w, "lesson_show.html", LessonPage{
-		PageMeta:      h.meta(r, "Learn Go: "+lesson.Title+" — go-learn", desc, base+"/lessons/"+lesson.Slug, lessonJSONLD(base, lesson, questions)),
-		Lesson:        lesson,
-		Sections:      sections,
-		QuestionViews: qviews,
-		Exercises:     exercises,
-		PrevLesson:    prev,
-		NextLesson:    next,
+		PageMeta:   lessonMeta,
+		Lesson:     lesson,
+		Blocks:     mergeLessonBlocks(sections, qviews, exviews),
+		Progress:   checkpointProg,
+		PrevLesson: prev,
+		NextLesson: next,
 	})
 }
 
 func (h *Handler) AnswerQuestion(w http.ResponseWriter, r *http.Request) {
-	user := middleware.UserFromContext(r)
-	if user == nil {
-		http.Error(w, "log in to save answers", http.StatusUnauthorized)
-		return
-	}
 	if err := r.ParseForm(); err != nil {
 		badRequest(w, "bad form")
 		return
@@ -287,19 +338,31 @@ func (h *Handler) AnswerQuestion(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	answer, err := h.Store.SaveAnswer(user.ID, questionID, pickedKey, pickedLabel)
-	if err != nil {
-		slog.Error("save answer", "questionId", questionID, "error", err)
-		http.Error(w, "invalid answer", http.StatusBadRequest)
-		return
-	}
-	q.Answer = &answer
-
+	user := middleware.UserFromContext(r)
 	view := QuestionView{
 		LessonID: lessonID,
 		Question: *q,
 		Review:   q.SectionTag == "review",
 	}
+
+	if user == nil {
+		view.Ephemeral = true
+		view.Question.Answer = &store.Answer{
+			QuestionID:  questionID,
+			PickedKey:   pickedKey,
+			PickedLabel: pickedLabel,
+			Correct:     evaluateAnswer(*q, pickedKey),
+		}
+	} else {
+		answer, err := h.Store.SaveAnswer(user.ID, questionID, pickedKey, pickedLabel)
+		if err != nil {
+			slog.Error("save answer", "questionId", questionID, "error", err)
+			http.Error(w, "invalid answer", http.StatusBadRequest)
+			return
+		}
+		view.Question.Answer = &answer
+	}
+
 	if err := h.Views.RenderPartial(w, "quiz_answer_partial", view); err != nil {
 		internalError(w, "answer partial", err)
 	}
@@ -360,8 +423,10 @@ func (h *Handler) Practice(w http.ResponseWriter, r *http.Request) {
 		evs = append(evs, ev)
 	}
 	base := h.baseURL(r)
+	practiceMeta := h.meta(r, "Practice — go-learn", "Hands-on Go programming exercises to reinforce your learning.", base+"/practice", "")
+	practiceMeta.HTMX = true
 	h.Views.Render(w, "practice.html", PracticePage{
-		PageMeta:  h.meta(r, "Practice — go-learn", "Hands-on Go programming exercises to reinforce your learning.", base+"/practice", ""),
+		PageMeta:  practiceMeta,
 		Exercises: evs,
 	})
 }
@@ -406,6 +471,48 @@ func (h *Handler) SubmitExercise(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	h.Views.Render(w, "submit_ok.html", map[string]bool{"Correct": correct})
+}
+
+func mergeLessonBlocks(sections []store.LessonSection, questions []QuestionView, exercises []ExerciseView) []LessonBlock {
+	var merged []LessonBlock
+	for i := range sections {
+		s := sections[i]
+		merged = append(merged, LessonBlock{Kind: BlockSection, SortOrder: s.SortOrder, Section: &s})
+	}
+	for i := range questions {
+		q := questions[i]
+		merged = append(merged, LessonBlock{Kind: BlockQuestion, SortOrder: q.Question.SortOrder, Question: &q})
+	}
+	sort.Slice(merged, func(i, j int) bool {
+		if merged[i].SortOrder != merged[j].SortOrder {
+			return merged[i].SortOrder < merged[j].SortOrder
+		}
+		return merged[i].Kind == BlockSection && merged[j].Kind == BlockQuestion
+	})
+
+	exs := append([]ExerciseView(nil), exercises...)
+	sort.Slice(exs, func(i, j int) bool { return exs[i].SortOrder < exs[j].SortOrder })
+
+	blocks := append([]LessonBlock(nil), merged...)
+	for i := range exs {
+		ex := exs[i]
+		blocks = append(blocks, LessonBlock{Kind: BlockExercise, SortOrder: ex.SortOrder, Exercise: &ex})
+	}
+	return blocks
+}
+
+func evaluateAnswer(q store.Question, pickedKey string) bool {
+	switch q.QuestionType {
+	case "text":
+		return strings.EqualFold(strings.TrimSpace(pickedKey), strings.TrimSpace(q.CorrectKey))
+	case "choice":
+		for _, opt := range q.Options {
+			if opt.OptionKey == pickedKey {
+				return opt.IsCorrect
+			}
+		}
+	}
+	return false
 }
 
 // gradeExercise compares submitted output against the embedded expected output
@@ -630,10 +737,13 @@ func (h *Handler) Health(w http.ResponseWriter, r *http.Request) {
 // NotFound renders a friendly 404 page.
 func (h *Handler) NotFound(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotFound)
+	msg := "That page doesn't exist."
+	meta := h.meta(r, "Not found — go-learn", msg, h.baseURL(r)+r.URL.Path, "")
+	meta.NoIndex = true
 	h.Views.Render(w, "error.html", errorPage{
-		PageMeta: views.PageMeta{Title: "Not found — go-learn", Canonical: h.baseURL(r) + r.URL.Path},
+		PageMeta: meta,
 		Code:     404,
-		Message:  "That page doesn't exist.",
+		Message:  msg,
 	})
 }
 
