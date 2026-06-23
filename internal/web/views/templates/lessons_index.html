@@ -1,33 +1,15 @@
 {{define "lessons_index.html"}}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{.Title}}</title>
-  <meta name="description" content="{{.Description}}">
-  {{if .Canonical}}<link rel="canonical" href="{{.Canonical}}">{{end}}
-  <meta property="og:title" content="{{.Title}}">
-  <meta property="og:description" content="{{.Description}}">
-  <meta property="og:type" content="website">
-  <meta property="og:image" content="/og-image.svg">
-  <meta property="og:url" content="{{.Canonical}}">
-  <meta name="twitter:card" content="summary_large_image">
-  <link rel="stylesheet" href="/static/theme.css">
-  {{if .JSONLD}}<script type="application/ld+json">{{.JSONLD}}</script>{{end}}
-</head>
-<body>
-{{template "nav" .}}
-<main id="main">
+{{template "page_start" .}}
 <h1>Lessons</h1>
+<p class="muted page-lead">Work through each lesson in order — quizzes and exercises are built in.</p>
+<div class="lesson-list">
 {{range .Lessons}}
-<div class="card">
-  <h2><a href="/lessons/{{.Slug}}">Lesson {{.LessonID}} — {{.Title}}</a></h2>
+<div class="card lesson-row">
+  <h2 class="lesson-row-title"><a href="/lessons/{{.Slug}}">Lesson {{.LessonID}} — {{.Title}}</a></h2>
   <div class="progress-bar"><span style="width: {{percent (lessonDone .QuestionsAnswered .ExercisesDone) (lessonTotal .QuestionsTotal .ExerciseTotal)}}%"></span></div>
-  <p class="muted">Questions: {{.QuestionsAnswered}}/{{.QuestionsTotal}} · Exercises: {{.ExercisesDone}}/{{.ExerciseTotal}}</p>
+  <p class="muted lesson-row-meta">Questions: {{.QuestionsAnswered}}/{{.QuestionsTotal}} · Exercises: {{.ExercisesDone}}/{{.ExerciseTotal}}</p>
 </div>
 {{end}}
-</main>
-</body>
-</html>
+</div>
+{{template "page_end" .}}
 {{end}}

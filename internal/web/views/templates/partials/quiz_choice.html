@@ -5,12 +5,15 @@
     <button type="button" disabled class="{{if eq $.Question.Answer.PickedKey .OptionKey}}{{if $.Question.Answer.Correct}}correct{{else}}wrong{{end}}{{else}}{{if .IsCorrect}}correct{{end}}{{end}}">{{.Label}}</button>
   {{end}}
   <div class="{{if .Question.Answer.Correct}}feedback ok{{else}}feedback no{{end}}">{{if .Question.Answer.Correct}}Correct.{{else}}Not quite — see highlighted answer.{{end}}</div>
+  {{if .Ephemeral}}<p class="muted"><a href="/login?next=/lessons/{{.LessonID}}">Log in</a> to save this answer.</p>{{end}}
 {{else}}
   {{range .Question.Options}}
     <button type="button"
       hx-post="/lessons/{{$.LessonID}}/questions/{{$.Question.ID}}/answer"
       hx-vals='{"pickedKey":"{{.OptionKey}}","pickedLabel":"{{.Label}}"}'
       hx-target="#quiz-body-{{$.Question.ID}}"
+      hx-indicator="#quiz-spinner-{{$.Question.ID}}"
+      hx-disabled-elt="#quiz-{{$.Question.ID}} .quiz-options button"
       hx-swap="innerHTML">{{.Label}}</button>
   {{end}}
 {{end}}

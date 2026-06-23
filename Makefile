@@ -1,7 +1,13 @@
-.PHONY: serve import test build generate-content
+.PHONY: serve import test build generate-content css css-watch
 
 DB := progress/go-learn.db
 BASE := https://go-learn.kartikkabadi.com
+
+css:
+	npm run css:build
+
+css-watch:
+	npm run css:watch
 
 serve:
 	go run ./cmd/server

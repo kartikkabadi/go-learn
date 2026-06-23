@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 	"net/http"
+	"net/url"
 
 	"github.com/kartikkabadi/go-learn/internal/store"
 	"github.com/kartikkabadi/go-learn/internal/web/cookies"
@@ -51,10 +52,17 @@ func LoadUser(s store.Store, key []byte) func(http.Handler) http.Handler {
 }
 
 // RequireUser rejects requests with no authenticated user, redirecting to /login.
+// HTMX requests get HX-Redirect instead of a full-page redirect body swapped into the target.
 func RequireUser(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if UserFromContext(r) == nil {
-			http.Redirect(w, r, "/login?next="+r.URL.Path, http.StatusFound)
+			login := "/login?next=" + url.QueryEscape(r.URL.RequestURI())
+			if r.Header.Get("HX-Request") == "true" {
+				w.Header().Set("HX-Redirect", login)
+				w.WriteHeader(http.StatusUnauthorized)
+				return
+			}
+			http.Redirect(w, r, login, http.StatusFound)
 			return
 		}
 		next.ServeHTTP(w, r)

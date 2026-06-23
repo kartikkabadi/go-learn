@@ -117,6 +117,9 @@ func TestDashboard_Authed(t *testing.T) {
 	}
 	body := w.Body.String()
 	// Authed users should see the dashboard with personal stats.
+	if !strings.Contains(body, "Continue learning") {
+		t.Fatal("authed dashboard should contain continue learning hub")
+	}
 	if !strings.Contains(body, "questions answered") {
 		t.Fatal("authed dashboard should contain 'questions answered'")
 	}
@@ -151,7 +154,67 @@ func TestLessonShow_Valid(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("want 200, got %d", resp.StatusCode)
 	}
+	body := w.Body.String()
+	if !strings.Contains(body, "Section 1") {
+		t.Fatal("lesson page should contain section heading")
+	}
+	if !strings.Contains(body, "Pick?") {
+		t.Fatal("lesson page should contain quiz prompt")
+	}
+	if !strings.Contains(body, "Checkpoints") {
+		t.Fatal("lesson page should show checkpoint stepper")
+	}
+	if !strings.Contains(body, `hx-post="/practice/web-t1:ex1/submit"`) {
+		t.Fatal("lesson page should inline practice form")
+	}
 	resp.Body.Close()
+}
+
+func TestLessonShow_Interleaved(t *testing.T) {
+	h := testHandler(t)
+	bundle := store.ContentBundle{
+		Lesson: store.BundleLesson{ID: "ord", Title: "Order", Slug: "order", SortOrder: 1},
+		Sections: []store.BundleSection{
+			{ID: "ord:s1", Heading: "Alpha Section", BodyHTML: "<p>a</p>", SortOrder: 1},
+			{ID: "ord:s2", Heading: "Beta Section", BodyHTML: "<p>b</p>", SortOrder: 2},
+		},
+		Questions: []store.BundleQuestion{
+			{
+				ID: "ord:q1", Prompt: "Quiz Alpha", CorrectKey: "a", QuestionType: "choice", SortOrder: 1,
+				SectionTag: "quiz",
+				Options: []store.BundleOption{{Key: "a", Label: "Yes", IsCorrect: true, SortOrder: 1}},
+			},
+			{
+				ID: "ord:q2", Prompt: "Quiz Beta", CorrectKey: "a", QuestionType: "choice", SortOrder: 2,
+				SectionTag: "quiz",
+				Options: []store.BundleOption{{Key: "a", Label: "Yes", IsCorrect: true, SortOrder: 1}},
+			},
+		},
+		Exercises: []store.BundleExercise{
+			{ID: "ord:ex1", Title: "Practice End", Path: "practice/x", Instructions: "Do it", SortOrder: 1},
+		},
+	}
+	if err := h.Store.ImportBundle(bundle); err != nil {
+		t.Fatal(err)
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/lessons/order", nil)
+	req.SetPathValue("slug", "order")
+	w := httptest.NewRecorder()
+	h.LessonShow(w, req)
+
+	body := w.Body.String()
+	alpha := strings.Index(body, "<h2>Alpha Section</h2>")
+	quizAlpha := strings.Index(body, ">Quiz Alpha")
+	beta := strings.Index(body, "<h2>Beta Section</h2>")
+	quizBeta := strings.Index(body, ">Quiz Beta")
+	practiceEnd := strings.Index(body, "Practice End")
+	if alpha < 0 || quizAlpha < 0 || beta < 0 || quizBeta < 0 || practiceEnd < 0 {
+		t.Fatal("expected all lesson blocks in page")
+	}
+	if !(alpha < quizAlpha && quizAlpha < beta && beta < quizBeta && quizBeta < practiceEnd) {
+		t.Fatalf("blocks not interleaved: alpha=%d quizAlpha=%d beta=%d quizBeta=%d practice=%d", alpha, quizAlpha, beta, quizBeta, practiceEnd)
+	}
 }
 
 func TestLessonShow_NotFound(t *testing.T) {
@@ -165,6 +228,33 @@ func TestLessonShow_NotFound(t *testing.T) {
 	resp := w.Result()
 	if resp.StatusCode != http.StatusNotFound {
 		t.Fatalf("want 404, got %d", resp.StatusCode)
+	}
+	resp.Body.Close()
+}
+
+func TestAnswerQuestion_Anonymous(t *testing.T) {
+	h := testHandler(t)
+	importTestLesson(t, h.Store)
+
+	form := url.Values{"pickedKey": {"a"}, "pickedLabel": {"Right"}}
+	req := httptest.NewRequest(http.MethodPost, "/lessons/web-t1/questions/web-t1:q1/answer",
+		strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.SetPathValue("id", "web-t1")
+	req.SetPathValue("qid", "web-t1:q1")
+	w := httptest.NewRecorder()
+	h.AnswerQuestion(w, req)
+
+	resp := w.Result()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("want 200, got %d body=%q", resp.StatusCode, w.Body.String())
+	}
+	body := w.Body.String()
+	if !strings.Contains(body, "Correct") {
+		t.Fatalf("anonymous answer should grade inline, got %q", body)
+	}
+	if !strings.Contains(body, "Log in") {
+		t.Fatal("anonymous answer should prompt login to save")
 	}
 	resp.Body.Close()
 }
