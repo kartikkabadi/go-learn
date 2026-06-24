@@ -254,7 +254,7 @@ func TestAnswerQuestion_Anonymous(t *testing.T) {
 	h := testHandler(t)
 	importTestLesson(t, h.Store)
 
-	form := url.Values{"pickedKey": {"a"}, "pickedLabel": {"Right"}}
+	form := url.Values{"pickedKey": {"a"}}
 	req := httptest.NewRequest(http.MethodPost, "/lessons/web-t1/questions/web-t1:q1/answer",
 		strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -322,6 +322,43 @@ func TestAnswerQuestion_EmptyKey(t *testing.T) {
 		t.Fatalf("want 400, got %d", resp.StatusCode)
 	}
 	resp.Body.Close()
+}
+
+func TestAnswerQuestion_UnknownOption_Anonymous(t *testing.T) {
+	h := testHandler(t)
+	importTestLesson(t, h.Store)
+
+	form := url.Values{"pickedKey": {"zzz"}}
+	req := httptest.NewRequest(http.MethodPost, "/lessons/web-t1/questions/web-t1:q1/answer",
+		strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.SetPathValue("id", "web-t1")
+	req.SetPathValue("qid", "web-t1:q1")
+	w := httptest.NewRecorder()
+	h.AnswerQuestion(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("want 400 for unknown option (anonymous), got %d", w.Code)
+	}
+}
+
+func TestAnswerQuestion_UnknownOption_Authed(t *testing.T) {
+	h := testHandler(t)
+	importTestLesson(t, h.Store)
+
+	form := url.Values{"pickedKey": {"zzz"}}
+	req := httptest.NewRequest(http.MethodPost, "/lessons/web-t1/questions/web-t1:q1/answer",
+		strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.SetPathValue("id", "web-t1")
+	req.SetPathValue("qid", "web-t1:q1")
+	req = withTestUser(t, h.Store, req)
+	w := httptest.NewRecorder()
+	h.AnswerQuestion(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("want 400 for unknown option (authed), got %d", w.Code)
+	}
 }
 
 func TestPractice(t *testing.T) {

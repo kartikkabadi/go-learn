@@ -45,6 +45,12 @@ func TestSaveAnswerChoice(t *testing.T) {
 	if ans.Correct {
 		t.Fatal("expected incorrect")
 	}
+
+	// Unknown option key must return an error, not silently save as incorrect.
+	_, err = st.SaveAnswer(testUser(t, st), "t1:q1", "zzz", "bogus")
+	if err == nil {
+		t.Fatal("expected error for unknown option key")
+	}
 }
 
 func TestSaveAnswerText(t *testing.T) {
