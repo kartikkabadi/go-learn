@@ -1,0 +1,144 @@
+{
+  "lesson": {
+    "id": "0017",
+    "title": "Testing",
+    "slug": "testing",
+    "summary": "Write automated tests to verify your code works correctly.",
+    "sortOrder": 17
+  },
+  "sections": [
+    {
+      "id": "0017:s1",
+      "heading": "Your first test",
+      "bodyHtml": "<p>Test files end in <code>_test.go</code> and live alongside your code. A test function takes <code>*testing.T</code> and starts with <code>Test</code>:</p><pre><code>// main.go\nfunc Add(a, b int) int {\n    return a + b\n}\n\n// main_test.go\npackage main\n\nimport \"testing\"\n\nfunc TestAdd(t *testing.T) {\n    got := Add(2, 3)\n    want := 5\n    if got != want {\n        t.Errorf(\"Add(2, 3) = %d; want %d\", got, want)\n    }\n}</code></pre>",
+      "sortOrder": 1
+    },
+    {
+      "id": "0017:s2",
+      "heading": "Running tests",
+      "bodyHtml": "<pre><code>go test                    # run tests in current package\ngo test -v                # verbose, shows each test name\ngo test ./...             # run all tests in all packages\ngo test -run TestAdd      # run only tests matching pattern</code></pre><p>Green output means all pass. Red means failures. Common flags:</p><pre><code>go test -count=1   # disable cache (force re-run)\ngo test -bench=.  # run benchmarks</code></pre>",
+      "sortOrder": 2
+    },
+    {
+      "id": "0017:s3",
+      "heading": "Table-driven tests",
+      "bodyHtml": "<p>Test multiple cases with a table. This is the idiomatic Go style:</p><pre><code>func TestAdd(t *testing.T) {\n    tests := []struct {\n        a, b, want int\n    }{\n        {2, 3, 5},\n        {0, 0, 0},\n        {-1, 1, 0},\n        {100, -50, 50},\n    }\n    for _, tt := range tests {\n        got := Add(tt.a, tt.b)\n        if got != tt.want {\n            t.Errorf(\"Add(%d, %d) = %d; want %d\", tt.a, tt.b, got, tt.want)\n        }\n    }\n}</code></pre><p>Add new cases by adding a row to the table — no code duplication.</p>",
+      "sortOrder": 3
+    },
+    {
+      "id": "0017:s4",
+      "heading": "Your turn",
+      "bodyHtml": "<p>Open <code>practice/testing/main_test.go</code>.</p><p>Write a table-driven test for a <code>Max(a, b int) int</code> function that returns the larger of two integers.</p>",
+      "sortOrder": 4
+    }
+  ],
+  "questions": [
+    {
+      "id": "0017:review-1",
+      "prompt": "What suffix do Go test files use?",
+      "correctKey": "test",
+      "questionType": "choice",
+      "sectionTag": "review",
+      "sortOrder": 1,
+      "options": [
+        {
+          "key": "spec",
+          "label": "<code>_spec.go</code>",
+          "isCorrect": false,
+          "sortOrder": 1
+        },
+        {
+          "key": "test",
+          "label": "<code>_test.go</code>",
+          "isCorrect": true,
+          "sortOrder": 2
+        },
+        {
+          "key": "suite",
+          "label": "<code>_suite.go</code>",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "0017:q1",
+      "prompt": "How do you run every test in the entire project?",
+      "correctKey": "dot",
+      "questionType": "choice",
+      "sectionTag": "quiz",
+      "sortOrder": 2,
+      "options": [
+        {
+          "key": "all",
+          "label": "<code>go test --all</code>",
+          "isCorrect": false,
+          "sortOrder": 1
+        },
+        {
+          "key": "dot",
+          "label": "<code>go test ./...</code>",
+          "isCorrect": true,
+          "sortOrder": 2
+        },
+        {
+          "key": "recursive",
+          "label": "<code>go test -recursive</code>",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "0017:q2",
+      "prompt": "What is a table-driven test?",
+      "correctKey": "table",
+      "questionType": "choice",
+      "sectionTag": "quiz",
+      "sortOrder": 3,
+      "options": [
+        {
+          "key": "table",
+          "label": "A test that iterates over a slice of input-output cases",
+          "isCorrect": true,
+          "sortOrder": 1
+        },
+        {
+          "key": "sql",
+          "label": "A test that uses a database table",
+          "isCorrect": false,
+          "sortOrder": 2
+        },
+        {
+          "key": "mock",
+          "label": "A test that uses a mock table",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
+      ]
+    }
+  ],
+  "exercises": [
+    {
+      "id": "0017:ex1",
+      "title": "Table-driven test for Max",
+      "path": "practice/testing",
+      "instructions": "Implement Max(a, b int) int and write table-driven tests covering positive, negative, and equal cases.",
+      "sortOrder": 1
+    }
+  ],
+  "references": [
+    {
+      "id": "0017:ref1",
+      "title": "Go testing package",
+      "url": "https://pkg.go.dev/testing",
+      "notes": ""
+    },
+    {
+      "id": "0017:ref2",
+      "title": "Go blog — Test your Go code",
+      "url": "https://go.dev/blog/testing",
+      "notes": ""
+    }
+  ]
+}

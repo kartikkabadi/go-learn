@@ -17,6 +17,66 @@
       "title": "Println adds spaces",
       "body": "fmt.Println separates each argument with a space. Println(\"Score:\", 7) prints Score: 7.",
       "kind": "weak_spot"
+    },
+    {
+      "id": "weak-if-assign",
+      "title": "== compares, = assigns",
+      "body": "Use == to check equality in conditions. A single = is assignment, not comparison.",
+      "kind": "weak_spot"
+    },
+    {
+      "id": "weak-array-vs-slice",
+      "title": "Slices are not arrays",
+      "body": "Arrays have fixed size ([5]int). Slices are dynamic ([]int). Most Go code uses slices, not arrays.",
+      "kind": "weak_spot"
+    },
+    {
+      "id": "weak-nil-slice",
+      "title": "nil slice is okay to append",
+      "body": "You can append to a nil slice — Go creates the backing array automatically. No need to initialize first.",
+      "kind": "weak_spot"
+    },
+    {
+      "id": "weak-map-zero",
+      "title": "Reading from nil map is safe",
+      "body": "Reading from a nil map returns the zero value. Writing to a nil map panics — always use make or a literal.",
+      "kind": "weak_spot"
+    },
+    {
+      "id": "weak-pointer-nil",
+      "title": "Nil pointer dereference panics",
+      "body": "Calling a method or accessing a field on a nil pointer crashes your program. Always check for nil first.",
+      "kind": "weak_spot"
+    },
+    {
+      "id": "weak-interface-nil",
+      "title": "nil interface vs nil pointer",
+      "body": "An interface holding a nil pointer is not nil itself. The interface has a concrete type but a nil value, so it != nil.",
+      "kind": "weak_spot"
+    },
+    {
+      "id": "weak-defer-eval",
+      "title": "Defer captures arguments immediately",
+      "body": "Arguments to a deferred function are evaluated when defer runs, not when the deferred call executes.",
+      "kind": "weak_spot"
+    },
+    {
+      "id": "weak-goroutine-loop",
+      "title": "Loop variable capture in goroutines",
+      "body": "Goroutines inside loops see the final iteration value. Pass the loop variable as an argument to each goroutine.",
+      "kind": "weak_spot"
+    },
+    {
+      "id": "weak-close-channel",
+      "title": "Close channels from the sender side",
+      "body": "Only the sender should close a channel. Sending on a closed channel panics. Receivers use range or comma-ok to detect closure.",
+      "kind": "weak_spot"
+    },
+    {
+      "id": "weak-error-check",
+      "title": "Always check errors",
+      "body": "Go does not warn about ignored errors. Unchecked errors lead to silent data corruption or crashes.",
+      "kind": "weak_spot"
     }
   ]
 }

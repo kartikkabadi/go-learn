@@ -1,0 +1,144 @@
+{
+  "lesson": {
+    "id": "0012",
+    "title": "Errors",
+    "slug": "errors",
+    "summary": "Handle failures explicitly — Go uses returned values, not exceptions.",
+    "sortOrder": 12
+  },
+  "sections": [
+    {
+      "id": "0012:s1",
+      "heading": "Errors are values",
+      "bodyHtml": "<p>In Go, errors are ordinary values. Functions that can fail return an <code>error</code> as their last return value — you check it yourself:</p><pre><code>f, err := os.Open(\"file.txt\")\nif err != nil {\n    log.Fatal(err)\n}\ndefer f.Close()</code></pre><p>The <code>error</code> type is a built-in interface:</p><pre><code>type error interface {\n    Error() string\n}</code></pre>",
+      "sortOrder": 1
+    },
+    {
+      "id": "0012:s2",
+      "heading": "Creating errors",
+      "bodyHtml": "<p>Create simple errors with <code>errors.New</code> or <code>fmt.Errorf</code>:</p><pre><code>import \"errors\"\n\nvar ErrNotFound = errors.New(\"item not found\")\n\nfunc find(id int) (string, error) {\n    if id &lt; 0 {\n        return \"\", fmt.Errorf(\"invalid id: %d\", id)\n    }\n    return \"result\", nil\n}</code></pre><p>Always return <code>nil</code> for the error when the operation succeeds. Convention: the zero value of <code>error</code> is <code>nil</code>, meaning \"no error\".</p>",
+      "sortOrder": 2
+    },
+    {
+      "id": "0012:s3",
+      "heading": "Sentinel errors and wrapping",
+      "bodyHtml": "<p><strong>Sentinel errors</strong> are package-level variables you compare against:</p><pre><code>if err == ErrNotFound {\n    fmt.Println(\"not found, moving on\")\n}</code></pre><p>Add context by <strong>wrapping</strong> with <code>%w</code>:</p><pre><code>if err != nil {\n    return fmt.Errorf(\"fetch user %d: %w\", id, err)\n}</code></pre><p>Unwrap with <code>errors.Is</code> (for sentinel checks) and <code>errors.As</code> (for type checks):</p><pre><code>if errors.Is(err, ErrNotFound) { ... }\n\nvar netErr *net.DNSError\nif errors.As(err, &amp;netErr) { ... }</code></pre>",
+      "sortOrder": 3
+    },
+    {
+      "id": "0012:s4",
+      "heading": "Your turn",
+      "bodyHtml": "<p>Open <code>practice/errors/main.go</code>.</p><p>Write a function <code>divide(a, b int) (int, error)</code> that returns an error when dividing by zero. Call it from <code>main</code> and print the result or error.</p>",
+      "sortOrder": 4
+    }
+  ],
+  "questions": [
+    {
+      "id": "0012:review-1",
+      "prompt": "What type does a Go function return when it can fail?",
+      "correctKey": "error",
+      "questionType": "choice",
+      "sectionTag": "review",
+      "sortOrder": 1,
+      "options": [
+        {
+          "key": "exception",
+          "label": "An exception object",
+          "isCorrect": false,
+          "sortOrder": 1
+        },
+        {
+          "key": "error",
+          "label": "The <code>error</code> interface, usually as the last return value",
+          "isCorrect": true,
+          "sortOrder": 2
+        },
+        {
+          "key": "nil",
+          "label": "The <code>nil</code> value only",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "0012:q1",
+      "prompt": "What does <code>fmt.Errorf(\"...: %w\", err)</code> do?",
+      "correctKey": "wrap",
+      "questionType": "choice",
+      "sectionTag": "quiz",
+      "sortOrder": 2,
+      "options": [
+        {
+          "key": "format",
+          "label": "Formats the error string only",
+          "isCorrect": false,
+          "sortOrder": 1
+        },
+        {
+          "key": "wrap",
+          "label": "Wraps the error so <code>errors.Is</code> can unwrap it",
+          "isCorrect": true,
+          "sortOrder": 2
+        },
+        {
+          "key": "ignore",
+          "label": "Ignores the error",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "0012:q2",
+      "prompt": "How do you check if an error wraps a specific sentinel error?",
+      "correctKey": "is",
+      "questionType": "choice",
+      "sectionTag": "quiz",
+      "sortOrder": 3,
+      "options": [
+        {
+          "key": "eq",
+          "label": "<code>err == sentinel</code>",
+          "isCorrect": false,
+          "sortOrder": 1
+        },
+        {
+          "key": "is",
+          "label": "<code>errors.Is(err, sentinel)</code>",
+          "isCorrect": true,
+          "sortOrder": 2
+        },
+        {
+          "key": "as",
+          "label": "<code>errors.As(err, &amp;sentinel)</code>",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
+      ]
+    }
+  ],
+  "exercises": [
+    {
+      "id": "0012:ex1",
+      "title": "Safe division",
+      "path": "practice/errors",
+      "instructions": "Implement divide that returns an error for division by zero. Print results for 10/2 and 5/0.",
+      "sortOrder": 1
+    }
+  ],
+  "references": [
+    {
+      "id": "0012:ref1",
+      "title": "Go blog — Error handling and Go",
+      "url": "https://go.dev/blog/error-handling-and-go",
+      "notes": ""
+    },
+    {
+      "id": "0012:ref2",
+      "title": "Go by Example: Errors",
+      "url": "https://gobyexample.com/errors",
+      "notes": ""
+    }
+  ]
+}

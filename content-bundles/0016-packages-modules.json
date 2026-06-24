@@ -1,0 +1,136 @@
+{
+  "lesson": {
+    "id": "0016",
+    "title": "Packages and Modules",
+    "slug": "packages-and-modules",
+    "summary": "Organise code into reusable packages and manage dependencies with modules.",
+    "sortOrder": 16
+  },
+  "sections": [
+    {
+      "id": "0016:s1",
+      "heading": "Packages — code organisation",
+      "bodyHtml": "<p>Every Go file starts with a <code>package</code> declaration. Files in the same directory belong to the same package:</p><pre><code>// greetings/greetings.go\npackage greetings\n\nfunc Hello(name string) string {\n    return \"Hello, \" + name\n}</code></pre><p>Exported names start with a capital letter. Unexported (lowercase) names are package-private.</p>",
+      "sortOrder": 1
+    },
+    {
+      "id": "0016:s2",
+      "heading": "Importing packages",
+      "bodyHtml": "<p>Use <code>import</code> to use code from other packages. The import path is the module path + subdirectory:</p><pre><code>package main\n\nimport (\n    \"fmt\"\n    \"example.com/myapp/greetings\"\n)\n\nfunc main() {\n    fmt.Println(greetings.Hello(\"Alice\"))\n}</code></pre><p>You can give imported packages an alias:</p><pre><code>import g \"example.com/myapp/greetings\"\nfmt.Println(g.Hello(\"Alice\"))</code></pre>",
+      "sortOrder": 2
+    },
+    {
+      "id": "0016:s3",
+      "heading": "Modules — dependency management",
+      "bodyHtml": "<p>A <strong>module</strong> is a collection of packages versioned together. The <code>go.mod</code> file at the root defines the module path and its dependencies:</p><pre><code>module example.com/myapp\n\ngo 1.26\n\nrequire (\n    golang.org/x/text v0.14.0\n)</code></pre><p>Commands:</p><pre><code>go mod init example.com/myapp   // create go.mod\ngo mod tidy                     // add missing, remove unused\ngo get golang.org/x/text        // add or update a dependency</code></pre>",
+      "sortOrder": 3
+    },
+    {
+      "id": "0016:s4",
+      "heading": "The module cache",
+      "bodyHtml": "<p>Go stores downloaded modules in a local cache (<code>GOMODCACHE</code>). The <code>go.sum</code> file alongside <code>go.mod</code> pins the exact module hashes so you get the same code on every machine.</p><p>Use <code>go mod verify</code> to check that cached modules haven't been tampered with. Use <code>go clean -modcache</code> to clear the cache.</p>",
+      "sortOrder": 4
+    }
+  ],
+  "questions": [
+    {
+      "id": "0016:review-1",
+      "prompt": "What makes a function name exported (visible outside its package)?",
+      "correctKey": "capital",
+      "questionType": "choice",
+      "sectionTag": "review",
+      "sortOrder": 1,
+      "options": [
+        {
+          "key": "export",
+          "label": "Preceding it with <code>export</code>",
+          "isCorrect": false,
+          "sortOrder": 1
+        },
+        {
+          "key": "capital",
+          "label": "Starting with a capital letter",
+          "isCorrect": true,
+          "sortOrder": 2
+        },
+        {
+          "key": "public",
+          "label": "Putting it in a file named <code>export.go</code>",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "0016:q1",
+      "prompt": "What file defines a Go module and its dependencies?",
+      "correctKey": "gomod",
+      "questionType": "choice",
+      "sectionTag": "quiz",
+      "sortOrder": 2,
+      "options": [
+        {
+          "key": "gomod",
+          "label": "<code>go.mod</code>",
+          "isCorrect": true,
+          "sortOrder": 1
+        },
+        {
+          "key": "package",
+          "label": "<code>package.json</code>",
+          "isCorrect": false,
+          "sortOrder": 2
+        },
+        {
+          "key": "config",
+          "label": "<code>go.config</code>",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "0016:q2",
+      "prompt": "What does <code>go mod tidy</code> do?",
+      "correctKey": "prune",
+      "questionType": "choice",
+      "sectionTag": "quiz",
+      "sortOrder": 3,
+      "options": [
+        {
+          "key": "install",
+          "label": "Installs all dependencies globally",
+          "isCorrect": false,
+          "sortOrder": 1
+        },
+        {
+          "key": "prune",
+          "label": "Adds missing module requirements and removes unused ones",
+          "isCorrect": true,
+          "sortOrder": 2
+        },
+        {
+          "key": "upgrade",
+          "label": "Upgrades all dependencies to latest versions",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
+      ]
+    }
+  ],
+  "exercises": [],
+  "references": [
+    {
+      "id": "0016:ref1",
+      "title": "How to Write Go Code",
+      "url": "https://go.dev/doc/code",
+      "notes": "Official guide to packages and modules"
+    },
+    {
+      "id": "0016:ref2",
+      "title": "Go Modules Reference",
+      "url": "https://go.dev/ref/mod",
+      "notes": ""
+    }
+  ]
+}

@@ -119,6 +119,13 @@
       "path": "practice/methods",
       "instructions": "Edit main.go to define Counter, implement Increment with a pointer receiver, and call it three times.",
       "sortOrder": 1
+    },
+    {
+      "id": "0010:ex2",
+      "title": "String method",
+      "path": "practice/stringer",
+      "instructions": "Run the program that implements String() on a Person struct.",
+      "sortOrder": 2
     }
   ],
   "references": [

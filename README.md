@@ -31,7 +31,7 @@ experience required.
 
 ## Features
 
-- **10 interactive lessons** — from "What is a program?" to methods on structs
+- **22 interactive lessons** — from "What is a program?" to the Standard Library
 - **Instant quiz feedback** — multiple choice and text answers via HTMX, no page reloads
 - **Progress tracking** — quiz scores, exercise submissions, weak spot identification
 - **User accounts** — signup, login, session cookies (bcrypt + secure sessions)
@@ -44,7 +44,7 @@ experience required.
 ## Lessons
 
 | # | Lesson | Topics |
-|---|--------|--------|
+|-------|--------|--------|
 | 1 | What Is a Program? | Programs, source code, running code, output |
 | 2 | Variables & Printing | `:=`, types, `fmt.Println`, string formatting |
 | 3 | Decisions with if | Conditions, branching, else, comparison operators |
@@ -55,6 +55,18 @@ experience required.
 | 8 | Structs | Custom types, fields, embedding |
 | 9 | Pointers | `&`, `*`, pointer semantics, when to use them |
 | 10 | Methods | Method receivers, value vs pointer receivers |
+| 11 | Interfaces | Implicit satisfaction, `any`, type assertions |
+| 12 | Errors | `error` interface, sentinel errors, wrapping |
+| 13 | Defer, Panic, Recover | Cleanup, crashes, recovering from panics |
+| 14 | Goroutines | Lightweight threads, concurrency, closures |
+| 15 | Channels & Select | Communicating between goroutines, buffered channels, `range` |
+| 16 | Packages & Modules | Code organisation, `go.mod`, importing, vendoring |
+| 17 | Testing | `_test.go`, table-driven tests, `go test` |
+| 18 | File I/O | `os.ReadFile`/`WriteFile`, `io.Reader`/`Writer`, `bufio` |
+| 19 | JSON | `json.Marshal`/`Unmarshal`, struct tags, streaming |
+| 20 | Generics | Type parameters, constraints, generic types |
+| 21 | Context | Deadlines, cancellation, request-scoped values |
+| 22 | Standard Library Tour | `strings`, `strconv`, `time`, `sort`, `flag`, `log` |
 
 ## Tech
 

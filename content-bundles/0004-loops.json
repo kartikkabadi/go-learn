@@ -149,10 +149,17 @@
   "exercises": [
     {
       "id": "0004:ex1",
-      "title": "Counting with loops",
+      "title": "Loop practice",
       "path": "practice/loops",
-      "instructions": "Edit main.go to print numbers 1 to 5 using a for loop.",
+      "instructions": "Run the program and inspect its output. Try changing the loop range.",
       "sortOrder": 1
+    },
+    {
+      "id": "0004:ex2",
+      "title": "FizzBuzz",
+      "path": "practice/fizzbuzz",
+      "instructions": "Run the classic FizzBuzz program for numbers 1 to 15.",
+      "sortOrder": 2
     }
   ],
   "references": [

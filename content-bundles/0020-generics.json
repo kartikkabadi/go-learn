@@ -1,0 +1,144 @@
+{
+  "lesson": {
+    "id": "0020",
+    "title": "Generics",
+    "slug": "generics",
+    "summary": "Write type-safe, reusable code with type parameters (Go 1.18+).",
+    "sortOrder": 20
+  },
+  "sections": [
+    {
+      "id": "0020:s1",
+      "heading": "Type parameters",
+      "bodyHtml": "<p>Generics let you write functions and types that work with any type. A <strong>type parameter</strong> goes in square brackets:</p><pre><code>func Last[T any](s []T) T {\n    return s[len(s)-1]\n}\n\nfmt.Println(Last([]int{1, 2, 3}))        // 3\nfmt.Println(Last([]string{\"a\", \"b\"}))    // \"b\"</code></pre><p>The <code>[T any]</code> says \"this function works for any type T\". The compiler infers the type from the argument — you rarely need to specify it explicitly.</p>",
+      "sortOrder": 1
+    },
+    {
+      "id": "0020:s2",
+      "heading": "Type constraints",
+      "bodyHtml": "<p>Use <strong>constraints</strong> to restrict what types a parameter accepts. The <code>constraints</code> package provides common ones, or define your own:</p><pre><code>import \"golang.org/x/exp/constraints\"\n\nfunc Max[T constraints.Ordered](a, b T) T {\n    if a &gt; b {\n        return a\n    }\n    return b\n}</code></pre><p>Any type that supports <code>&gt;</code>, <code>&lt;</code>, <code>==</code> satisfies <code>Ordered</code> (int, float64, string, etc.).</p>",
+      "sortOrder": 2
+    },
+    {
+      "id": "0020:s3",
+      "heading": "Generic types",
+      "bodyHtml": "<p>Types can also have type parameters. This is useful for collections:</p><pre><code>type Stack[T any] struct {\n    items []T\n}\n\nfunc (s *Stack[T]) Push(v T) {\n    s.items = append(s.items, v)\n}\n\nfunc (s *Stack[T]) Pop() (T, bool) {\n    if len(s.items) == 0 {\n        var zero T\n        return zero, false\n    }\n    v := s.items[len(s.items)-1]\n    s.items = s.items[:len(s.items)-1]\n    return v, true\n}</code></pre><p>Instantiate a generic type with concrete types: <code>Stack[int]{}</code>.</p>",
+      "sortOrder": 3
+    },
+    {
+      "id": "0020:s4",
+      "heading": "Your turn",
+      "bodyHtml": "<p>Open <code>practice/generics/main.go</code>.</p><p>Write a generic function <code>Contains[T comparable](s []T, v T) bool</code> that returns true if v is in the slice. Test it with int and string slices.</p>",
+      "sortOrder": 4
+    }
+  ],
+  "questions": [
+    {
+      "id": "0020:review-1",
+      "prompt": "Where do type parameters go in a generic function?",
+      "correctKey": "bracket",
+      "questionType": "choice",
+      "sectionTag": "review",
+      "sortOrder": 1,
+      "options": [
+        {
+          "key": "paren",
+          "label": "In parentheses before the function name",
+          "isCorrect": false,
+          "sortOrder": 1
+        },
+        {
+          "key": "bracket",
+          "label": "In square brackets between the function name and parameters",
+          "isCorrect": true,
+          "sortOrder": 2
+        },
+        {
+          "key": "angle",
+          "label": "In angle brackets after the parameters",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "0020:q1",
+      "prompt": "What does the <code>any</code> constraint mean in <code>[T any]</code>?",
+      "correctKey": "all",
+      "questionType": "choice",
+      "sectionTag": "quiz",
+      "sortOrder": 2,
+      "options": [
+        {
+          "key": "nil",
+          "label": "T must be nilable",
+          "isCorrect": false,
+          "sortOrder": 1
+        },
+        {
+          "key": "all",
+          "label": "T can be any type at all",
+          "isCorrect": true,
+          "sortOrder": 2
+        },
+        {
+          "key": "int",
+          "label": "T must be an integer type",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "0020:q2",
+      "prompt": "What constraint should you use for types that support comparison with <code>==</code>?",
+      "correctKey": "comparable",
+      "questionType": "choice",
+      "sectionTag": "quiz",
+      "sortOrder": 3,
+      "options": [
+        {
+          "key": "ordered",
+          "label": "<code>constraints.Ordered</code>",
+          "isCorrect": false,
+          "sortOrder": 1
+        },
+        {
+          "key": "comparable",
+          "label": "<code>comparable</code> (built-in constraint)",
+          "isCorrect": true,
+          "sortOrder": 2
+        },
+        {
+          "key": "equal",
+          "label": "<code>constraints.Equal</code>",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
+      ]
+    }
+  ],
+  "exercises": [
+    {
+      "id": "0020:ex1",
+      "title": "Generic Contains",
+      "path": "practice/generics",
+      "instructions": "Write Contains[T comparable](s []T, v T) bool and test with int and string slices.",
+      "sortOrder": 1
+    }
+  ],
+  "references": [
+    {
+      "id": "0020:ref1",
+      "title": "Go blog — An Introduction to Generics",
+      "url": "https://go.dev/blog/intro-generics",
+      "notes": ""
+    },
+    {
+      "id": "0020:ref2",
+      "title": "Go by Example: Generics",
+      "url": "https://gobyexample.com/generics",
+      "notes": ""
+    }
+  ]
+}

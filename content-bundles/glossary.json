@@ -31,10 +31,106 @@
       "sortOrder": 5
     },
     {
-      "id": "if",
+      "id": "if-statement",
       "term": "if statement",
       "definition": "Runs one branch of code only when a condition is true; otherwise skips or runs else.",
       "sortOrder": 6
+    },
+    {
+      "id": "loop",
+      "term": "Loop",
+      "definition": "Repeats a block of code. Go only has the for keyword, which can act as a for, while, or range loop.",
+      "sortOrder": 7
+    },
+    {
+      "id": "slice",
+      "term": "Slice",
+      "definition": "A dynamically-sized, flexible view into elements of an array. The most common way to work with sequences in Go.",
+      "sortOrder": 8
+    },
+    {
+      "id": "map",
+      "term": "Map",
+      "definition": "An unordered collection of key-value pairs. Also called a dictionary or hash table in other languages.",
+      "sortOrder": 9
+    },
+    {
+      "id": "struct",
+      "term": "Struct",
+      "definition": "A composite type that groups together fields (like a lightweight class without methods).",
+      "sortOrder": 10
+    },
+    {
+      "id": "pointer",
+      "term": "Pointer",
+      "definition": "A value that holds the memory address of another value. Use & to get an address and * to follow it.",
+      "sortOrder": 11
+    },
+    {
+      "id": "method",
+      "term": "Method",
+      "definition": "A function attached to a type via a receiver parameter. Called with dot notation: value.Method().",
+      "sortOrder": 12
+    },
+    {
+      "id": "interface",
+      "term": "Interface",
+      "definition": "A set of method signatures. Any type that implements all those methods satisfies the interface automatically — no explicit declaration needed.",
+      "sortOrder": 13
+    },
+    {
+      "id": "goroutine",
+      "term": "Goroutine",
+      "definition": "A lightweight thread managed by the Go runtime. Start one by adding go before a function call.",
+      "sortOrder": 14
+    },
+    {
+      "id": "channel",
+      "term": "Channel",
+      "definition": "A typed conduit for sending and receiving values between goroutines. Created with make(chan Type).",
+      "sortOrder": 15
+    },
+    {
+      "id": "defer",
+      "term": "Defer",
+      "definition": "Schedules a function call to run just before the surrounding function returns. Used for cleanup like closing files.",
+      "sortOrder": 16
+    },
+    {
+      "id": "error",
+      "term": "Error",
+      "definition": "The built-in interface representing an error condition. Functions that can fail return an error as their last value.",
+      "sortOrder": 17
+    },
+    {
+      "id": "package",
+      "term": "Package",
+      "definition": "A collection of Go files in the same directory. Every Go file belongs to a package, declared at the top with package <name>.",
+      "sortOrder": 18
+    },
+    {
+      "id": "module",
+      "term": "Module",
+      "definition": "A versioned collection of Go packages. The go.mod file defines the module path and its dependencies.",
+      "sortOrder": 19
+    },
+    {
+      "id": "generic",
+      "term": "Generic",
+      "definition": "Functions and types that work with any type using type parameters in square brackets, e.g. func Last[T any](s []T) T.",
+      "sortOrder": 20
+    },
+    {
+      "id": "context",
+      "term": "Context",
+      "definition": "A standard interface for carrying deadlines, cancellation signals, and request-scoped values across API boundaries.",
+      "sortOrder": 21
+    },
+    {
+      "id": "select",
+      "term": "Select",
+      "definition": "A control structure that waits on multiple channel operations. Similar to switch but for channels.",
+      "sortOrder": 22
     }
   ]
 }

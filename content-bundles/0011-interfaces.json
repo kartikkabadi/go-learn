@@ -1,0 +1,144 @@
+{
+  "lesson": {
+    "id": "0011",
+    "title": "Interfaces",
+    "slug": "interfaces",
+    "summary": "Define behaviour with abstract types — let different types satisfy the same contract.",
+    "sortOrder": 11
+  },
+  "sections": [
+    {
+      "id": "0011:s1",
+      "heading": "What is an interface",
+      "bodyHtml": "<p>An <strong>interface</strong> defines a set of method signatures. Any type whose methods match the interface <strong>satisfies</strong> it automatically — no explicit <code>implements</code> keyword.</p><pre><code>type Speaker interface {\n    Speak() string\n}\n\ntype Dog struct{}\nfunc (d Dog) Speak() string { return \"Woof!\" }\n\ntype Cat struct{}\nfunc (c Cat) Speak() string { return \"Meow\" }</code></pre><p>Both <code>Dog</code> and <code>Cat</code> satisfy <code>Speaker</code>. A function accepting <code>Speaker</code> can take either:</p><pre><code>func greet(s Speaker) {\n    fmt.Println(s.Speak())\n}\n\ngreet(Dog{})  // Woof!\ngreet(Cat{})  // Meow</code></pre>",
+      "sortOrder": 1
+    },
+    {
+      "id": "0011:s2",
+      "heading": "The empty interface",
+      "bodyHtml": "<p>The empty interface <code>interface{}</code> (write <code>any</code> in modern Go) has zero methods, so every type satisfies it. Use it sparingly — it bypasses type safety:</p><pre><code>var x any = 42\nx = \"hello\"\nx = 3.14</code></pre><p>To get a concrete value back, use a <strong>type assertion</strong>:</p><pre><code>val := x.(int)       // panics if x is not int\nval, ok := x.(int)   // ok=false instead of panic</code></pre>",
+      "sortOrder": 2
+    },
+    {
+      "id": "0011:s3",
+      "heading": "Interface values",
+      "bodyHtml": "<p>An interface value holds two things: a <strong>concrete type</strong> and a <strong>value</strong> of that type. This is sometimes called the <em>interface tuple</em>:</p><pre><code>var s Speaker = Dog{}\n// (type: Dog, value: {})</code></pre><p>You can check the underlying type with a <strong>type switch</strong>:</p><pre><code>switch v := s.(type) {\ncase Dog:\n    fmt.Println(\"dog\")\ncase Cat:\n    fmt.Println(\"cat\")\ndefault:\n    fmt.Println(\"unknown\")\n}</code></pre>",
+      "sortOrder": 3
+    },
+    {
+      "id": "0011:s4",
+      "heading": "Your turn",
+      "bodyHtml": "<p>Open <code>practice/interfaces/main.go</code>.</p><p>Define a <code>Shape</code> interface with an <code>Area() float64</code> method. Implement it on <code>Circle</code> (radius field) and <code>Rectangle</code> (width, height fields). Print the area of each.</p>",
+      "sortOrder": 4
+    }
+  ],
+  "questions": [
+    {
+      "id": "0011:review-1",
+      "prompt": "In Go, how does a type satisfy an interface?",
+      "correctKey": "implicit",
+      "questionType": "choice",
+      "sectionTag": "review",
+      "sortOrder": 1,
+      "options": [
+        {
+          "key": "implicit",
+          "label": "By implementing all the interface's methods — no explicit keyword",
+          "isCorrect": true,
+          "sortOrder": 1
+        },
+        {
+          "key": "implements",
+          "label": "By writing <code>implements InterfaceName</code>",
+          "isCorrect": false,
+          "sortOrder": 2
+        },
+        {
+          "key": "extends",
+          "label": "By extending the interface type",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "0011:q1",
+      "prompt": "What does <code>any</code> mean in Go?",
+      "correctKey": "empty",
+      "questionType": "choice",
+      "sectionTag": "quiz",
+      "sortOrder": 2,
+      "options": [
+        {
+          "key": "nil",
+          "label": "The same as <code>nil</code>",
+          "isCorrect": false,
+          "sortOrder": 1
+        },
+        {
+          "key": "empty",
+          "label": "An alias for <code>interface{}</code> — any type satisfies it",
+          "isCorrect": true,
+          "sortOrder": 2
+        },
+        {
+          "key": "generic",
+          "label": "A generic type parameter",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "0011:q2",
+      "prompt": "What happens in a type assertion <code>x.(int)</code> if x does not hold an int?",
+      "correctKey": "panic",
+      "questionType": "choice",
+      "sectionTag": "quiz",
+      "sortOrder": 3,
+      "options": [
+        {
+          "key": "zero",
+          "label": "Returns the zero value of int",
+          "isCorrect": false,
+          "sortOrder": 1
+        },
+        {
+          "key": "panic",
+          "label": "The program panics",
+          "isCorrect": true,
+          "sortOrder": 2
+        },
+        {
+          "key": "skip",
+          "label": "Returns false as a second value",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
+      ]
+    }
+  ],
+  "exercises": [
+    {
+      "id": "0011:ex1",
+      "title": "Shape interface",
+      "path": "practice/interfaces",
+      "instructions": "Implement Shape with Area() on Circle and Rectangle. Print the area of a circle with radius 5 and a rectangle 3x4.",
+      "sortOrder": 1
+    }
+  ],
+  "references": [
+    {
+      "id": "0011:ref1",
+      "title": "Go by Example: Interfaces",
+      "url": "https://gobyexample.com/interfaces",
+      "notes": ""
+    },
+    {
+      "id": "0011:ref2",
+      "title": "A Tour of Go — Interfaces",
+      "url": "https://go.dev/tour/methods/9",
+      "notes": ""
+    }
+  ]
+}

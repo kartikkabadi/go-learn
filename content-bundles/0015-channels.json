@@ -1,0 +1,150 @@
+{
+  "lesson": {
+    "id": "0015",
+    "title": "Channels and Select",
+    "slug": "channels",
+    "summary": "Communicate between goroutines safely with channels.",
+    "sortOrder": 15
+  },
+  "sections": [
+    {
+      "id": "0015:s1",
+      "heading": "Channels — communication between goroutines",
+      "bodyHtml": "<p>A <strong>channel</strong> is a typed conduit that lets goroutines send values to each other. Create one with <code>make(chan Type)</code>:</p><pre><code>ch := make(chan int)\n\n// Send a value into the channel (in a goroutine)\ngo func() { ch &lt;- 42 }()\n\n// Receive a value from the channel\nval := &lt;-ch\nfmt.Println(val)  // 42</code></pre><p>The arrow indicates direction: <code>ch &lt;-</code> sends, <code>&lt;-ch</code> receives. Both block until the other side is ready — sends wait for a receiver, receives wait for a sender.</p>",
+      "sortOrder": 1
+    },
+    {
+      "id": "0015:s2",
+      "heading": "Buffered channels",
+      "bodyHtml": "<p>A <strong>buffered channel</strong> can hold a fixed number of values without a receiver. Sends only block when the buffer is full:</p><pre><code>ch := make(chan string, 2)\nch &lt;- \"a\"   // does not block\nch &lt;- \"b\"   // does not block (buffer full after this)\n// ch &lt;- \"c\"  // would block until someone receives\n\nfmt.Println(&lt;-ch)  // \"a\"\nfmt.Println(&lt;-ch)  // \"b\"</code></pre><p>Use buffered channels when you know the capacity upfront (e.g. collecting results from N goroutines).</p>",
+      "sortOrder": 2
+    },
+    {
+      "id": "0015:s3",
+      "heading": "Range and close",
+      "bodyHtml": "<p>You can iterate over a channel with <code>range</code> until it is closed. The sender calls <code>close(ch)</code> to signal no more values:</p><pre><code>ch := make(chan int)\ngo func() {\n    for i := 0; i &lt; 5; i++ {\n        ch &lt;- i\n    }\n    close(ch)\n}()\n\nfor n := range ch {\n    fmt.Println(n)  // 0, 1, 2, 3, 4\n}</code></pre><p>Only the sender should close a channel. Sending on a closed channel panics.</p>",
+      "sortOrder": 3
+    },
+    {
+      "id": "0015:s4",
+      "heading": "Select — wait on multiple channels",
+      "bodyHtml": "<p>The <code>select</code> statement waits on multiple channel operations. It chooses one at random among those that are ready:</p><pre><code>select {\ncase msg := &lt;-ch1:\n    fmt.Println(\"from ch1:\", msg)\ncase msg := &lt;-ch2:\n    fmt.Println(\"from ch2:\", msg)\ncase &lt;-time.After(1 * time.Second):\n    fmt.Println(\"timeout\")\ndefault:\n    fmt.Println(\"none ready\")\n}</code></pre><p><code>default</code> runs immediately if no other case is ready. Use select with an empty <code>default</code> for a non-blocking read.</p>",
+      "sortOrder": 4
+    },
+    {
+      "id": "0015:s5",
+      "heading": "Your turn",
+      "bodyHtml": "<p>Open <code>practice/channels/main.go</code>.</p><p>Write a program that creates a goroutine sending numbers 1 through 5 on a channel, then reads and prints them in <code>main</code>.</p>",
+      "sortOrder": 5
+    }
+  ],
+  "questions": [
+    {
+      "id": "0015:review-1",
+      "prompt": "What does <code>ch &lt;- 5</code> do?",
+      "correctKey": "send",
+      "questionType": "choice",
+      "sectionTag": "review",
+      "sortOrder": 1,
+      "options": [
+        {
+          "key": "receive",
+          "label": "Receives from ch into 5",
+          "isCorrect": false,
+          "sortOrder": 1
+        },
+        {
+          "key": "send",
+          "label": "Sends 5 into the channel",
+          "isCorrect": true,
+          "sortOrder": 2
+        },
+        {
+          "key": "compare",
+          "label": "Compares ch to 5",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "0015:q1",
+      "prompt": "What happens when you receive from an unbuffered channel with no sender ready?",
+      "correctKey": "block",
+      "questionType": "choice",
+      "sectionTag": "quiz",
+      "sortOrder": 2,
+      "options": [
+        {
+          "key": "zero",
+          "label": "Returns the zero value immediately",
+          "isCorrect": false,
+          "sortOrder": 1
+        },
+        {
+          "key": "block",
+          "label": "Blocks until a sender sends",
+          "isCorrect": true,
+          "sortOrder": 2
+        },
+        {
+          "key": "panic",
+          "label": "Panics",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "0015:q2",
+      "prompt": "What does <code>select</code> do when multiple cases are ready?",
+      "correctKey": "random",
+      "questionType": "choice",
+      "sectionTag": "quiz",
+      "sortOrder": 3,
+      "options": [
+        {
+          "key": "first",
+          "label": "Chooses the first case in source order",
+          "isCorrect": false,
+          "sortOrder": 1
+        },
+        {
+          "key": "random",
+          "label": "Chooses one at random",
+          "isCorrect": true,
+          "sortOrder": 2
+        },
+        {
+          "key": "all",
+          "label": "Executes all ready cases sequentially",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
+      ]
+    }
+  ],
+  "exercises": [
+    {
+      "id": "0015:ex1",
+      "title": "Channel send and receive",
+      "path": "practice/channels",
+      "instructions": "Send numbers 1-5 on a channel from a goroutine. Read and print them in main.",
+      "sortOrder": 1
+    }
+  ],
+  "references": [
+    {
+      "id": "0015:ref1",
+      "title": "Go by Example: Channels",
+      "url": "https://gobyexample.com/channels",
+      "notes": ""
+    },
+    {
+      "id": "0015:ref2",
+      "title": "A Tour of Go — Channels",
+      "url": "https://go.dev/tour/concurrency/2",
+      "notes": ""
+    }
+  ]
+}

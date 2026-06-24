@@ -149,10 +149,17 @@
   "exercises": [
     {
       "id": "0006:ex1",
-      "title": "Working with slices",
+      "title": "Slice operations",
       "path": "practice/slices",
-      "instructions": "Edit main.go to create a slice literal of five numbers, append a sixth, then print the length and all elements.",
+      "instructions": "Run the slice program. Try adding a new fruit and observe the length change.",
       "sortOrder": 1
+    },
+    {
+      "id": "0006:ex2",
+      "title": "Filter even numbers",
+      "path": "practice/filter",
+      "instructions": "Run the program that filters even numbers from a slice of 1-10.",
+      "sortOrder": 2
     }
   ],
   "references": [

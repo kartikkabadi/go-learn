@@ -1,0 +1,144 @@
+{
+  "lesson": {
+    "id": "0019",
+    "title": "JSON",
+    "slug": "json",
+    "summary": "Marshal and unmarshal JSON — Go's built-in encoding/json package.",
+    "sortOrder": 19
+  },
+  "sections": [
+    {
+      "id": "0019:s1",
+      "heading": "Marshalling — Go to JSON",
+      "bodyHtml": "<p>Use <code>json.Marshal</code> to convert a Go value to JSON bytes. Export the fields you want (capital letters), use struct tags to control names:</p><pre><code>type User struct {\n    ID    int    `json:\"id\"`\n    Name  string `json:\"name\"`\n    Email string `json:\"email,omitempty\"`\n}\n\nu := User{ID: 1, Name: \"Alice\"}\nb, _ := json.Marshal(u)\nfmt.Println(string(b))  // {\"id\":1,\"name\":\"Alice\"}</code></pre><p>Tags control the JSON field name (<code>json:\"name\"</code>), omit empty fields (<code>omitempty</code>), or skip a field entirely (<code>json:\"-\"</code>).</p>",
+      "sortOrder": 1
+    },
+    {
+      "id": "0019:s2",
+      "heading": "Unmarshalling — JSON to Go",
+      "bodyHtml": "<p>Use <code>json.Unmarshal</code> to parse JSON into a Go struct. Unknown fields are ignored by default:</p><pre><code>data := []byte(`{\"id\":2,\"name\":\"Bob\"}`)\nvar u User\njson.Unmarshal(data, &amp;u)\nfmt.Println(u.Name)  // Bob</code></pre><p>For unstructured data, use <code>map[string]any</code>:</p><pre><code>var m map[string]any\njson.Unmarshal(data, &amp;m)\nfmt.Println(m[\"name\"])  // Bob</code></pre>",
+      "sortOrder": 2
+    },
+    {
+      "id": "0019:s3",
+      "heading": "Working with streams",
+      "bodyHtml": "<p>For JSON streams or large payloads, use <code>json.NewDecoder</code> and <code>json.NewEncoder</code>:</p><pre><code>// Decode from a file\nf, _ := os.Open(\"users.json\")\ndefer f.Close()\nvar users []User\njson.NewDecoder(f).Decode(&amp;users)\n\n// Encode to stdout\njson.NewEncoder(os.Stdout).Encode(users)</code></pre><p>The encoder automatically indents nothing by default. Use <code>json.MarshalIndent</code> for pretty output.</p>",
+      "sortOrder": 3
+    },
+    {
+      "id": "0019:s4",
+      "heading": "Your turn",
+      "bodyHtml": "<p>Open <code>practice/json-io/main.go</code>.</p><p>Define a <code>Product</code> struct with <code>ID</code>, <code>Name</code>, <code>Price</code> fields. Create a slice with two products, marshal to JSON, and print the result.</p>",
+      "sortOrder": 4
+    }
+  ],
+  "questions": [
+    {
+      "id": "0019:review-1",
+      "prompt": "What does <code>json.Marshal</code> return?",
+      "correctKey": "bytes",
+      "questionType": "choice",
+      "sectionTag": "review",
+      "sortOrder": 1,
+      "options": [
+        {
+          "key": "string",
+          "label": "A string",
+          "isCorrect": false,
+          "sortOrder": 1
+        },
+        {
+          "key": "bytes",
+          "label": "A <code>[]byte</code> and an <code>error</code>",
+          "isCorrect": true,
+          "sortOrder": 2
+        },
+        {
+          "key": "reader",
+          "label": "An <code>io.Reader</code>",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "0019:q1",
+      "prompt": "How do you control the JSON field name for a struct field?",
+      "correctKey": "tag",
+      "questionType": "choice",
+      "sectionTag": "quiz",
+      "sortOrder": 2,
+      "options": [
+        {
+          "key": "rename",
+          "label": "Name the Go field with the JSON name",
+          "isCorrect": false,
+          "sortOrder": 1
+        },
+        {
+          "key": "tag",
+          "label": "Use a struct tag like <code>json:\"name\"</code>",
+          "isCorrect": true,
+          "sortOrder": 2
+        },
+        {
+          "key": "alias",
+          "label": "Use a type alias",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "0019:q2",
+      "prompt": "What does <code>json:\"-\"</code> do in a struct tag?",
+      "correctKey": "skip",
+      "questionType": "choice",
+      "sectionTag": "quiz",
+      "sortOrder": 3,
+      "options": [
+        {
+          "key": "omit",
+          "label": "Omits the field when it is empty",
+          "isCorrect": false,
+          "sortOrder": 1
+        },
+        {
+          "key": "skip",
+          "label": "Skips the field entirely (never included in JSON)",
+          "isCorrect": true,
+          "sortOrder": 2
+        },
+        {
+          "key": "name",
+          "label": "Uses \"-\" as the JSON field name",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
+      ]
+    }
+  ],
+  "exercises": [
+    {
+      "id": "0019:ex1",
+      "title": "Product JSON",
+      "path": "practice/json-io",
+      "instructions": "Define Product struct, marshal a slice of 2 products to JSON, and print.",
+      "sortOrder": 1
+    }
+  ],
+  "references": [
+    {
+      "id": "0019:ref1",
+      "title": "Go by Example: JSON",
+      "url": "https://gobyexample.com/json",
+      "notes": ""
+    },
+    {
+      "id": "0019:ref2",
+      "title": "pkg.go.dev — encoding/json",
+      "url": "https://pkg.go.dev/encoding/json",
+      "notes": ""
+    }
+  ]
+}

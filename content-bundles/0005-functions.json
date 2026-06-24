@@ -115,10 +115,17 @@
   "exercises": [
     {
       "id": "0005:ex1",
-      "title": "Double function",
+      "title": "Function calls",
       "path": "practice/functions",
-      "instructions": "Write a function double(n int) int that returns n * 2. Call it with 3, 7, and 21, and print each result.",
+      "instructions": "Run the program that uses double and greet functions.",
       "sortOrder": 1
+    },
+    {
+      "id": "0005:ex2",
+      "title": "Factorial",
+      "path": "practice/factorial",
+      "instructions": "Run the recursive factorial function and confirm the outputs.",
+      "sortOrder": 2
     }
   ],
   "references": [

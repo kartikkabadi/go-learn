@@ -1,0 +1,138 @@
+{
+  "lesson": {
+    "id": "0022",
+    "title": "Standard Library Tour",
+    "slug": "standard-library",
+    "summary": "A guided tour of essential Go standard library packages.",
+    "sortOrder": 22
+  },
+  "sections": [
+    {
+      "id": "0022:s1",
+      "heading": "Strings, numbers, and time",
+      "bodyHtml": "<p>The <code>strings</code> package provides string manipulation:</p><pre><code>strings.Contains(\"hello\", \"ll\")    // true\nstrings.ToUpper(\"go\")              // \"GO\"\nstrings.TrimSpace(\"  hi  \")        // \"hi\"\nstrings.Join([]string{\"a\", \"b\"}, \",\") // \"a,b\"</code></pre><p><code>strconv</code> converts strings to numbers and back:</p><pre><code>n, _ := strconv.Atoi(\"42\")          // 42\ns := strconv.Itoa(42)               // \"42\"</code></pre><p><code>time</code> handles dates, durations, and formatting:</p><pre><code>now := time.Now()\nfmt.Println(now.Format(\"2006-01-02\")) // current date</code></pre>",
+      "sortOrder": 1
+    },
+    {
+      "id": "0022:s2",
+      "heading": "Sorting, flags, and logging",
+      "bodyHtml": "<p><code>sort</code> sorts built-in and custom types:</p><pre><code>nums := []int{3, 1, 4, 1, 5}\nsort.Ints(nums)  // [1 1 3 4 5]</code></pre><p><code>flag</code> parses command-line arguments:</p><pre><code>var name = flag.String(\"name\", \"world\", \"a name\")\nflag.Parse()\nfmt.Println(\"Hello,\", *name)</code></pre><p><code>log</code> provides timestamped output:</p><pre><code>log.Println(\"server starting\")</code></pre>",
+      "sortOrder": 2
+    },
+    {
+      "id": "0022:s3",
+      "heading": "Your turn",
+      "bodyHtml": "<p>Open <code>practice/stdlib/main.go</code>.</p><p>Write a program that reads a comma-separated string, splits it with <code>strings.Split</code>, sorts the parts with <code>sort.Strings</code>, and joins them back with <code>strings.Join</code>. Print the result.</p>",
+      "sortOrder": 3
+    }
+  ],
+  "questions": [
+    {
+      "id": "0022:review-1",
+      "prompt": "Which package converts a string like \"42\" to an int?",
+      "correctKey": "strconv",
+      "questionType": "choice",
+      "sectionTag": "review",
+      "sortOrder": 1,
+      "options": [
+        {
+          "key": "strings",
+          "label": "<code>strings</code>",
+          "isCorrect": false,
+          "sortOrder": 1
+        },
+        {
+          "key": "strconv",
+          "label": "<code>strconv</code>",
+          "isCorrect": true,
+          "sortOrder": 2
+        },
+        {
+          "key": "fmt",
+          "label": "<code>fmt</code>",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "0022:q1",
+      "prompt": "What reference date is used in Go's time formatting?",
+      "correctKey": "golang",
+      "questionType": "choice",
+      "sectionTag": "quiz",
+      "sortOrder": 2,
+      "options": [
+        {
+          "key": "unix",
+          "label": "January 1, 1970",
+          "isCorrect": false,
+          "sortOrder": 1
+        },
+        {
+          "key": "golang",
+          "label": "Mon Jan 2 15:04:05 MST 2006",
+          "isCorrect": true,
+          "sortOrder": 2
+        },
+        {
+          "key": "iso",
+          "label": "2000-01-01",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "0022:q2",
+      "prompt": "How do you sort a slice of ints in ascending order?",
+      "correctKey": "ints",
+      "questionType": "choice",
+      "sectionTag": "quiz",
+      "sortOrder": 3,
+      "options": [
+        {
+          "key": "ints",
+          "label": "<code>sort.Ints(slice)</code>",
+          "isCorrect": true,
+          "sortOrder": 1
+        },
+        {
+          "key": "sort",
+          "label": "<code>slice.Sort()</code>",
+          "isCorrect": false,
+          "sortOrder": 2
+        },
+        {
+          "key": "ordered",
+          "label": "<code>sort.Ordered(slice)</code>",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
+      ]
+    }
+  ],
+  "exercises": [
+    {
+      "id": "0022:ex1",
+      "title": "Sort comma-separated words",
+      "path": "practice/stdlib",
+      "instructions": "Split a comma-separated string, sort the words, join them back, and print.",
+      "sortOrder": 1
+    }
+  ],
+  "references": [
+    {
+      "id": "0022:ref1",
+      "title": "pkg.go.dev — stdlib",
+      "url": "https://pkg.go.dev/std",
+      "notes": "Index of all standard library packages"
+    },
+    {
+      "id": "0022:ref2",
+      "title": "Go by Example",
+      "url": "https://gobyexample.com/",
+      "notes": ""
+    }
+  ]
+}

@@ -1,0 +1,130 @@
+{
+  "lesson": {
+    "id": "0021",
+    "title": "Context",
+    "slug": "context",
+    "summary": "Carry deadlines, cancellations, and request-scoped values across API boundaries.",
+    "sortOrder": 21
+  },
+  "sections": [
+    {
+      "id": "0021:s1",
+      "heading": "What is context",
+      "bodyHtml": "<p>The <code>context</code> package lets you pass <strong>deadlines</strong>, <strong>cancellation signals</strong>, and <strong>request-scoped values</strong> between goroutines and across API boundaries.</p><p>A <code>context.Context</code> is an immutable tree. You create a parent context and derive child contexts with additional behaviour:</p><pre><code>ctx := context.Background()   // root, never cancelled\nctx = context.TODO()           // placeholder when unsure</code></pre>",
+      "sortOrder": 1
+    },
+    {
+      "id": "0021:s2",
+      "heading": "Cancellation and deadlines",
+      "bodyHtml": "<p>Use <code>context.WithCancel</code> or <code>context.WithTimeout</code> to create contexts that can cancel:</p><pre><code>ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)\ndefer cancel()  // always call cancel to release resources\n\n// Pass ctx to a blocking operation\nresult, err := someOperation(ctx)\nif errors.Is(err, context.DeadlineExceeded) {\n    fmt.Println(\"operation timed out\")\n}</code></pre><p>Operations should check <code>ctx.Done()</code> periodically and return when it fires:</p><pre><code>select {\ncase &lt;-ctx.Done():\n    return ctx.Err()\ncase result := &lt;-ch:\n    return result, nil\n}</code></pre>",
+      "sortOrder": 2
+    },
+    {
+      "id": "0021:s3",
+      "heading": "Context values",
+      "bodyHtml": "<p>Pass request-scoped data (like request IDs or auth tokens) with <code>context.WithValue</code>. Use custom types for keys to avoid collisions:</p><pre><code>type ctxKey string\nconst keyRequestID ctxKey = \"request_id\"\n\nctx = context.WithValue(ctx, keyRequestID, \"req-123\")\n\n// In a downstream function:\nid, ok := ctx.Value(keyRequestID).(string)</code></pre><p>Use context values sparingly — explicit parameters are clearer. Good uses: tracing IDs, auth principals, middleware data.</p>",
+      "sortOrder": 3
+    }
+  ],
+  "questions": [
+    {
+      "id": "0021:review-1",
+      "prompt": "Where should <code>context.Context</code> appear in a function signature?",
+      "correctKey": "first",
+      "questionType": "choice",
+      "sectionTag": "review",
+      "sortOrder": 1,
+      "options": [
+        {
+          "key": "last",
+          "label": "As the last parameter",
+          "isCorrect": false,
+          "sortOrder": 1
+        },
+        {
+          "key": "first",
+          "label": "As the first parameter",
+          "isCorrect": true,
+          "sortOrder": 2
+        },
+        {
+          "key": "return",
+          "label": "As a return value",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "0021:q1",
+      "prompt": "How do you create a context that automatically cancels after 3 seconds?",
+      "correctKey": "timeout",
+      "questionType": "choice",
+      "sectionTag": "quiz",
+      "sortOrder": 2,
+      "options": [
+        {
+          "key": "timer",
+          "label": "<code>context.WithTimer(ctx, 3*time.Second)</code>",
+          "isCorrect": false,
+          "sortOrder": 1
+        },
+        {
+          "key": "timeout",
+          "label": "<code>context.WithTimeout(ctx, 3*time.Second)</code>",
+          "isCorrect": true,
+          "sortOrder": 2
+        },
+        {
+          "key": "deadline",
+          "label": "<code>context.WithDeadline(ctx, 3*time.Second)</code>",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "0021:q2",
+      "prompt": "Which channel does a context close when it is cancelled?",
+      "correctKey": "done",
+      "questionType": "choice",
+      "sectionTag": "quiz",
+      "sortOrder": 3,
+      "options": [
+        {
+          "key": "cancel",
+          "label": "<code>ctx.Cancel()</code>",
+          "isCorrect": false,
+          "sortOrder": 1
+        },
+        {
+          "key": "done",
+          "label": "<code>ctx.Done()</code>",
+          "isCorrect": true,
+          "sortOrder": 2
+        },
+        {
+          "key": "err",
+          "label": "<code>ctx.Err()</code>",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
+      ]
+    }
+  ],
+  "exercises": [],
+  "references": [
+    {
+      "id": "0021:ref1",
+      "title": "Go blog — Context",
+      "url": "https://go.dev/blog/context",
+      "notes": ""
+    },
+    {
+      "id": "0021:ref2",
+      "title": "pkg.go.dev — context",
+      "url": "https://pkg.go.dev/context",
+      "notes": ""
+    }
+  ]
+}

@@ -119,6 +119,13 @@
       "path": "practice/pointers",
       "instructions": "Edit main.go to implement double(v *int) and call it from main.",
       "sortOrder": 1
+    },
+    {
+      "id": "0009:ex2",
+      "title": "Swap via pointers",
+      "path": "practice/swap",
+      "instructions": "Run the program that swaps two values using pointer parameters.",
+      "sortOrder": 2
     }
   ],
   "references": [

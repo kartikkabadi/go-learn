@@ -154,8 +154,15 @@
       "id": "0003:ex1",
       "title": "Age decision",
       "path": "practice/decisions",
-      "instructions": "Write if/else for age >= 18. Run with age 15 and age 20, paste both outputs.",
+      "instructions": "Run the program and confirm \"You are a minor.\" prints.",
       "sortOrder": 1
+    },
+    {
+      "id": "0003:ex2",
+      "title": "Grade classifier",
+      "path": "practice/grade",
+      "instructions": "Run the grade classifier for a score of 85 and confirm the output.",
+      "sortOrder": 2
     }
   ],
   "references": [

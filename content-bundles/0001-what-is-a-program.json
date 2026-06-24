@@ -125,6 +125,13 @@
       "path": "practice/hello",
       "instructions": "Run go run . and confirm you see Hello, world!",
       "sortOrder": 1
+    },
+    {
+      "id": "0001:ex2",
+      "title": "Change the greeting",
+      "path": "practice/greet",
+      "instructions": "Run go run . and confirm you see Hello, Gopher!",
+      "sortOrder": 2
     }
   ],
   "references": [

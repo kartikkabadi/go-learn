@@ -1,0 +1,144 @@
+{
+  "lesson": {
+    "id": "0014",
+    "title": "Goroutines",
+    "slug": "goroutines",
+    "summary": "Run functions concurrently — lightweight threads that make Go scale.",
+    "sortOrder": 14
+  },
+  "sections": [
+    {
+      "id": "0014:s1",
+      "heading": "What is a goroutine",
+      "bodyHtml": "<p>A <strong>goroutine</strong> is a lightweight thread managed by the Go runtime. Just add <code>go</code> before a function call to run it concurrently:</p><pre><code>func say(msg string) {\n    for i := 0; i &lt; 5; i++ {\n        fmt.Println(msg)\n        time.Sleep(100 * time.Millisecond)\n    }\n}\n\ngo say(\"hello\")  // runs in background\ngo say(\"world\")  // runs in background\ntime.Sleep(1 * time.Second)</code></pre><p>Goroutines share the same address space, so you need to synchronise access to shared data (covered in the channels lesson).</p>",
+      "sortOrder": 1
+    },
+    {
+      "id": "0014:s2",
+      "heading": "Goroutines are cheap",
+      "bodyHtml": "<p>A goroutine starts at ~4 KB of stack, growing as needed. You can start thousands, even hundreds of thousands, on a single machine. Compare that to OS threads which use ~1 MB each:</p><pre><code>for i := 0; i &lt; 10000; i++ {\n    go func(n int) {\n        fmt.Println(n)\n    }(i)\n}\ntime.Sleep(1 * time.Second)</code></pre><p>The <code>go</code> keyword does not wait — execution continues immediately to the next line. The program exits when <code>main</code> returns, even if goroutines are still running.</p>",
+      "sortOrder": 2
+    },
+    {
+      "id": "0014:s3",
+      "heading": "Anonymous goroutines and closures",
+      "bodyHtml": "<p>You can launch an anonymous function as a goroutine. Be careful with loop variables — pass them as arguments:</p><pre><code>// BAD — all goroutines see the same 'i'\nfor i := 0; i &lt; 3; i++ {\n    go func() { fmt.Println(i) }()\n}\n\n// GOOD — each goroutine gets its own copy\nfor i := 0; i &lt; 3; i++ {\n    go func(n int) { fmt.Println(n) }(i)\n}</code></pre>",
+      "sortOrder": 3
+    },
+    {
+      "id": "0014:s4",
+      "heading": "Your turn",
+      "bodyHtml": "<p>Open <code>practice/goroutines/main.go</code>.</p><p>Write a program that launches 5 goroutines, each printing its number (1-5). Use <code>time.Sleep</code> to wait for them to finish.</p>",
+      "sortOrder": 4
+    }
+  ],
+  "questions": [
+    {
+      "id": "0014:review-1",
+      "prompt": "What keyword starts a goroutine?",
+      "correctKey": "go",
+      "questionType": "choice",
+      "sectionTag": "review",
+      "sortOrder": 1,
+      "options": [
+        {
+          "key": "async",
+          "label": "<code>async</code>",
+          "isCorrect": false,
+          "sortOrder": 1
+        },
+        {
+          "key": "go",
+          "label": "<code>go</code> before a function call",
+          "isCorrect": true,
+          "sortOrder": 2
+        },
+        {
+          "key": "spawn",
+          "label": "<code>spawn</code>",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "0014:q1",
+      "prompt": "When does the program exit if main starts several goroutines?",
+      "correctKey": "main",
+      "questionType": "choice",
+      "sectionTag": "quiz",
+      "sortOrder": 2,
+      "options": [
+        {
+          "key": "all",
+          "label": "After all goroutines finish",
+          "isCorrect": false,
+          "sortOrder": 1
+        },
+        {
+          "key": "main",
+          "label": "When main returns, even if goroutines are still running",
+          "isCorrect": true,
+          "sortOrder": 2
+        },
+        {
+          "key": "last",
+          "label": "After the last goroutine finishes",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "0014:q2",
+      "prompt": "Approximately how much stack does a goroutine start with?",
+      "correctKey": "kb",
+      "questionType": "choice",
+      "sectionTag": "quiz",
+      "sortOrder": 3,
+      "options": [
+        {
+          "key": "mb",
+          "label": "1 MB",
+          "isCorrect": false,
+          "sortOrder": 1
+        },
+        {
+          "key": "kb",
+          "label": "~4 KB",
+          "isCorrect": true,
+          "sortOrder": 2
+        },
+        {
+          "key": "byte",
+          "label": "~100 bytes",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
+      ]
+    }
+  ],
+  "exercises": [
+    {
+      "id": "0014:ex1",
+      "title": "Five goroutines",
+      "path": "practice/goroutines",
+      "instructions": "Launch 5 goroutines printing 1-5. Use time.Sleep to let them all finish before main exits.",
+      "sortOrder": 1
+    }
+  ],
+  "references": [
+    {
+      "id": "0014:ref1",
+      "title": "Go by Example: Goroutines",
+      "url": "https://gobyexample.com/goroutines",
+      "notes": ""
+    },
+    {
+      "id": "0014:ref2",
+      "title": "A Tour of Go — Goroutines",
+      "url": "https://go.dev/tour/concurrency/1",
+      "notes": ""
+    }
+  ]
+}

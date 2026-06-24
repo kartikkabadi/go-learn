@@ -115,10 +115,17 @@
   "exercises": [
     {
       "id": "0002:ex1",
-      "title": "Your variables",
+      "title": "Your details",
       "path": "practice/variables",
-      "instructions": "Change name and age, add learningGo bool, run go run .",
+      "instructions": "Change the variables to your own details and run the program.",
       "sortOrder": 1
+    },
+    {
+      "id": "0002:ex2",
+      "title": "Temperature converter",
+      "path": "practice/temperature",
+      "instructions": "Run the Celsius to Fahrenheit converter and confirm the output.",
+      "sortOrder": 2
     }
   ],
   "references": [

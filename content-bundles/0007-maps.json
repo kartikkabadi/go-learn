@@ -115,10 +115,17 @@
   "exercises": [
     {
       "id": "0007:ex1",
-      "title": "Using a map",
+      "title": "Map operations",
       "path": "practice/maps",
-      "instructions": "Edit main.go to create a map of student grades, add three entries, then look up one by name and print whether it was found.",
+      "instructions": "Run the map program to see lookups, iteration, and deletion.",
       "sortOrder": 1
+    },
+    {
+      "id": "0007:ex2",
+      "title": "Word frequency",
+      "path": "practice/wordcount",
+      "instructions": "Run the word frequency counter and see which word appears twice.",
+      "sortOrder": 2
     }
   ],
   "references": [

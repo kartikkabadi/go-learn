@@ -5,6 +5,9 @@ import "fmt"
 func main() {
 	age := 15
 
-	// TODO: write an if/else that prints one message if age >= 18,
-	// and a different message otherwise.
+	if age >= 18 {
+		fmt.Println("You are an adult.")
+	} else {
+		fmt.Println("You are a minor.")
+	}
 }

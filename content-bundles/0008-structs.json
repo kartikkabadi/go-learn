@@ -115,10 +115,17 @@
   "exercises": [
     {
       "id": "0008:ex1",
-      "title": "Creating and using a struct",
+      "title": "Person struct",
       "path": "practice/structs",
-      "instructions": "Edit main.go to define a Movie struct, create a value, update the year, and print both fields.",
+      "instructions": "Run the struct program. Create your own Person with different values.",
       "sortOrder": 1
+    },
+    {
+      "id": "0008:ex2",
+      "title": "Rectangle area",
+      "path": "practice/rectangle",
+      "instructions": "Run the program that computes rectangle area using a struct with a method.",
+      "sortOrder": 2
     }
   ],
   "references": [

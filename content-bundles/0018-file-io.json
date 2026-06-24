@@ -1,0 +1,144 @@
+{
+  "lesson": {
+    "id": "0018",
+    "title": "File I/O and the io Package",
+    "slug": "file-io",
+    "summary": "Read and write files, work with readers and writers.",
+    "sortOrder": 18
+  },
+  "sections": [
+    {
+      "id": "0018:s1",
+      "heading": "Reading and writing files",
+      "bodyHtml": "<p>Use <code>os.ReadFile</code> and <code>os.WriteFile</code> for simple file operations (Go 1.16+):</p><pre><code>data := []byte(\"hello world\")\nerr := os.WriteFile(\"output.txt\", data, 0644)\n\nread, err := os.ReadFile(\"output.txt\")\nfmt.Println(string(read))  // hello world</code></pre><p>For larger files, use <code>os.Open</code> + <code>io.Copy</code> or a <code>bufio.Scanner</code> to stream line-by-line:</p><pre><code>f, err := os.Open(\"file.txt\")\nscanner := bufio.NewScanner(f)\nfor scanner.Scan() {\n    fmt.Println(scanner.Text())\n}</code></pre>",
+      "sortOrder": 1
+    },
+    {
+      "id": "0018:s2",
+      "heading": "The io.Reader and io.Writer interfaces",
+      "bodyHtml": "<p>The <code>io.Reader</code> and <code>io.Writer</code> interfaces are the foundation of Go's I/O:</p><pre><code>type Reader interface {\n    Read(p []byte) (n int, err error)\n}\ntype Writer interface {\n    Write(p []byte) (n int, err error)\n}</code></pre><p>Many types satisfy these: files, network connections, strings, buffers. Use <code>io.Copy</code> to stream from any reader to any writer:</p><pre><code>r := strings.NewReader(\"data\")\nw := os.Stdout\nio.Copy(w, r)  // writes \"data\" to stdout</code></pre>",
+      "sortOrder": 2
+    },
+    {
+      "id": "0018:s3",
+      "heading": "Working with the filesystem",
+      "bodyHtml": "<p>The <code>os</code> package provides filesystem operations:</p><pre><code>os.Stat(\"file.txt\")  // file info\nos.Remove(\"file.txt\") // delete file\nos.Rename(\"old\", \"new\") // rename or move</code></pre><p>For virtual filesystems (useful in tests), use <code>io/fs</code> and <code>testing/fstest</code>.</p>",
+      "sortOrder": 3
+    },
+    {
+      "id": "0018:s4",
+      "heading": "Your turn",
+      "bodyHtml": "<p>Open <code>practice/file-io/main.go</code>.</p><p>Write a program that writes \"Hello, file!\" to <code>hello.txt</code> using <code>os.WriteFile</code>, then reads and prints it with <code>os.ReadFile</code>.</p>",
+      "sortOrder": 4
+    }
+  ],
+  "questions": [
+    {
+      "id": "0018:review-1",
+      "prompt": "Which function reads an entire file into memory (Go 1.16+)?",
+      "correctKey": "readfile",
+      "questionType": "choice",
+      "sectionTag": "review",
+      "sortOrder": 1,
+      "options": [
+        {
+          "key": "open",
+          "label": "<code>os.Open</code>",
+          "isCorrect": false,
+          "sortOrder": 1
+        },
+        {
+          "key": "readfile",
+          "label": "<code>os.ReadFile</code>",
+          "isCorrect": true,
+          "sortOrder": 2
+        },
+        {
+          "key": "ioutil",
+          "label": "<code>ioutil.ReadFile</code>",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "0018:q1",
+      "prompt": "What does <code>io.Copy(w, r)</code> do?",
+      "correctKey": "stream",
+      "questionType": "choice",
+      "sectionTag": "quiz",
+      "sortOrder": 2,
+      "options": [
+        {
+          "key": "copy",
+          "label": "Copies the file from r to w",
+          "isCorrect": false,
+          "sortOrder": 1
+        },
+        {
+          "key": "stream",
+          "label": "Reads from r and writes to w until EOF",
+          "isCorrect": true,
+          "sortOrder": 2
+        },
+        {
+          "key": "compare",
+          "label": "Compares r and w",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
+      ]
+    },
+    {
+      "id": "0018:q2",
+      "prompt": "How many methods does <code>io.Reader</code> require?",
+      "correctKey": "one",
+      "questionType": "choice",
+      "sectionTag": "quiz",
+      "sortOrder": 3,
+      "options": [
+        {
+          "key": "zero",
+          "label": "0 (it is a marker interface)",
+          "isCorrect": false,
+          "sortOrder": 1
+        },
+        {
+          "key": "one",
+          "label": "1 — <code>Read(p []byte) (n int, err error)</code>",
+          "isCorrect": true,
+          "sortOrder": 2
+        },
+        {
+          "key": "two",
+          "label": "2 — Read and Close",
+          "isCorrect": false,
+          "sortOrder": 3
+        }
+      ]
+    }
+  ],
+  "exercises": [
+    {
+      "id": "0018:ex1",
+      "title": "Write and read a file",
+      "path": "practice/file-io",
+      "instructions": "Write \"Hello, file!\" to hello.txt, then read and print it.",
+      "sortOrder": 1
+    }
+  ],
+  "references": [
+    {
+      "id": "0018:ref1",
+      "title": "Go by Example: Writing Files",
+      "url": "https://gobyexample.com/writing-files",
+      "notes": ""
+    },
+    {
+      "id": "0018:ref2",
+      "title": "Go by Example: Reading Files",
+      "url": "https://gobyexample.com/reading-files",
+      "notes": ""
+    }
+  ]
+}
