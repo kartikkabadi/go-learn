@@ -2,6 +2,13 @@
 bin/
 /server
 
+# Practice module binaries (go build output in practice/*/)
+practice/*/*
+!practice/*/*.go
+!practice/*/*.mod
+!practice/*/*.sum
+!practice/*/*.txt
+
 # Database (local copy - schema is in migrations, content comes from bundles)
 progress/go-learn.db
 *.db
