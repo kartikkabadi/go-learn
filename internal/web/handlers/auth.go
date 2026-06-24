@@ -108,7 +108,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 	next := strings.TrimSpace(r.URL.Query().Get("next"))
 	// Restrict next to same-site relative paths to prevent open redirect.
-	if next == "" || !strings.HasPrefix(next, "/") || strings.HasPrefix(next, "//") {
+	if next == "" || !strings.HasPrefix(next, "/") || strings.HasPrefix(next, "//") || strings.HasPrefix(next, "/\\") {
 		next = "/"
 	}
 	if r.Method == http.MethodGet {

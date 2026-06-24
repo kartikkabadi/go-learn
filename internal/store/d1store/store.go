@@ -226,6 +226,9 @@ func (s *Store) ListQuestionsByLesson(userID, lessonID string) ([]store.Question
 		a.Correct = correct == 1
 		ansByQ[a.QuestionID] = &a
 	}
+	if err := ansRows.Err(); err != nil {
+		return nil, fmt.Errorf("ListQuestionsByLesson answers: %w", err)
+	}
 	for i := range out {
 		out[i].Answer = ansByQ[out[i].ID]
 	}
@@ -290,6 +293,9 @@ func (s *Store) attachSubmissions(out []store.Exercise, userID string) ([]store.
 		}
 		subByEx[exID] = true
 		correctByEx[exID] = correct == 1
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("exercises submissions: %w", err)
 	}
 	for i := range out {
 		if subByEx[out[i].ID] {
@@ -393,6 +399,9 @@ func (s *Store) LessonProgress(userID string) ([]store.LessonProgress, error) {
 		ac[1] += correct
 		ansByLesson[q.LessonID] = ac
 	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("LessonProgress: %w", err)
+	}
 
 	// 1 query: all exercise submissions (no join — lesson_id from embedded content).
 	esRows, err := s.db.Query(`
@@ -412,6 +421,9 @@ func (s *Store) LessonProgress(userID string) ([]store.LessonProgress, error) {
 		if lid != "" {
 			exByLesson[lid]++
 		}
+	}
+	if err := esRows.Err(); err != nil {
+		return nil, fmt.Errorf("LessonProgress exercises: %w", err)
 	}
 
 	for i := range out {
@@ -462,6 +474,9 @@ func (s *Store) UserData(userID string) (*store.UserData, error) {
 		ud.TotalAnswered++
 		ud.TotalCorrect += correct
 	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("UserData answers: %w", err)
+	}
 
 	// Query 2: all exercise submissions (no join — lesson_id from embedded content).
 	esRows, err := s.db.Query(`
@@ -484,6 +499,9 @@ func (s *Store) UserData(userID string) (*store.UserData, error) {
 			ud.SubmissionsByLesson[lid]++
 		}
 		ud.TotalSubmitted++
+	}
+	if err := esRows.Err(); err != nil {
+		return nil, fmt.Errorf("UserData submissions: %w", err)
 	}
 
 	return ud, nil
