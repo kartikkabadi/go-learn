@@ -88,6 +88,7 @@ type AnswerRow struct {
 	Prompt       string `json:"prompt"`
 	CorrectKey   string `json:"correctKey"`
 	CorrectLabel string `json:"correctLabel"`
+	QuestionType string `json:"questionType"`
 }
 
 func (s *SQLiteStore) Close() error {
@@ -176,7 +177,7 @@ func (s *SQLiteStore) ListAnswers(userID string) ([]AnswerRow, error) {
 	rows, err := s.db.Query(`
 		SELECT
 			a.question_id, a.picked_key, a.picked_label, a.correct, a.answered_at,
-			q.lesson_id, l.title, q.prompt, q.correct_key,
+			q.lesson_id, l.title, q.prompt, q.correct_key, q.question_type,
 			COALESCE(
 				(SELECT o.label FROM question_options o
 				 WHERE o.question_id = q.id AND o.is_correct = 1 LIMIT 1),
@@ -199,7 +200,7 @@ func (s *SQLiteStore) ListAnswers(userID string) ([]AnswerRow, error) {
 		var correct int
 		if err := rows.Scan(
 			&row.QuestionID, &row.PickedKey, &row.PickedLabel, &correct, &row.AnsweredAt,
-			&row.LessonID, &row.LessonTitle, &row.Prompt, &row.CorrectKey, &row.CorrectLabel,
+			&row.LessonID, &row.LessonTitle, &row.Prompt, &row.CorrectKey, &row.QuestionType, &row.CorrectLabel,
 		); err != nil {
 			return nil, fmt.Errorf("scan answer row: %w", err)
 		}

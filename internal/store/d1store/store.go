@@ -134,6 +134,7 @@ func (s *Store) ListAnswers(userID string) ([]store.AnswerRow, error) {
 			row.LessonID = q.LessonID
 			row.Prompt = q.Prompt
 			row.CorrectKey = q.CorrectKey
+			row.QuestionType = q.QuestionType
 			for _, opt := range q.Options {
 				if opt.IsCorrect {
 					row.CorrectLabel = opt.Label

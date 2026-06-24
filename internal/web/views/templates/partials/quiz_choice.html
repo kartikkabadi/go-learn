@@ -2,7 +2,7 @@
 <div class="quiz-options">
 {{if .Question.Answer}}
   {{range .Question.Options}}
-    <button type="button" disabled class="{{if eq $.Question.Answer.PickedKey .OptionKey}}{{if $.Question.Answer.Correct}}correct{{else}}wrong{{end}}{{else}}{{if .IsCorrect}}correct{{end}}{{end}}">{{.Label}}</button>
+    <button type="button" disabled class="{{if eq $.Question.Answer.PickedKey .OptionKey}}{{if $.Question.Answer.Correct}}correct{{else}}wrong{{end}}{{else}}{{if .IsCorrect}}correct{{end}}{{end}}">{{safeHTML .Label}}</button>
   {{end}}
   <div class="{{if .Question.Answer.Correct}}feedback ok{{else}}feedback no{{end}}">{{if .Question.Answer.Correct}}Correct.{{else}}Not quite — see highlighted answer.{{end}}</div>
   {{if .Ephemeral}}<p class="muted"><a href="/login?next=/lessons/{{.LessonID}}">Log in</a> to save this answer.</p>{{end}}
@@ -14,7 +14,7 @@
       hx-target="#quiz-body-{{$.Question.ID}}"
       hx-indicator="#quiz-spinner-{{$.Question.ID}}"
       hx-disabled-elt="#quiz-{{$.Question.ID}} .quiz-options button"
-      hx-swap="innerHTML">{{.Label}}</button>
+      hx-swap="innerHTML">{{safeHTML .Label}}</button>
   {{end}}
 {{end}}
 </div>

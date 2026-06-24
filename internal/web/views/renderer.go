@@ -33,6 +33,9 @@ type Renderer struct {
 // New creates a Renderer by parsing all embedded HTML templates.
 func New() (*Renderer, error) {
 	funcs := template.FuncMap{
+		"safeHTML": func(s string) template.HTML {
+			return template.HTML(s)
+		},
 		"percent": func(done, total int) int {
 			if total == 0 {
 				return 0
