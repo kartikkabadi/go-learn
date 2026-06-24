@@ -190,12 +190,16 @@ func (h *Handler) LessonsIndex(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) LessonShow(w http.ResponseWriter, r *http.Request) {
 	slugOrID := r.PathValue("slug")
 	lesson, err := h.Store.GetLessonBySlug(slugOrID)
-	if lesson == nil {
-		lesson, err = h.Store.GetLesson(slugOrID)
-	}
 	if err != nil {
 		internalError(w, "lesson show", err)
 		return
+	}
+	if lesson == nil {
+		lesson, err = h.Store.GetLesson(slugOrID)
+		if err != nil {
+			internalError(w, "lesson show", err)
+			return
+		}
 	}
 	if lesson == nil {
 		http.NotFound(w, r)

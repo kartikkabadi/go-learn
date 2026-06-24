@@ -296,6 +296,13 @@ func TestListAnswers(t *testing.T) {
 	if !answers[1].Correct {
 		t.Fatal("expected second answer correct")
 	}
+	// Verify QuestionType is populated (needed for safeHTML rendering in progress.html).
+	if answers[0].QuestionType != "choice" {
+		t.Fatalf("want QuestionType 'choice', got %q", answers[0].QuestionType)
+	}
+	if answers[1].QuestionType != "text" {
+		t.Fatalf("want QuestionType 'text', got %q", answers[1].QuestionType)
+	}
 }
 
 func TestLessonProgress(t *testing.T) {
