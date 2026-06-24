@@ -417,4 +417,25 @@ func TestAuthFlow_LoginAndLogout(t *testing.T) {
 			t.Fatalf("expected no user, got %v", got)
 		}
 	})
+
+	t.Run("Logout deletes session from DB", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodPost, "/logout", nil)
+		req.AddCookie(&http.Cookie{
+			Name:  "session",
+			Value: cookies.Sign(sess.Token, h.CookieKey),
+		})
+		w := httptest.NewRecorder()
+		h.Logout(w, req)
+
+		if w.Code != http.StatusFound {
+			t.Fatalf("want 302, got %d", w.Code)
+		}
+		got, err := h.Store.GetSession(sess.Token)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got != nil {
+			t.Fatal("session should be deleted from DB after logout")
+		}
+	})
 }

@@ -150,8 +150,10 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 // Logout deletes the session and clears the cookie.
 func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 	if c, err := r.Cookie(sessionCookieName); err == nil && c.Value != "" {
-		if err := h.Store.DeleteSession(c.Value); err != nil {
-			slog.Error("delete session", "error", err)
+		if token, err := cookies.Verify(c.Value, h.CookieKey); err == nil {
+			if err := h.Store.DeleteSession(token); err != nil {
+				slog.Error("delete session", "error", err)
+			}
 		}
 	}
 	secure := r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == "https"
