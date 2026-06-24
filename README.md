@@ -86,7 +86,8 @@ experience required.
 ├── cmd/
 │   ├── server/            # Local dev server
 │   ├── worker/            # Cloudflare Workers entry point (WASM)
-│   └── import-content/    # JSON bundle import CLI
+│   ├── import-content/    # JSON bundle import CLI
+│   └── generate-content/  # Embeds SQLite content into Go source (build step)
 ├── internal/
 │   ├── app/               # Config, base URL, env vars
 │   ├── store/             # Data layer interface + SQLite impl

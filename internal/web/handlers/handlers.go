@@ -715,7 +715,7 @@ func (h *Handler) RobotsTXT(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "Sitemap: "+h.baseURL(r)+"/sitemap.xml")
 }
 
-// Favicon serves an inline SVG favicon as a 204 for the classic /favicon.ico path,
+// Favicon serves an inline SVG favicon for the classic /favicon.ico path,
 // avoiding per-visit 404 noise in logs.
 func (h *Handler) Favicon(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "image/svg+xml")
