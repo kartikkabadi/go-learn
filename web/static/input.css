@@ -442,10 +442,6 @@
     @apply mt-10 flex justify-between gap-4 border-t border-border pt-6 text-sm;
   }
 
-  .next-action {
-    @apply my-6 rounded-xl border-l-4 border-primary bg-card p-4 shadow-sm;
-  }
-
   .auth-form {
     @apply my-6 flex max-w-sm flex-col gap-2;
   }
@@ -576,10 +572,6 @@
       opacity: 1;
       transform: scale(1);
     }
-  }
-
-  .quiz-pending .loader-dots {
-    @apply ml-2;
   }
 
   .lesson-grid {
