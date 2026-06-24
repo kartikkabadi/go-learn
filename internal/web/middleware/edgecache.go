@@ -25,7 +25,6 @@ var cacheablePaths = map[string]bool{
 	"/sitemap.xml":   true,
 	"/robots.txt":    true,
 	"/favicon.ico":   true,
-	"/health":        true,
 }
 
 // isCacheable returns true for anonymous GET requests to cacheable paths.

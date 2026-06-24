@@ -727,10 +727,12 @@ func (h *Handler) Favicon(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="6" fill="#007d9c"/><text x="16" y="22" font-family="Georgia,serif" font-size="18" font-weight="bold" text-anchor="middle" fill="#fff">Go</text></svg>`)
 }
 
-// Health returns 200 if the process is alive and the DB is reachable.
+// Health returns 200 if the process is alive and content is loaded.
+// For D1 (production), ListLessons returns embedded content (0 D1 queries),
+// so this verifies the Worker is running and content initialized — not D1 connectivity.
 func (h *Handler) Health(w http.ResponseWriter, r *http.Request) {
 	if _, err := h.Store.ListLessons(); err != nil {
-		slog.Error("health check db probe", "error", err)
+		slog.Error("health check", "error", err)
 		http.Error(w, "unavailable", http.StatusServiceUnavailable)
 		return
 	}
