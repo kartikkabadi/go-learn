@@ -707,18 +707,19 @@ func (h *Handler) Sitemap(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	today := time.Now().Format("2006-01-02")
+	xb := template.HTMLEscapeString(base)
 	fmt.Fprintf(w, `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>%s/</loc><lastmod>%s</lastmod><changefreq>weekly</changefreq><priority>1.0</priority></url>
   <url><loc>%s/lessons</loc><lastmod>%s</lastmod><changefreq>weekly</changefreq><priority>0.9</priority></url>
   <url><loc>%s/reference</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
   <url><loc>%s/practice</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
-`, base, today, base, today, base, base)
+`, xb, today, xb, today, xb, xb)
 	for _, l := range lessons {
 		if l.Slug == "" {
 			continue
 		}
-		u := base + "/lessons/" + l.Slug
+		u := xb + "/lessons/" + template.HTMLEscapeString(l.Slug)
 		fmt.Fprintf(w, `  <url><loc>%s</loc><lastmod>%s</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
 `, u, today)
 	}

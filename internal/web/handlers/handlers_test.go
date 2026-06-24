@@ -527,3 +527,20 @@ func TestLogin_NextWithAmpersand(t *testing.T) {
 		t.Fatalf("next with & should preserve full path, got Location=%q", loc)
 	}
 }
+
+func TestSitemap_EscapesBaseURL(t *testing.T) {
+	h := testHandler(t)
+	h.BaseURL = "http://evil.com</urlset>"
+
+	req := httptest.NewRequest(http.MethodGet, "/sitemap.xml", nil)
+	w := httptest.NewRecorder()
+	h.Sitemap(w, req)
+
+	body := w.Body.String()
+	if strings.Contains(body, "</urlset><") {
+		t.Fatal("sitemap should XML-escape base URL, got injection")
+	}
+	if !strings.Contains(body, "&lt;/urlset&gt;") {
+		t.Fatal("sitemap should contain escaped base URL")
+	}
+}
