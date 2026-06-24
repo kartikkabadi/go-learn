@@ -8,6 +8,7 @@ package d1store
 import (
 	"database/sql"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -44,41 +45,28 @@ func (s *Store) DB() *sql.DB { return s.db }
 
 // SaveAnswer records a quiz answer, evaluates correctness, and returns the result.
 func (s *Store) SaveAnswer(userID, questionID, pickedKey, pickedLabel string) (store.Answer, error) {
-	var qType, correctKey string
-	err := s.db.QueryRow(
-		`SELECT question_type, correct_key FROM questions WHERE id = ?`,
-		questionID,
-	).Scan(&qType, &correctKey)
-	if err == sql.ErrNoRows {
+	q := content.QuestionsByID[questionID]
+	if q == nil {
 		return store.Answer{}, fmt.Errorf("unknown question %q", questionID)
-	}
-	if err != nil {
-		return store.Answer{}, fmt.Errorf("lookup question: %w", err)
 	}
 
 	correct := false
-	switch qType {
+	switch q.QuestionType {
 	case "text":
-		correct = strings.EqualFold(strings.TrimSpace(pickedKey), strings.TrimSpace(correctKey))
+		correct = strings.EqualFold(strings.TrimSpace(pickedKey), strings.TrimSpace(q.CorrectKey))
 	case "choice":
-		var isCorrect int
-		err = s.db.QueryRow(
-			`SELECT is_correct FROM question_options WHERE question_id = ? AND option_key = ?`,
-			questionID, pickedKey,
-		).Scan(&isCorrect)
-		if err == sql.ErrNoRows {
-			return store.Answer{}, fmt.Errorf("unknown option %q for %q", pickedKey, questionID)
+		for _, opt := range q.Options {
+			if opt.OptionKey == pickedKey {
+				correct = opt.IsCorrect
+				break
+			}
 		}
-		if err != nil {
-			return store.Answer{}, fmt.Errorf("lookup option: %w", err)
-		}
-		correct = isCorrect == 1
 	default:
-		return store.Answer{}, fmt.Errorf("unsupported question type %q", qType)
+		return store.Answer{}, fmt.Errorf("unsupported question type %q", q.QuestionType)
 	}
 
 	now := time.Now().UTC().Format(time.RFC3339)
-	_, err = s.db.Exec(`
+	_, err := s.db.Exec(`
 		INSERT INTO answers (user_id, question_id, picked_key, picked_label, correct, answered_at)
 		VALUES (?, ?, ?, ?, ?, ?)
 		ON CONFLICT(user_id, question_id) DO UPDATE SET
@@ -118,22 +106,13 @@ func (s *Store) GetAnswer(userID, questionID string) (*store.Answer, error) {
 	return &a, nil
 }
 
-// ListAnswers returns all answers joined with lesson and question data.
+// ListAnswers returns all answers for a user, joined with embedded lesson/question data.
+// Queries only the answers table from D1 (1 query); lesson/question metadata comes from
+// embedded content (0 D1 queries).
 func (s *Store) ListAnswers(userID string) ([]store.AnswerRow, error) {
 	rows, err := s.db.Query(`
-		SELECT
-			a.question_id, a.picked_key, a.picked_label, a.correct, a.answered_at,
-			q.lesson_id, l.title, q.prompt, q.correct_key,
-			COALESCE(
-				(SELECT o.label FROM question_options o
-				 WHERE o.question_id = q.id AND o.is_correct = 1 LIMIT 1),
-				q.correct_key
-			) AS correct_label
-		FROM answers a
-		JOIN questions q ON q.id = a.question_id
-		JOIN lessons l ON l.id = q.lesson_id
-		WHERE a.user_id = ?
-		ORDER BY l.sort_order, q.sort_order
+		SELECT question_id, picked_key, picked_label, correct, answered_at
+		FROM answers WHERE user_id = ?
 	`, userID)
 	if err != nil {
 		return nil, fmt.Errorf("list answers: %w", err)
@@ -146,13 +125,45 @@ func (s *Store) ListAnswers(userID string) ([]store.AnswerRow, error) {
 		var correct int
 		if err := rows.Scan(
 			&row.QuestionID, &row.PickedKey, &row.PickedLabel, &correct, &row.AnsweredAt,
-			&row.LessonID, &row.LessonTitle, &row.Prompt, &row.CorrectKey, &row.CorrectLabel,
 		); err != nil {
 			return nil, fmt.Errorf("scan answer row: %w", err)
 		}
 		row.Correct = correct == 1
+		q := content.QuestionsByID[row.QuestionID]
+		if q != nil {
+			row.LessonID = q.LessonID
+			row.Prompt = q.Prompt
+			row.CorrectKey = q.CorrectKey
+			for _, opt := range q.Options {
+				if opt.IsCorrect {
+					row.CorrectLabel = opt.Label
+					break
+				}
+			}
+			if row.CorrectLabel == "" {
+				row.CorrectLabel = q.CorrectKey
+			}
+			if l := content.LessonsByID[q.LessonID]; l != nil {
+				row.LessonTitle = l.Title
+			}
+		}
 		out = append(out, row)
 	}
+	// Sort by lesson sort_order, then question sort_order (matching SQLite store).
+	sort.SliceStable(out, func(i, j int) bool {
+		li, lj := content.LessonsByID[out[i].LessonID], content.LessonsByID[out[j].LessonID]
+		if li == nil || lj == nil {
+			return false
+		}
+		if li.SortOrder != lj.SortOrder {
+			return li.SortOrder < lj.SortOrder
+		}
+		qi, qj := content.QuestionsByID[out[i].QuestionID], content.QuestionsByID[out[j].QuestionID]
+		if qi == nil || qj == nil {
+			return false
+		}
+		return qi.SortOrder < qj.SortOrder
+	})
 	return out, rows.Err()
 }
 
@@ -187,11 +198,20 @@ func (s *Store) ListQuestionsByLesson(userID, lessonID string) ([]store.Question
 		return out, nil
 	}
 
-	ansRows, err := s.db.Query(`
+	// Build question ID list from embedded content (not D1 — content tables may be stale).
+	placeholders := make([]string, len(out))
+	args := make([]any, 0, len(out)+1)
+	args = append(args, userID)
+	for i, q := range out {
+		placeholders[i] = "?"
+		args = append(args, q.ID)
+	}
+	query := fmt.Sprintf(`
 		SELECT question_id, picked_key, picked_label, correct, answered_at
 		FROM answers
-		WHERE user_id = ? AND question_id IN (SELECT id FROM questions WHERE lesson_id = ?)
-	`, userID, lessonID)
+		WHERE user_id = ? AND question_id IN (%s)
+	`, strings.Join(placeholders, ","))
+	ansRows, err := s.db.Query(query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("ListQuestionsByLesson answers: %w", err)
 	}
@@ -349,12 +369,9 @@ func (s *Store) LessonProgress(userID string) ([]store.LessonProgress, error) {
 		return out, nil
 	}
 
-	// 1 query for all user answers grouped by lesson.
+	// 1 query: all user answers (no join — lesson_id from embedded content).
 	rows, err := s.db.Query(`
-		SELECT q.lesson_id, COUNT(*), COALESCE(SUM(a.correct), 0)
-		FROM answers a JOIN questions q ON q.id = a.question_id
-		WHERE a.user_id = ?
-		GROUP BY q.lesson_id
+		SELECT question_id, correct FROM answers WHERE user_id = ?
 	`, userID)
 	if err != nil {
 		return nil, fmt.Errorf("LessonProgress: %w", err)
@@ -362,20 +379,24 @@ func (s *Store) LessonProgress(userID string) ([]store.LessonProgress, error) {
 	defer rows.Close()
 	ansByLesson := make(map[string][2]int) // [answered, correct]
 	for rows.Next() {
-		var lid string
-		var answered, correct int
-		if err := rows.Scan(&lid, &answered, &correct); err != nil {
+		var qid string
+		var correct int
+		if err := rows.Scan(&qid, &correct); err != nil {
 			return nil, fmt.Errorf("LessonProgress: %w", err)
 		}
-		ansByLesson[lid] = [2]int{answered, correct}
+		q := content.QuestionsByID[qid]
+		if q == nil {
+			continue
+		}
+		ac := ansByLesson[q.LessonID]
+		ac[0]++
+		ac[1] += correct
+		ansByLesson[q.LessonID] = ac
 	}
 
-	// 1 query for exercise submissions grouped by lesson.
+	// 1 query: all exercise submissions (no join — lesson_id from embedded content).
 	esRows, err := s.db.Query(`
-		SELECT e.lesson_id, COUNT(*)
-		FROM exercise_submissions es JOIN exercises e ON e.id = es.exercise_id
-		WHERE es.user_id = ?
-		GROUP BY e.lesson_id
+		SELECT exercise_id FROM exercise_submissions WHERE user_id = ?
 	`, userID)
 	if err != nil {
 		return nil, fmt.Errorf("LessonProgress exercises: %w", err)
@@ -383,12 +404,14 @@ func (s *Store) LessonProgress(userID string) ([]store.LessonProgress, error) {
 	defer esRows.Close()
 	exByLesson := make(map[string]int)
 	for esRows.Next() {
-		var lid string
-		var done int
-		if err := esRows.Scan(&lid, &done); err != nil {
+		var eid string
+		if err := esRows.Scan(&eid); err != nil {
 			return nil, fmt.Errorf("LessonProgress exercises: %w", err)
 		}
-		exByLesson[lid] = done
+		lid := exerciseLessonID(eid)
+		if lid != "" {
+			exByLesson[lid]++
+		}
 	}
 
 	for i := range out {
@@ -414,47 +437,52 @@ func (s *Store) UserData(userID string) (*store.UserData, error) {
 		return ud, nil
 	}
 
-	// Query 1: all answers grouped by lesson.
+	// Query 1: all user answers (no join — lesson_id from embedded content).
 	rows, err := s.db.Query(`
-		SELECT q.lesson_id, COUNT(*), COALESCE(SUM(a.correct), 0)
-		FROM answers a JOIN questions q ON q.id = a.question_id
-		WHERE a.user_id = ?
-		GROUP BY q.lesson_id
+		SELECT question_id, correct FROM answers WHERE user_id = ?
 	`, userID)
 	if err != nil {
 		return nil, fmt.Errorf("UserData answers: %w", err)
 	}
 	defer rows.Close()
 	for rows.Next() {
-		var lid string
-		var answered, correct int
-		if err := rows.Scan(&lid, &answered, &correct); err != nil {
+		var qid string
+		var correct int
+		if err := rows.Scan(&qid, &correct); err != nil {
 			return nil, fmt.Errorf("UserData answers: %w", err)
 		}
-		ud.AnswersByLesson[lid] = [2]int{answered, correct}
-		ud.TotalAnswered += answered
+		q := content.QuestionsByID[qid]
+		if q == nil {
+			continue
+		}
+		ac := ud.AnswersByLesson[q.LessonID]
+		ac[0]++
+		ac[1] += correct
+		ud.AnswersByLesson[q.LessonID] = ac
+		ud.TotalAnswered++
 		ud.TotalCorrect += correct
 	}
 
-	// Query 2: all exercise submissions.
+	// Query 2: all exercise submissions (no join — lesson_id from embedded content).
 	esRows, err := s.db.Query(`
-		SELECT es.exercise_id, e.lesson_id, es.correct
-		FROM exercise_submissions es JOIN exercises e ON e.id = es.exercise_id
-		WHERE es.user_id = ?
+		SELECT exercise_id, correct FROM exercise_submissions WHERE user_id = ?
 	`, userID)
 	if err != nil {
 		return nil, fmt.Errorf("UserData submissions: %w", err)
 	}
 	defer esRows.Close()
 	for esRows.Next() {
-		var exID, lessonID string
+		var exID string
 		var correct int
-		if err := esRows.Scan(&exID, &lessonID, &correct); err != nil {
+		if err := esRows.Scan(&exID, &correct); err != nil {
 			return nil, fmt.Errorf("UserData submissions: %w", err)
 		}
 		ud.SubmissionsByEx[exID] = true
 		ud.CorrectByEx[exID] = correct == 1
-		ud.SubmissionsByLesson[lessonID]++
+		lid := exerciseLessonID(exID)
+		if lid != "" {
+			ud.SubmissionsByLesson[lid]++
+		}
 		ud.TotalSubmitted++
 	}
 
@@ -478,4 +506,17 @@ func boolToInt(v bool) int {
 		return 1
 	}
 	return 0
+}
+
+// exerciseLessonID returns the lesson_id for an exercise ID from embedded content.
+var exerciseLessonCache map[string]string
+
+func exerciseLessonID(exID string) string {
+	if exerciseLessonCache == nil {
+		exerciseLessonCache = make(map[string]string, len(content.Exercises))
+		for _, ex := range content.Exercises {
+			exerciseLessonCache[ex.ID] = ex.LessonID
+		}
+	}
+	return exerciseLessonCache[exID]
 }
