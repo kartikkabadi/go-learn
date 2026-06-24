@@ -36,10 +36,11 @@ func main() {
 
 	prog := &service.Progress{Store: st}
 	web := &handlers.Handler{
-		Store:    st,
-		Progress: prog,
-		Views:    renderer,
-		BaseURL:  cfg.BaseURL,
+		Store:     st,
+		Progress:  prog,
+		Views:     renderer,
+		BaseURL:   cfg.BaseURL,
+		CookieKey: cfg.CookieKey,
 	}
 
 	mux := http.NewServeMux()

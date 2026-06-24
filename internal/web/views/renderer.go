@@ -6,6 +6,7 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"net/url"
 )
 
 // PageMeta carries SEO metadata and auth state for every full-page render.
@@ -49,6 +50,13 @@ func New() (*Renderer, error) {
 		},
 		"lessonDone": func(qa, ed int) int {
 			return qa + ed
+		},
+		"origin": func(rawurl string) string {
+			u, err := url.Parse(rawurl)
+			if err != nil || u.Host == "" {
+				return ""
+			}
+			return u.Scheme + "://" + u.Host
 		},
 	}
 	t, err := template.New("").Funcs(funcs).ParseFS(templateFS, "templates/*.html", "templates/partials/*.html")

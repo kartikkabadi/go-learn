@@ -464,6 +464,10 @@ func (h *Handler) SubmitExercise(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 	}
+	if path == "" {
+		http.NotFound(w, r)
+		return
+	}
 	correct := gradeExercise(path, output)
 
 	if err := h.Store.SaveExerciseSubmission(user.ID, id, output, correct); err != nil {
