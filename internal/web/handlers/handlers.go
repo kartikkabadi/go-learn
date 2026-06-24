@@ -538,14 +538,14 @@ func evaluateAnswer(q store.Question, pickedKey string) (correct, ok bool) {
 }
 
 // gradeExercise compares submitted output against the embedded expected output
-// for a practice module. Trailing whitespace is ignored. No expected file =>
-// submission is marked correct (no grading for that exercise).
+// for a practice module. Trailing/leading whitespace and CR (Windows paste) are
+// normalized. No expected file => submission is marked correct (no grading).
 func gradeExercise(path, output string) bool {
 	expected, ok := practice.ExpectedOutput(path)
 	if !ok {
 		return true
 	}
-	return expected == strings.TrimSpace(output)
+	return expected == strings.TrimSpace(strings.ReplaceAll(output, "\r", ""))
 }
 
 // --- SEO helpers ---
