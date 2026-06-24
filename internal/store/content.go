@@ -124,6 +124,9 @@ func (s *SQLiteStore) ListQuestionsByLesson(userID, lessonID string) ([]Question
 		o.IsCorrect = correct == 1
 		optsByQ[o.QuestionID] = append(optsByQ[o.QuestionID], o)
 	}
+	if err := optRows.Err(); err != nil {
+		return nil, fmt.Errorf("ListQuestionsByLesson options: %w", err)
+	}
 
 	// Batch-fetch answers for this user+lesson (only if logged in).
 	var ansByQ map[string]*Answer
@@ -146,6 +149,9 @@ func (s *SQLiteStore) ListQuestionsByLesson(userID, lessonID string) ([]Question
 			}
 			a.Correct = correct == 1
 			ansByQ[a.QuestionID] = &a
+		}
+		if err := ansRows.Err(); err != nil {
+			return nil, fmt.Errorf("ListQuestionsByLesson answers: %w", err)
 		}
 	}
 

@@ -249,6 +249,9 @@ func (s *SQLiteStore) UserData(userID string) (*UserData, error) {
 		ud.TotalAnswered += answered
 		ud.TotalCorrect += correct
 	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("UserData answers: %w", err)
+	}
 
 	esRows, err := s.db.Query(`
 		SELECT es.exercise_id, e.lesson_id, es.correct
@@ -269,6 +272,9 @@ func (s *SQLiteStore) UserData(userID string) (*UserData, error) {
 		ud.CorrectByEx[exID] = correct == 1
 		ud.SubmissionsByLesson[lessonID]++
 		ud.TotalSubmitted++
+	}
+	if err := esRows.Err(); err != nil {
+		return nil, fmt.Errorf("UserData submissions: %w", err)
 	}
 
 	return ud, nil
