@@ -296,6 +296,9 @@ func (s *SQLiteStore) LessonCounts() (map[string]int, map[string]int, error) {
 		}
 		qCounts[lid] = n
 	}
+	if err := qRows.Err(); err != nil {
+		return nil, nil, fmt.Errorf("LessonCounts questions: %w", err)
+	}
 
 	eRows, err := s.db.Query(`SELECT lesson_id, COUNT(*) FROM exercises GROUP BY lesson_id`)
 	if err != nil {
@@ -310,6 +313,9 @@ func (s *SQLiteStore) LessonCounts() (map[string]int, map[string]int, error) {
 			return nil, nil, fmt.Errorf("LessonCounts exercises: %w", err)
 		}
 		eCounts[lid] = n
+	}
+	if err := eRows.Err(); err != nil {
+		return nil, nil, fmt.Errorf("LessonCounts exercises: %w", err)
 	}
 
 	return qCounts, eCounts, nil

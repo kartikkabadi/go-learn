@@ -55,11 +55,16 @@ func (s *Store) SaveAnswer(userID, questionID, pickedKey, pickedLabel string) (s
 	case "text":
 		correct = strings.EqualFold(strings.TrimSpace(pickedKey), strings.TrimSpace(q.CorrectKey))
 	case "choice":
+		found := false
 		for _, opt := range q.Options {
 			if opt.OptionKey == pickedKey {
 				correct = opt.IsCorrect
+				found = true
 				break
 			}
+		}
+		if !found {
+			return store.Answer{}, fmt.Errorf("unknown option %q for %q", pickedKey, questionID)
 		}
 	default:
 		return store.Answer{}, fmt.Errorf("unsupported question type %q", q.QuestionType)

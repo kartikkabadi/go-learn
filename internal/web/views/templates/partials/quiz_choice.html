@@ -10,7 +10,7 @@
   {{range .Question.Options}}
     <button type="button"
       hx-post="/lessons/{{$.LessonID}}/questions/{{$.Question.ID}}/answer"
-      hx-vals='{"pickedKey":"{{.OptionKey}}","pickedLabel":"{{.Label}}"}'
+      hx-vals='{"pickedKey":"{{.OptionKey}}"}'
       hx-target="#quiz-body-{{$.Question.ID}}"
       hx-indicator="#quiz-spinner-{{$.Question.ID}}"
       hx-disabled-elt="#quiz-{{$.Question.ID}} .quiz-options button"

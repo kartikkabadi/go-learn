@@ -75,6 +75,10 @@ func emitLessons(b *strings.Builder, db *sql.DB) {
 		fmt.Fprintf(b, "\t\t{ID: %s, Title: %s, Slug: %s, Summary: %s, SortOrder: %d},\n",
 			q(l.ID), q(l.Title), q(l.Slug), q(l.Summary), l.SortOrder)
 	}
+	if err := rows.Err(); err != nil {
+		fmt.Fprintf(os.Stderr, "lessons: %v\n", err)
+		os.Exit(1)
+	}
 	b.WriteString("\t}\n")
 	b.WriteString("\tfor i := range Lessons {\n")
 	b.WriteString("\t\tl := &Lessons[i]\n")
@@ -104,6 +108,10 @@ func emitSections(b *strings.Builder, db *sql.DB) {
 		}
 		fmt.Fprintf(b, "\t\tSections[%s] = append(Sections[%s], store.LessonSection{ID: %s, LessonID: %s, Heading: %s, BodyHTML: template.HTML(%s), SortOrder: %d})\n",
 			q(s.LessonID), q(s.LessonID), q(s.ID), q(s.LessonID), q(s.Heading), q(s.BodyHTML), s.SortOrder)
+	}
+	if err := rows.Err(); err != nil {
+		fmt.Fprintf(os.Stderr, "sections: %v\n", err)
+		os.Exit(1)
 	}
 	b.WriteString("\t}\n\n")
 }
@@ -153,6 +161,10 @@ func emitQuestions(b *strings.Builder, db *sql.DB) {
 				q(row.OptQID.String), q(row.OptKey.String), q(row.OptLabel.String), row.OptCorrect.Int64 == 1, int(row.OptOrder.Int64))
 		}
 	}
+	if err := rows.Err(); err != nil {
+		fmt.Fprintf(os.Stderr, "questions: %v\n", err)
+		os.Exit(1)
+	}
 	b.WriteString("\t}\n\n")
 }
 
@@ -175,6 +187,10 @@ func emitExercises(b *strings.Builder, db *sql.DB) {
 		}
 		fmt.Fprintf(b, "\t\t{ID: %s, LessonID: %s, Title: %s, Path: %s, Instructions: %s, SortOrder: %d},\n",
 			q(e.ID), q(e.LessonID), q(e.Title), q(e.Path), q(e.Instructions), e.SortOrder)
+	}
+	if err := rows.Err(); err != nil {
+		fmt.Fprintf(os.Stderr, "exercises: %v\n", err)
+		os.Exit(1)
 	}
 	b.WriteString("\t}\n")
 	b.WriteString("\tfor i := range Exercises {\n")
@@ -202,6 +218,10 @@ func emitGlossary(b *strings.Builder, db *sql.DB) {
 		fmt.Fprintf(b, "\t\t{ID: %s, Term: %s, Definition: %s, SortOrder: %d},\n",
 			q(g.ID), q(g.Term), q(g.Definition), g.SortOrder)
 	}
+	if err := rows.Err(); err != nil {
+		fmt.Fprintf(os.Stderr, "glossary: %v\n", err)
+		os.Exit(1)
+	}
 	b.WriteString("\t}\n\n")
 }
 
@@ -223,6 +243,10 @@ func emitReferences(b *strings.Builder, db *sql.DB) {
 		}
 		fmt.Fprintf(b, "\t\t{ID: %s, Title: %s, URL: %s, Notes: %s, LessonID: %s},\n",
 			q(r.ID), q(r.Title), q(r.URL), q(r.Notes), q(r.LessonID))
+	}
+	if err := rows.Err(); err != nil {
+		fmt.Fprintf(os.Stderr, "references: %v\n", err)
+		os.Exit(1)
 	}
 	b.WriteString("\t}\n\n")
 }
@@ -246,6 +270,10 @@ func emitInsights(b *strings.Builder, db *sql.DB) {
 		}
 		fmt.Fprintf(b, "\t\t{ID: %s, Title: %s, Body: %s, Kind: %s, Active: %t, CreatedAt: %s},\n",
 			q(ins.ID), q(ins.Title), q(ins.Body), q(ins.Kind), ins.Active == 1, q(ins.CreatedAt))
+	}
+	if err := rows.Err(); err != nil {
+		fmt.Fprintf(os.Stderr, "insights: %v\n", err)
+		os.Exit(1)
 	}
 	b.WriteString("\t}\n\n")
 }

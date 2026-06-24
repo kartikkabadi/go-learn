@@ -318,15 +318,11 @@ func (h *Handler) AnswerQuestion(w http.ResponseWriter, r *http.Request) {
 	lessonID := r.PathValue("id")
 	questionID := r.PathValue("qid")
 	pickedKey := strings.TrimSpace(r.FormValue("pickedKey"))
-	pickedLabel := strings.TrimSpace(r.FormValue("pickedLabel"))
-	if pickedLabel == "" {
-		pickedLabel = pickedKey
-	}
 	if pickedKey == "" {
 		badRequest(w, "pickedKey required")
 		return
 	}
-	if len(pickedKey) > 200 || len(pickedLabel) > 500 {
+	if len(pickedKey) > 200 {
 		badRequest(w, "value too long")
 		return
 	}
@@ -342,6 +338,19 @@ func (h *Handler) AnswerQuestion(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Look up the label server-side from the question's options for choice
+	// questions. This avoids trusting client-provided labels and avoids
+	// JSON-escaping issues in hx-vals attributes.
+	pickedLabel := pickedKey
+	if q.QuestionType == "choice" {
+		for _, opt := range q.Options {
+			if opt.OptionKey == pickedKey {
+				pickedLabel = opt.Label
+				break
+			}
+		}
+	}
+
 	user := middleware.UserFromContext(r)
 	view := QuestionView{
 		LessonID: lessonID,
@@ -350,12 +359,17 @@ func (h *Handler) AnswerQuestion(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if user == nil {
+		correct, ok := evaluateAnswer(*q, pickedKey)
+		if !ok {
+			badRequest(w, "invalid option")
+			return
+		}
 		view.Ephemeral = true
 		view.Question.Answer = &store.Answer{
 			QuestionID:  questionID,
 			PickedKey:   pickedKey,
 			PickedLabel: pickedLabel,
-			Correct:     evaluateAnswer(*q, pickedKey),
+			Correct:     correct,
 		}
 	} else {
 		answer, err := h.Store.SaveAnswer(user.ID, questionID, pickedKey, pickedLabel)
@@ -509,18 +523,18 @@ func mergeLessonBlocks(sections []store.LessonSection, questions []QuestionView,
 	return blocks
 }
 
-func evaluateAnswer(q store.Question, pickedKey string) bool {
+func evaluateAnswer(q store.Question, pickedKey string) (correct, ok bool) {
 	switch q.QuestionType {
 	case "text":
-		return strings.EqualFold(strings.TrimSpace(pickedKey), strings.TrimSpace(q.CorrectKey))
+		return strings.EqualFold(strings.TrimSpace(pickedKey), strings.TrimSpace(q.CorrectKey)), true
 	case "choice":
 		for _, opt := range q.Options {
 			if opt.OptionKey == pickedKey {
-				return opt.IsCorrect
+				return opt.IsCorrect, true
 			}
 		}
 	}
-	return false
+	return false, false
 }
 
 // gradeExercise compares submitted output against the embedded expected output

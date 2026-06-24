@@ -281,7 +281,7 @@ func TestAnswerQuestion_Valid(t *testing.T) {
 	h := testHandler(t)
 	importTestLesson(t, h.Store)
 
-	form := url.Values{"pickedKey": {"a"}, "pickedLabel": {"Right"}}
+	form := url.Values{"pickedKey": {"a"}}
 	req := httptest.NewRequest(http.MethodPost, "/lessons/web-t1/questions/web-t1:q1/answer",
 		strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -294,6 +294,11 @@ func TestAnswerQuestion_Valid(t *testing.T) {
 	resp := w.Result()
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("want 200, got %d", resp.StatusCode)
+	}
+	// Server should look up the label from the question's options, not trust
+	// the client. The option "a" has label "Right" in importTestLesson.
+	if !strings.Contains(w.Body.String(), "Right") {
+		t.Fatal("response should contain server-looked-up label 'Right'")
 	}
 	resp.Body.Close()
 }
