@@ -232,6 +232,24 @@ func TestLessonShow_NotFound(t *testing.T) {
 	resp.Body.Close()
 }
 
+func TestNotFound_ContentType(t *testing.T) {
+	h := testHandler(t)
+
+	req := httptest.NewRequest(http.MethodGet, "/nonexistent", nil)
+	w := httptest.NewRecorder()
+	h.NotFound(w, req)
+
+	resp := w.Result()
+	if resp.StatusCode != http.StatusNotFound {
+		t.Fatalf("want 404, got %d", resp.StatusCode)
+	}
+	ct := resp.Header.Get("Content-Type")
+	if !strings.HasPrefix(ct, "text/html") {
+		t.Fatalf("want text/html Content-Type, got %q", ct)
+	}
+	resp.Body.Close()
+}
+
 func TestAnswerQuestion_Anonymous(t *testing.T) {
 	h := testHandler(t)
 	importTestLesson(t, h.Store)

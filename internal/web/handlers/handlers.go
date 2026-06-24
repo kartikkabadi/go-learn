@@ -740,15 +740,18 @@ func (h *Handler) Health(w http.ResponseWriter, r *http.Request) {
 
 // NotFound renders a friendly 404 page.
 func (h *Handler) NotFound(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(http.StatusNotFound)
 	msg := "That page doesn't exist."
 	meta := h.meta(r, "Not found — go-learn", msg, h.baseURL(r)+r.URL.Path, "")
 	meta.NoIndex = true
-	h.Views.Render(w, "error.html", errorPage{
+	if err := h.Views.RenderPartial(w, "error.html", errorPage{
 		PageMeta: meta,
 		Code:     404,
 		Message:  msg,
-	})
+	}); err != nil {
+		slog.Error("render 404", "error", err)
+	}
 }
 
 type errorPage struct {
