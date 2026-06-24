@@ -4,7 +4,7 @@
 
 {{if .Error}}<p class="bad">{{.Error}}</p>{{end}}
 
-<form method="POST" action="/login?next={{.Next}}" class="auth-form">
+<form method="POST" action="/login" class="auth-form">
   <label for="email">Email</label>
   <input type="email" id="email" name="email" value="{{.Email}}" required autocomplete="email" autofocus>
   <label for="password">Password</label>

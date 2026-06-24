@@ -499,3 +499,31 @@ func TestAuthFlow_LoginAndLogout(t *testing.T) {
 		}
 	})
 }
+
+func TestLogin_NextWithAmpersand(t *testing.T) {
+	h := testHandler(t)
+
+	// Create a real user so login succeeds.
+	_, err := h.Store.CreateUser("nexttest@example.com", "$2a$04$PVO64ClROB.Y1qPsICjT1eRxNLjsi9YysWb9jseBQqT/LjaTfBK2K")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// POST login with next containing & — the form body hidden input carries it.
+	form := url.Values{
+		"email":    {"nexttest@example.com"},
+		"password": {"testpassword123"},
+		"next":     {"/progress?foo=1&bar=2"},
+	}
+	req := httptest.NewRequest(http.MethodPost, "/login", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	w := httptest.NewRecorder()
+	h.Login(w, req)
+
+	// Login redirects to next. If & truncation bug is present, redirect goes
+	// to /progress?foo=1 instead of /progress?foo=1&bar=2.
+	loc := w.Header().Get("Location")
+	if !strings.Contains(loc, "bar=2") {
+		t.Fatalf("next with & should preserve full path, got Location=%q", loc)
+	}
+}

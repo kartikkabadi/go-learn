@@ -106,7 +106,15 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/", http.StatusFound)
 		return
 	}
-	next := strings.TrimSpace(r.URL.Query().Get("next"))
+	// Read next from query string (GET) or form body (POST).
+	// The hidden input in the form body avoids URL-encoding issues with &
+	// in the next parameter (e.g. /progress?foo=1&bar=2).
+	var next string
+	if r.Method == http.MethodPost {
+		next = strings.TrimSpace(r.FormValue("next"))
+	} else {
+		next = strings.TrimSpace(r.URL.Query().Get("next"))
+	}
 	// Restrict next to same-site relative paths to prevent open redirect.
 	if next == "" || !strings.HasPrefix(next, "/") || strings.HasPrefix(next, "//") || strings.HasPrefix(next, "/\\") {
 		next = "/"
