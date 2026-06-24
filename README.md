@@ -115,6 +115,16 @@ make serve     # http://127.0.0.1:4173/
 
 Visual design rules live in [`DESIGN.md`](DESIGN.md). Run `make css-watch` while editing templates or CSS.
 
+## Deployment (Cloudflare Workers)
+
+```bash
+make deploy    # build WASM + deploy to Cloudflare Workers
+```
+
+Required secrets (set once via `wrangler secret put`):
+
+- `COOKIE_KEY` — 32-byte HMAC key for signing session cookies. Generate with `openssl rand -base64 32`. Without it, the worker generates a random key on each cold start, invalidating all sessions.
+
 ## Security
 
 - **Passwords**: bcrypt hashed, never stored in plaintext

@@ -2,7 +2,7 @@
   <rect width="1200" height="630" fill="#181818"/>
   <text x="60" y="200" font-family="monospace" font-size="72" fill="#00add8" font-weight="bold">go-learn</text>
   <text x="60" y="300" font-family="system-ui,sans-serif" font-size="48" fill="#e0e0e0">Learn Go interactively</text>
-  <text x="60" y="370" font-family="system-ui,sans-serif" font-size="32" fill="#888">10 lessons · quizzes · exercises · free</text>
+  <text x="60" y="370" font-family="system-ui,sans-serif" font-size="32" fill="#888">22 lessons · quizzes · exercises · free</text>
   <rect x="60" y="430" width="300" height="60" rx="8" fill="#00add8"/>
   <text x="210" y="470" font-family="system-ui,sans-serif" font-size="28" fill="#181818" text-anchor="middle" font-weight="bold">Start learning →</text>
 </svg>

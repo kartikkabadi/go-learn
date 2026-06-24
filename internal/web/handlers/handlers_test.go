@@ -331,6 +331,40 @@ func TestProgressPage(t *testing.T) {
 	resp.Body.Close()
 }
 
+func TestSubmitExercise_UnknownID(t *testing.T) {
+	h := testHandler(t)
+	importTestLesson(t, h.Store)
+
+	form := url.Values{"output": {"hello"}}
+	req := httptest.NewRequest(http.MethodPost, "/practice/nonexistent/submit", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.SetPathValue("id", "nonexistent")
+	req = withTestUser(t, h.Store, req)
+	w := httptest.NewRecorder()
+	h.SubmitExercise(w, req)
+
+	if w.Code != http.StatusNotFound {
+		t.Fatalf("want 404 for unknown exercise, got %d", w.Code)
+	}
+}
+
+func TestSubmitExercise_Valid(t *testing.T) {
+	h := testHandler(t)
+	importTestLesson(t, h.Store)
+
+	form := url.Values{"output": {"anything"}}
+	req := httptest.NewRequest(http.MethodPost, "/practice/web-t1:ex1/submit", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.SetPathValue("id", "web-t1:ex1")
+	req = withTestUser(t, h.Store, req)
+	w := httptest.NewRecorder()
+	h.SubmitExercise(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("want 200, got %d", w.Code)
+	}
+}
+
 func TestAuthFlow_LoginAndLogout(t *testing.T) {
 	h := testHandler(t)
 	u, err := h.Store.CreateUser("authflow@example.com", "$2a$10$dummyhashfortestonlyxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
