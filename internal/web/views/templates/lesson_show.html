@@ -33,7 +33,7 @@
     {{if .Question.Review}}<h3>Review</h3>{{else if eq .Question.Question.QuestionType "text"}}<h3>Predict</h3>{{else}}<h3>Question</h3>{{end}}
     <span class="htmx-indicator loader-dots" id="quiz-spinner-{{.Question.Question.ID}}" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span></span>
   </div>
-  <p class="quiz-prompt">{{.Question.Question.Prompt}}</p>
+  <p class="quiz-prompt">{{safeHTML .Question.Question.Prompt}}</p>
   <div id="quiz-body-{{.Question.Question.ID}}" aria-live="polite">
     {{if eq .Question.Question.QuestionType "text"}}
       {{template "quiz_text_partial" .Question}}
