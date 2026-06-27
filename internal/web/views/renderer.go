@@ -1,6 +1,7 @@
 package views
 
 import (
+	"bytes"
 	"embed"
 	"html/template"
 	"io"
@@ -70,12 +71,17 @@ func New() (*Renderer, error) {
 }
 
 // Render writes a full-page template to the response writer.
+// Renders into a buffer first so a mid-template execution error returns a
+// clean 500 instead of a corrupt 200 with partial HTML.
 func (r *Renderer) Render(w http.ResponseWriter, name string, data any) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	if err := r.templates.ExecuteTemplate(w, name, data); err != nil {
+	var buf bytes.Buffer
+	if err := r.templates.ExecuteTemplate(&buf, name, data); err != nil {
 		slog.Error("render template", "name", name, "error", err)
 		http.Error(w, "internal error", http.StatusInternalServerError)
+		return
 	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Write(buf.Bytes())
 }
 
 // RenderPartial executes a named template and writes to an arbitrary writer (used for HTMX partials).

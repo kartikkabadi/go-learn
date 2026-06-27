@@ -133,6 +133,13 @@ func emitQuestions(b *strings.Builder, db *sql.DB) {
 
 	b.WriteString("\t{\n")
 	b.WriteString("\t\tqIdx := map[string]int{}\n")
+	// Collect question IDs in first-seen order so QuestionsByID can be
+	// populated in a separate pass after all Questions[lessonID] appends are
+	// done. Taking &Questions[lessonID][idx] earlier would leave the pointer
+	// dangling if a later question append reallocates the lesson's slice.
+	type qidLesson struct{ qid, lesson string }
+	var order []qidLesson
+	seen := map[string]bool{}
 	for rows.Next() {
 		var row struct {
 			ID, LessonID, Prompt, CorrectKey, QuestionType, SectionTag string
@@ -153,8 +160,11 @@ func emitQuestions(b *strings.Builder, db *sql.DB) {
 		fmt.Fprintf(b, "\t\t\tQuestions[%s] = append(Questions[%s], store.Question{ID: %s, LessonID: %s, Prompt: %s, CorrectKey: %s, QuestionType: %s, SectionTag: %s, SortOrder: %d})\n",
 			q(row.LessonID), q(row.LessonID), q(row.ID), q(row.LessonID), q(row.Prompt), q(row.CorrectKey), q(row.QuestionType), q(row.SectionTag), row.SortOrder)
 		fmt.Fprintf(b, "\t\t\tqIdx[%s] = len(Questions[%s]) - 1\n", q(row.ID), q(row.LessonID))
-		fmt.Fprintf(b, "\t\t\tQuestionsByID[%s] = &Questions[%s][qIdx[%s]]\n", q(row.ID), q(row.LessonID), q(row.ID))
 		b.WriteString("\t\t}\n")
+		if !seen[row.ID] {
+			seen[row.ID] = true
+			order = append(order, qidLesson{qid: row.ID, lesson: row.LessonID})
+		}
 		if row.OptQID.Valid {
 			fmt.Fprintf(b, "\t\tQuestions[%s][qIdx[%s]].Options = append(Questions[%s][qIdx[%s]].Options, store.QuestionOption{QuestionID: %s, OptionKey: %s, Label: %s, IsCorrect: %t, SortOrder: %d})\n",
 				q(row.LessonID), q(row.ID), q(row.LessonID), q(row.ID),
@@ -164,6 +174,12 @@ func emitQuestions(b *strings.Builder, db *sql.DB) {
 	if err := rows.Err(); err != nil {
 		fmt.Fprintf(os.Stderr, "questions: %v\n", err)
 		os.Exit(1)
+	}
+	// Second pass: assign QuestionsByID now that all Questions[lesson] slices
+	// are at their final length. Pointers taken earlier could dangle after a
+	// later append reallocated the lesson's backing array.
+	for _, ql := range order {
+		fmt.Fprintf(b, "\t\tQuestionsByID[%s] = &Questions[%s][qIdx[%s]]\n", q(ql.qid), q(ql.lesson), q(ql.qid))
 	}
 	b.WriteString("\t}\n\n")
 }

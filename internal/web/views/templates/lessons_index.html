@@ -5,7 +5,7 @@
 <div class="lesson-list">
 {{range .Lessons}}
 <div class="card lesson-row">
-  <h2 class="lesson-row-title"><a href="/lessons/{{.Slug}}">Lesson {{.LessonID}} — {{.Title}}</a></h2>
+  <h2 class="lesson-row-title"><a href="/lessons/{{.Slug}}">Lesson {{.SortOrder}} — {{.Title}}</a></h2>
   <div class="progress-bar"><span style="width: {{percent (lessonDone .QuestionsAnswered .ExercisesDone) (lessonTotal .QuestionsTotal .ExerciseTotal)}}%"></span></div>
   <p class="muted lesson-row-meta">Questions: {{.QuestionsAnswered}}/{{.QuestionsTotal}} · Exercises: {{.ExercisesDone}}/{{.ExerciseTotal}}</p>
 </div>

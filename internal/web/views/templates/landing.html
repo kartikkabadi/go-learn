@@ -26,7 +26,7 @@
   <div class="lesson-grid">
   {{range .Lessons}}
   <div class="card lesson-card">
-    <a href="/lessons/{{.Slug}}" class="lesson-card-link"><strong>Lesson {{.ID}}</strong> — {{.Title}}</a>
+    <a href="/lessons/{{.Slug}}" class="lesson-card-link"><strong>Lesson {{.SortOrder}}</strong> — {{.Title}}</a>
     <p>{{.Summary}}</p>
   </div>
   {{end}}

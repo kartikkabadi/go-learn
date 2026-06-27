@@ -4,7 +4,7 @@
   {{if .Data.NextLesson}}
   <div class="continue-card card">
     <p class="continue-eyebrow">Continue learning</p>
-    <h1 class="continue-title">Lesson {{.Data.NextLesson.LessonID}} — {{.Data.NextLesson.Title}}</h1>
+    <h1 class="continue-title">Lesson {{.Data.NextLesson.SortOrder}} — {{.Data.NextLesson.Title}}</h1>
     <div class="progress-bar"><span style="width: {{percent (lessonDone .Data.NextLesson.QuestionsAnswered .Data.NextLesson.ExercisesDone) (lessonTotal .Data.NextLesson.QuestionsTotal .Data.NextLesson.ExerciseTotal)}}%"></span></div>
     <p class="muted">Quiz {{.Data.NextLesson.QuestionsAnswered}}/{{.Data.NextLesson.QuestionsTotal}} · Exercises {{.Data.NextLesson.ExercisesDone}}/{{.Data.NextLesson.ExerciseTotal}}</p>
     <p><a href="/lessons/{{.Data.NextLesson.Slug}}" class="btn btn-primary">Resume lesson</a></p>
@@ -35,7 +35,7 @@
 <div class="lesson-list">
 {{range .Data.Lessons}}
 <div class="card lesson-row">
-  <a href="/lessons/{{.Slug}}" class="lesson-row-link"><strong>Lesson {{.LessonID}}</strong> — {{.Title}}</a>
+  <a href="/lessons/{{.Slug}}" class="lesson-row-link"><strong>Lesson {{.SortOrder}}</strong> — {{.Title}}</a>
   <div class="progress-bar"><span style="width: {{percent (lessonDone .QuestionsAnswered .ExercisesDone) (lessonTotal .QuestionsTotal .ExerciseTotal)}}%"></span></div>
   <p class="muted lesson-row-meta">Quiz: {{.QuestionsAnswered}}/{{.QuestionsTotal}} · Exercises: {{.ExercisesDone}}/{{.ExerciseTotal}}</p>
 </div>

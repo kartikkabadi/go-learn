@@ -170,6 +170,67 @@ func TestLessonShow_Valid(t *testing.T) {
 	resp.Body.Close()
 }
 
+// TestLessonShow_DisplaysSortOrderNotID guards against showing the raw
+// zero-padded lesson ID (e.g. "0001") where the human-friendly sort order
+// (e.g. "1") is intended. Lesson IDs are storage keys; SortOrder is the
+// display number.
+func TestLessonShow_DisplaysSortOrderNotID(t *testing.T) {
+	h := testHandler(t)
+	bundle := store.ContentBundle{
+		Lesson: store.BundleLesson{ID: "0001", Title: "What Is a Program?", Slug: "what-is-a-program", SortOrder: 1},
+		Sections: []store.BundleSection{
+			{ID: "0001:s1", Heading: "Intro", BodyHTML: "<p>hi</p>", SortOrder: 1},
+		},
+	}
+	if err := h.Store.ImportBundle(bundle); err != nil {
+		t.Fatal(err)
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/lessons/what-is-a-program", nil)
+	req.SetPathValue("slug", "what-is-a-program")
+	w := httptest.NewRecorder()
+	h.LessonShow(w, req)
+
+	body := w.Body.String()
+	if !strings.Contains(body, "Lesson 1 — What Is a Program?") {
+		t.Fatalf("page should display sort order (1), not raw ID; got: %s", body)
+	}
+	if strings.Contains(body, "Lesson 0001") {
+		t.Fatalf("page should not display raw zero-padded ID '0001'; got: %s", body)
+	}
+}
+
+// TestReference_ShowsLessonTitleNotID guards against the references table
+// showing the raw zero-padded lesson storage key. The "Lesson" column should
+// show the human-readable lesson title via the LessonTitles lookup map.
+func TestReference_ShowsLessonTitleNotID(t *testing.T) {
+	h := testHandler(t)
+	bundle := store.ContentBundle{
+		Lesson: store.BundleLesson{ID: "0001", Title: "What Is a Program?", Slug: "what-is-a-program", SortOrder: 1},
+		References: []store.BundleReference{
+			{ID: "0001:ref1", Title: "Go tour", URL: "https://go.dev/tour", Notes: "Official tour"},
+		},
+	}
+	if err := h.Store.ImportBundle(bundle); err != nil {
+		t.Fatal(err)
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/reference", nil)
+	w := httptest.NewRecorder()
+	h.Reference(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("want 200, got %d", w.Code)
+	}
+	body := w.Body.String()
+	if !strings.Contains(body, "What Is a Program?") {
+		t.Fatalf("reference table should show lesson title, not raw ID; got: %s", body)
+	}
+	if strings.Contains(body, ">0001<") {
+		t.Fatalf("reference table should not display raw lesson ID '0001' in a cell; got: %s", body)
+	}
+}
+
 func TestLessonShow_Interleaved(t *testing.T) {
 	h := testHandler(t)
 	bundle := store.ContentBundle{

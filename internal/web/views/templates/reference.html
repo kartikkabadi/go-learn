@@ -17,7 +17,7 @@
     <tr>
       <td><a href="{{.URL}}">{{.Title}}</a></td>
       <td>{{.Notes}}</td>
-      <td>{{if .LessonID}}{{.LessonID}}{{else}}—{{end}}</td>
+      <td>{{$title := index $.LessonTitles .LessonID}}{{if $title}}{{$title}}{{else}}—{{end}}</td>
     </tr>
   {{end}}
   </tbody>

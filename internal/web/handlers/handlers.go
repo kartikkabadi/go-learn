@@ -98,8 +98,9 @@ type ProgressPage struct {
 
 type ReferencePage struct {
 	views.PageMeta
-	Terms      []store.GlossaryTerm
-	References []store.Reference
+	Terms        []store.GlossaryTerm
+	References   []store.Reference
+	LessonTitles map[string]string // lessonID -> title, for the references table
 }
 
 type ExerciseView struct {
@@ -358,12 +359,16 @@ func (h *Handler) AnswerQuestion(w http.ResponseWriter, r *http.Request) {
 		Review:   q.SectionTag == "review",
 	}
 
+	// Validate the picked key against the question's options/text answer once,
+	// for both anonymous and authed paths. A bad key is a client error (400);
+	// only store failures below are server errors (500).
+	correct, ok := evaluateAnswer(*q, pickedKey)
+	if !ok {
+		badRequest(w, "invalid option")
+		return
+	}
+
 	if user == nil {
-		correct, ok := evaluateAnswer(*q, pickedKey)
-		if !ok {
-			badRequest(w, "invalid option")
-			return
-		}
 		view.Ephemeral = true
 		view.Question.Answer = &store.Answer{
 			QuestionID:  questionID,
@@ -374,8 +379,7 @@ func (h *Handler) AnswerQuestion(w http.ResponseWriter, r *http.Request) {
 	} else {
 		answer, err := h.Store.SaveAnswer(user.ID, questionID, pickedKey, pickedLabel)
 		if err != nil {
-			slog.Error("save answer", "questionId", questionID, "error", err)
-			http.Error(w, "invalid answer", http.StatusBadRequest)
+			internalError(w, "save answer", err)
 			return
 		}
 		view.Question.Answer = &answer
@@ -410,11 +414,23 @@ func (h *Handler) Reference(w http.ResponseWriter, r *http.Request) {
 		internalError(w, "reference refs", err)
 		return
 	}
+	// Build a lessonID -> title map so the references table can show a
+	// human-readable lesson name instead of the raw storage key.
+	lessons, err := h.Store.ListLessons()
+	if err != nil {
+		internalError(w, "reference lessons", err)
+		return
+	}
+	titles := make(map[string]string, len(lessons))
+	for _, l := range lessons {
+		titles[l.ID] = l.Title
+	}
 	base := h.baseURL(r)
 	h.Views.Render(w, "reference.html", ReferencePage{
-		PageMeta:   h.meta(r, "Go Reference — Glossary and Resources — go-learn", "Go programming glossary: definitions for variables, functions, slices, maps, structs, pointers, and methods. Plus curated Go learning resources.", base+"/reference", glossaryJSONLD(base, terms)),
-		Terms:      terms,
-		References: refs,
+		PageMeta:     h.meta(r, "Go Reference — Glossary and Resources — go-learn", "Go programming glossary: definitions for variables, functions, slices, maps, structs, pointers, and methods. Plus curated Go learning resources.", base+"/reference", glossaryJSONLD(base, terms)),
+		Terms:        terms,
+		References:   refs,
+		LessonTitles: titles,
 	})
 }
 

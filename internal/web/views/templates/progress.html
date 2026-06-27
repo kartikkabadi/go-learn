@@ -10,7 +10,7 @@
   <tbody>
   {{range .Answers}}
     <tr>
-      <td>{{.LessonID}}</td>
+      <td>{{.LessonTitle}}</td>
       <td>{{safeHTML .Prompt}}</td>
       <td>{{if eq .QuestionType "choice"}}{{safeHTML .PickedLabel}}{{else}}{{.PickedLabel}}{{end}}</td>
       <td class="{{if .Correct}}ok{{else}}bad{{end}}">{{if .Correct}}Correct{{else}}Wrong — {{safeHTML .CorrectLabel}}{{end}}</td>
